@@ -1,0 +1,41 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install elan
+        run: |
+          curl https://raw.githubusercontent.com/leanprover/elan/master/elan-init.sh -sSf | sh -s -- -y --default-toolchain none
+          echo "$HOME/.elan/bin" >> $GITHUB_PATH
+      - name: Cache outputs
+        uses: actions/cache@v4
+        with:
+          path: |
+            .lake
+            !.lake/build/doc/HelloTypeSystem.html*
+            !.lake/build/doc/HelloTypeSystem
+          key: deps-${{ runner.os }}-${{ hashFiles('lean-toolchain') }}-${{ hashFiles('lake-manifest.json') }}-${{ github.sha }}
+          restore-keys: |
+            deps-${{ runner.os }}-${{ hashFiles('lean-toolchain') }}-${{ hashFiles('lake-manifest.json') }}
+            deps-${{ runner.os }}-${{ hashFiles('lean-toolchain') }}
+      - name: Build
+        run: |
+          lake build
+      - name: Generate docs
+        run: |
+          lake update
+          lake build -R -Kenv=dev HelloTypeSystem:docs
+      - name: Upload Pages artifact
+        if: ${{ github.event_name == 'push' }}
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: ".lake/build/doc"
+
