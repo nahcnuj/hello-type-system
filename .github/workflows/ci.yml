@@ -31,8 +31,8 @@ jobs:
           lake build
       - name: Generate docs
         run: |
-          lake update
-          lake build -R -Kenv=dev HelloTypeSystem:docs
+          lake -R -Kenv=dev update
+          lake -R -Kenv=dev build HelloTypeSystem:docs
       - name: Upload Pages artifact
         if: ${{ github.event_name == 'push' }}
         uses: actions/upload-pages-artifact@v3
