@@ -2,10 +2,10 @@
 Lean 4でプログラミング言語の意味論・型システムに入門するリポジトリです。
 ## Build
 ```sh
-lake update
 lake build
 
 # with docs by doc-gen4
+lake -R -Kenv=dev update
 lake -R -Kenv=dev build HelloTypeSystem:docs
 ```
 ## References
