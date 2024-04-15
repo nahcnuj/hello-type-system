@@ -38,3 +38,20 @@ def PNat.mul : PNat → PNat → PNat
 
 instance : Mul PNat where
   mul := PNat.mul
+
+/--
+判断
+-/
+inductive Judgement where
+  /--
+  "$n_1$ plus $n_2$ is $n_3$"
+  -/
+  | Plus (n₁ n₂ n₃ : PNat)
+  /--
+  "$n_1$ times $n_2$ is $n_3$"
+  -/
+  | Times (n₁ n₂ n₃ : PNat)
+  /--
+  "$n_1$ is less than $n_2$"
+  -/
+  | LT (n₁ n₂ : PNat)

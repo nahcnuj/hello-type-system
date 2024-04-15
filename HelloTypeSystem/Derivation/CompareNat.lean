@@ -1,18 +1,6 @@
 import HelloTypeSystem.Basic
 
-namespace Hidden
-/--
-導出システムCompareNat1--3で扱う判断
--/
-inductive Judgement
-  /--
-  "$n_1$ is less than $n_2$"
-  -/
-  | LT (n₁ n₂ : PNat)
-end Hidden
-
 namespace CompareNat1
-open Hidden
 /--
 導出システムCompareNat1の推論規則
 -/

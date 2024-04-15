@@ -2,19 +2,6 @@ import HelloTypeSystem.Basic
 
 namespace Nat
 /--
-導出システムNatの判断
--/
-inductive Judgement where
-  /--
-  "$n_1$ plus $n_2$ is $n_3$"
-  -/
-  | Plus (n₁ n₂ n₃ : PNat) : Judgement
-  /--
-  "$n_1$ times $n_2$ is $n_3$"
-  -/
-  | Times (n₁ n₂ n₃ : PNat) : Judgement
-
-/--
 導出システムNatの推論規則による導出
 -/
 inductive Derivation : Judgement → Type where

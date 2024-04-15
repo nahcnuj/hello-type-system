@@ -7,8 +7,10 @@ import «HelloTypeSystem».Derivation
 # Hello, Type System
 Lean 4でプログラミング言語の型システムや意味論に入門するリポジトリです。
 ## Index
-- [ペアノ自然数`PNat`](./HelloTypeSystem/Basic.html#PNat)
-- 導出システム
+- [諸定義](./HelloTypeSystem/Basic.html)
+  - [ペアノ自然数`PNat`](./HelloTypeSystem/Basic.html#PNat)
+  - [判断(judgement)](./HelloTypeSystem/Basic.html#Judgement)
+- 導出システム(derivation systems)
   - [`Nat`](./HelloTypeSystem/Derivation/Nat.html)
   - [`CompareNat1`](./HelloTypeSystem/Derivation/CompareNat.html##CompareNat1.Derivation)
 ## References
