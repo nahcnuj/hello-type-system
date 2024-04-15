@@ -9,7 +9,7 @@ inductive Judgement where
   "$n_1$ plus $n_2$ is $n_3$"
   -/
   | Plus (n₁ n₂ n₃ : PNat) : Judgement
-  /-
+  /--
   "$n_1$ times $n_2$ is $n_3$"
   -/
   | Times (n₁ n₂ n₃ : PNat) : Judgement
@@ -155,7 +155,7 @@ $$\because \text{T_Zero} + \text{T_Succ} + n_1 \times (\text{T_Succ}の前提) =
 -/
 theorem steps_times {n₁ n₂ n₃ : PNat} : (h : Derivation (.Times n₁ n₂ n₃)) → steps h = n₁ * (n₂ + 2) + 1
   | .T_Zero n => Nat.zero_mul _ ▸ steps_T_Zero n
-  | .T_Succ (n₁ := n₁) (n₃ := n₃') ht hp =>
+  | .T_Succ (n₁ := n₁) ht hp =>
       calc _
         _ = 1 + steps hp + steps ht      := steps_T_Succ ht hp
         _ = 1 + (n₂ + 1) + steps ht      := congrArg (_ + · + _) (steps_plus hp)
