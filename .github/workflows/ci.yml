@@ -22,9 +22,8 @@ jobs:
         uses: actions/cache@v4
         with:
           path: |
-            .lake
-            !.lake/build/doc/HelloTypeSystem.html*
-            !.lake/build/doc/HelloTypeSystem/**/*
+            .lake/*/*/*
+            !.lake/build/doc/HelloTypeSystem*
           key: deps-${{ runner.os }}-${{ hashFiles('lean-toolchain') }}-${{ hashFiles('lake-manifest.json') }}-${{ github.sha }}
           restore-keys: |
             deps-${{ runner.os }}-${{ hashFiles('lean-toolchain') }}-${{ hashFiles('lake-manifest.json') }}
