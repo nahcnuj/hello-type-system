@@ -1,4 +1,5 @@
 import «HelloTypeSystem»
+open HelloTypeSystem (PNat)
 
 def answer : PNat := 42
 

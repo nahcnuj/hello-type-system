@@ -1,4 +1,5 @@
 import HelloTypeSystem.Basic
+namespace HelloTypeSystem
 
 namespace CompareNat1
 /--

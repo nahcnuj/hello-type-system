@@ -1,3 +1,5 @@
+namespace HelloTypeSystem
+
 /--
 ペアノ自然数
 -/
