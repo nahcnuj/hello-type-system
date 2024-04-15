@@ -38,4 +38,7 @@ jobs:
         uses: actions/upload-pages-artifact@v3
         with:
           path: ".lake/build/doc"
+      - name: Deploy docs to GitHub Pages
+        if: ${{ github.event_name == 'push' }}
+        uses: actions/deploy-pages@v4
 
