@@ -6,7 +6,7 @@ lake build
 
 # with docs by doc-gen4
 lake -R -Kenv=dev update
-lake -R -Kenv=dev build HelloTypeSystem:docs
+lake -R -Kenv=dev build hellotypesystem HelloTypeSystem:docs
 ```
 ## References
 - 五十嵐淳 著. プログラミング言語の基礎概念, サイエンス社, 2011.7, (ライブラリ情報学コア・テキスト ; 24). 978-4-7819-1285-1. https://ndlsearch.ndl.go.jp/books/R100000002-I000011238587
