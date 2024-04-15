@@ -1,1 +1,2 @@
 import HelloTypeSystem.Derivation.Nat
+import HelloTypeSystem.Derivation.CompareNat
