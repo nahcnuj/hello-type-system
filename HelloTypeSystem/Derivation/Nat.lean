@@ -139,7 +139,7 @@ theorem steps_plus {n₁ n₂ n₃ : PNat} : (h : Derivation (.Plus n₁ n₂ n�
 
 /--
 任意のペアノ自然数$n_1,n_2,n_3$に対して、導出システムNatによって導出される判断"$n_1$ times $n_2$ is $n_3$"は$n_1 \times (n_2 + 2) + 1$ステップで導出できる。
-$$\because \text{T_Zero} + \text{T_Succ} + n_1 \times (\text{T_Succ}の前提) = 1 + n_1 + n_1 \times (n_2 + 1)$$
+$$\because (\text{T_Zero}) + (\text{T_Succ}) + n_1 \times (\text{T_Succの前提}) = 1 + n_1 + n_1 \times (n_2 + 1)$$
 -/
 theorem steps_times {n₁ n₂ n₃ : PNat} : (h : Derivation (.Times n₁ n₂ n₃)) → steps h = n₁ * (n₂ + 2) + 1
   | .T_Zero n => Nat.zero_mul _ ▸ steps_T_Zero n
