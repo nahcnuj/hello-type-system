@@ -31,14 +31,14 @@ instance : ToString PNat where
 -/
 inductive Judgement where
   /--
-  "$n_1$ plus $n_2$ is $n_3$"
+  "$\TT{$\MV{n_1}$ plus $\MV{n_2}$ is $\MV{n_3}$}$"
   -/
   | Plus (n₁ n₂ n₃ : PNat)
   /--
-  "$n_1$ times $n_2$ is $n_3$"
+  "$\TT{$\MV{n_1}$ times $\MV{n_2}$ is $\MV{n_3}$}$"
   -/
   | Times (n₁ n₂ n₃ : PNat)
   /--
-  "$n_1$ is less than $n_2$"
+  "$\TT{$\MV{n_1}$ is less than $\MV{n_2}$}$"
   -/
   | LT (n₁ n₂ : PNat)

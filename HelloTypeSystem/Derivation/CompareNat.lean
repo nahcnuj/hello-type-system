@@ -28,14 +28,14 @@ def SSZ_lt_SSSSZ : Derivation (.LT (.S (.S .Z)) (.S (.S (.S (.S .Z))))) :=
     (.LT_Succ (.S (.S (.S .Z))))
 
 /-!
-導出システムCompareNat1は判断"$n_1$ is less than $n_2$"に対して、
+導出システムCompareNat1は判断"$\TT{$\MV{n_1}$ is less than $\MV{n_2}$}$"に対して、
 規則LT_Transにおける中間の項（`n₂`）の取り方によって異なる導出を与える。
 -/
 
 /--
 判断"Z is less than SSSSZ"のCompareNat1による導出
 
-規則LT_Transで$n_2 = {\tt SZ}$, $n_2 = {\tt SSZ}$, $n_2 = {\tt SSSZ}$として導出する。
+規則LT_Transで$\MV{n_2} = \TT{SZ}$, $\MV{n_2} = \TT{SSZ}$, $\MV{n_2} = \TT{SSSZ}$として導出する。
 -/
 def Z_lt_SSSSZ : Derivation (.LT .Z (.S (.S (.S (.S .Z))))) :=
   .LT_Trans (n₁ := .Z) (n₂ := .S .Z) (n₃ := .S (.S (.S (.S .Z))))
@@ -51,7 +51,7 @@ def Z_lt_SSSSZ : Derivation (.LT .Z (.S (.S (.S (.S .Z))))) :=
 /--
 判断"Z is less than SSSSZ"のCompareNat1による導出
 
-規則LT_Transで$n_2 = {\tt SSZ}$, $n_2 = {\tt SZ}$, $n_2 = {\tt SSSZ}$として導出する。
+規則LT_Transで$\MV{n_2} = \TT{SSZ}$, $\MV{n_2} = \TT{SZ}$, $\MV{n_2} = \TT{SSSZ}$として導出する。
 -/
 def Z_lt_SSSSZ' : Derivation (.LT .Z (.S (.S (.S (.S .Z))))) :=
   .LT_Trans (n₁ := .Z) (n₂ := .S (.S .Z)) (n₃ := .S (.S (.S (.S .Z))))
@@ -67,7 +67,7 @@ def Z_lt_SSSSZ' : Derivation (.LT .Z (.S (.S (.S (.S .Z))))) :=
 /--
 判断"Z is less than SSSSZ"のCompareNat1による導出
 
-規則LT_Transで$n_2 = {\tt SSSZ}$, $n_2 = {\tt SZ}$, $n_2 = {\tt SSZ}$として導出する。
+規則LT_Transで$\MV{n_2} = \TT{SSSZ}$, $\MV{n_2} = \TT{SZ}$, $\MV{n_2} = \TT{SSZ}$として導出する。
 -/
 def Z_lt_SSSSZ'' : Derivation (.LT .Z (.S (.S (.S (.S .Z))))) :=
   .LT_Trans (n₁ := .Z) (n₂ := .S (.S (.S .Z))) (n₃ := .S (.S (.S (.S .Z))))
