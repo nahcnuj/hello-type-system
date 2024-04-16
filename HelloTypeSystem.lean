@@ -6,6 +6,7 @@ import «HelloTypeSystem».Derivation
 $\newcommand\Set[1]{\mathbf{#1}}$
 $\newcommand\MV[1]{\boldsymbol{#1}}$
 $\newcommand\TT[1]{\texttt{#1}}$
+$\newcommand\Evals{\mathrel{\Downarrow}}$
 -/
 
 /-!
@@ -16,10 +17,11 @@ Lean 4でプログラミング言語の型システムや意味論に入門す�
   - [ペアノ自然数`PNat`](./HelloTypeSystem/Basic.html#HelloTypeSystem.PNat)
   - [判断(judgement)](./HelloTypeSystem/Basic.html#HelloTypeSystem.Judgement)
 - 導出システム(derivation systems)
-  - [`Nat`](./HelloTypeSystem/Derivation/Nat.html#HelloTypeSystem.Derivation.Nat)
+  - [`Nat`](./HelloTypeSystem/Derivation/Nat.html#HelloTypeSystem.Nat.Derivation)
   - [`CompareNat1`](./HelloTypeSystem/Derivation/CompareNat.html#HelloTypeSystem.CompareNat1.Derivation)
   - [`CompareNat2`](./HelloTypeSystem/Derivation/CompareNat.html#HelloTypeSystem.CompareNat2.Derivation)
   - [`CompareNat3`](./HelloTypeSystem/Derivation/CompareNat.html#HelloTypeSystem.CompareNat3.Derivation)
+  - [`EvalNatExp`](./HelloTypeSystem/Derivation/EvalNatExp.html#EvalNatExp.Derivation)
 ## Notation
 - $\MV{n},\MV{n_1},\dots$（太字斜体）：メタ変数。特にペアノ自然数の場合はそれに対応する普通の自然数を$n,n_1,\dots$と書く。
 - $\Set{Nat},\Set{Exp},\dots$（太字立体）：BNFで定義された構文要素の集合

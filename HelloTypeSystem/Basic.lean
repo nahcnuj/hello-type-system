@@ -2,6 +2,9 @@ namespace HelloTypeSystem
 
 /--
 ペアノ自然数
+$$\begin{align*}
+\Set{PNat} \ni \MV{n} ::={}& \TT{Z} \mid \TT{S}\MV{n} \\\\
+\end{align*}$$
 -/
 inductive PNat
   | Z
@@ -27,7 +30,6 @@ instance : ToString PNat where
 判断
 
 この型の項は形式上は正しい判断であるが、内容的にも正しいとは限らない。
-内容的な正しい判断は導出システムによって規定される。
 -/
 inductive Judgement where
   /--
