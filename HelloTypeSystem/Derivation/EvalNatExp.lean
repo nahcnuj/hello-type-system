@@ -1,53 +1,7 @@
 import HelloTypeSystem.Basic
-open HelloTypeSystem (PNat)
+open HelloTypeSystem (PNat Judgement Exp)
 
 namespace EvalNatExp
-/--
-算術式
-$$\begin{align*}
-\Set{Exp} \ni \MV{e} ::={}& \MV{n} \mid \TT{$\MV{e}$ + $\MV{e}$} \mid \TT{$\MV{e}$ * $\MV{e}$} \\\\
-\end{align*}$$
--/
-inductive Exp where
-  | Nat (n : PNat)
-  | Add (e₁ e₂ : Exp)
-  | Mul (e₁ e₂ : Exp)
-
-instance : Coe PNat Exp where
-  coe := .Nat
-instance : Add Exp where
-  add := .Add
-instance : Mul Exp where
-  mul := .Mul
-
-/--
-$$\begin{align*}
-\Set{PNat} \ni \MV{n} ::={}& \TT{Z} \mid \TT{S}\MV{n} \\\\
-\Set{Exp} \ni \MV{e} ::={}& \MV{n} \mid \TT{$\MV{e}$ + $\MV{e}$} \mid \TT{$\MV{e}$ * $\MV{e}$} \\\\
-\end{align*}$$
--/
-inductive Syntax where
-  | Nat (n : PNat)
-  | Exp (e : Exp)
-
-/--
-導出システムEvalNatExpが扱う判断
--/
-inductive Judgement where
-  /--
-  "$\TT{$\MV{n_1}$ plus $\MV{n_2}$ is $\MV{n_3}$}$"
-  -/
-  | Plus (n₁ n₂ n₃ : PNat)
-  /--
-  "$\TT{$\MV{n_1}$ times $\MV{n_2}$ is $\MV{n_3}$}$"
-  -/
-  | Times (n₁ n₂ n₃ : PNat)
-  /--
-  "$\MV{e} \Evals \MV{n}$"（$\MV{e}$ evaluates to $\MV{n}$）
-  -/
-  | Eval (e : Exp) (n : PNat)
-
-notation:50 e:51 " ⇓ " n:51 => Judgement.Eval e n
 
 /--
 導出システムEvalNatExpの推論規則
