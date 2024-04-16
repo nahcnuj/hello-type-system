@@ -1,10 +1,10 @@
 import HelloTypeSystem.Basic
-open HelloTypeSystem (PNat Judgement Exp)
+open HelloTypeSystem (PNat Judgement Expr)
 
-namespace EvalNatExp
+namespace EvalNatExpr
 
 /--
-導出システムEvalNatExpの推論規則
+導出システムEvalNatExprの推論規則
 -/
 inductive Derivation : Judgement → Type where
   | P_Zero (n : PNat)

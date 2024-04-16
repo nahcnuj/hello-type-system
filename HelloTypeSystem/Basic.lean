@@ -29,19 +29,19 @@ instance : ToString PNat where
 /--
 算術式
 $$\begin{align*}
-\Set{Exp} \ni \MV{e} ::={}& \MV{n} \mid \TT{$\MV{e}$ + $\MV{e}$} \mid \TT{$\MV{e}$ * $\MV{e}$} \\\\
+\Set{Expr} \ni \MV{e} ::={}& \MV{n} \mid \TT{$\MV{e}$ + $\MV{e}$} \mid \TT{$\MV{e}$ * $\MV{e}$} \\\\
 \end{align*}$$
 -/
-inductive Exp where
+inductive Expr where
   | Nat (n : PNat)
-  | Add (e₁ e₂ : Exp)
-  | Mul (e₁ e₂ : Exp)
+  | Add (e₁ e₂ : Expr)
+  | Mul (e₁ e₂ : Expr)
 
-instance : Coe PNat Exp where
+instance : Coe PNat Expr where
   coe := .Nat
-instance : Add Exp where
+instance : Add Expr where
   add := .Add
-instance : Mul Exp where
+instance : Mul Expr where
   mul := .Mul
 
 /--
@@ -63,8 +63,8 @@ inductive Judgement where
   -/
   | LT (n₁ n₂ : PNat)
   /--
-  "$\MV{e} \Evals \MV{n}$"（$\MV{e}$ evaluates to $\MV{n}$）
+  "$\MV{e} \Evals \MV{n}$" means that $\MV{e}$ evaluates to $\MV{n}$.
   -/
-  | Eval (e : Exp) (n : PNat)
+  | Eval (e : Expr) (n : PNat)
 
 notation:50 e:51 " ⇓ " n:51 => Judgement.Eval e n
