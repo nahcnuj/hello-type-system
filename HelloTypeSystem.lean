@@ -7,6 +7,9 @@ $\newcommand\Set[1]{\mathbf{#1}}$
 $\newcommand\MV[1]{\boldsymbol{#1}}$
 $\newcommand\TT[1]{\texttt{#1}}$
 $\newcommand\Evals{\mathrel{\Downarrow}}$
+$\newcommand\Reduces{\mathrel{\longrightarrow}}$
+$\newcommand\MReduces{\mathrel{\longrightarrow^{\\!*}}}$
+$\newcommand\DReduces{\mathrel{\longrightarrow_{\\!d}}}$
 -/
 
 /-!

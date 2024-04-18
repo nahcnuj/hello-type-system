@@ -66,5 +66,20 @@ inductive Judgement where
   "$\MV{e} \Evals \MV{n}$" means that $\MV{e}$ evaluates to $\MV{n}$.
   -/
   | Eval (e : Expr) (n : PNat)
+  /--
+  "$\MV{e} \Reduces \MV{e'}$" means that $\MV{e}$ is reduced to $\MV{e'}$ at a time.
+  -/
+  | Reduce (e : Expr) (e' : Expr)
+  /--
+  "$\MV{e} \MReduces \MV{e'}$" means that $\MV{e}$ is reduced to $\MV{e'}$ at some time.
+  -/
+  | MReduce (e : Expr) (e' : Expr)
+  /--
+  "$\MV{e} \DReduces \MV{e'}$" means that $\MV{e}$ is reduced to $\MV{e'}$ deterministically.
+  -/
+  | DReduce (e : Expr) (e' : Expr)
 
-notation:50 e:51 " ⇓ " n:51 => Judgement.Eval e n
+notation:50 e:51 " ⇓ " n:51  => Judgement.Eval e n
+notation:50 e:51 " ⟶ " e':51 => Judgement.Reduce e e'
+notation:50 e:51 " ⟶* " e':51 => Judgement.MReduce e e'
+notation:50 e:51 " ⟶' " e':51 => Judgement.DReduce e e'
