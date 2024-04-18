@@ -26,6 +26,7 @@ Lean 4でプログラミング言語の型システムや意味論に入門す�
   - [`CompareNat2`](./HelloTypeSystem/Derivation/CompareNat.html#CompareNat2.Derivation)
   - [`CompareNat3`](./HelloTypeSystem/Derivation/CompareNat.html#CompareNat3.Derivation)
   - [`EvalNatExpr`](./HelloTypeSystem/Derivation/EvalNatExpr.html#EvalNatExpr.Derivation)
+  - [`ReduceNatExpr`](./HelloTypeSystem/Derivation/ReduceNatExpr.html#ReduceNatExpr.Derivation)
 ## Notation
 - $\MV{n},\MV{n_1},\dots$（太字斜体）：メタ変数。特にペアノ自然数の場合はそれに対応する普通の自然数を$n,n_1,\dots$と書く。
 - $\Set{PNat},\Set{Expr},\dots$（太字立体）：BNFで定義された構文要素の集合
