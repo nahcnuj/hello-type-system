@@ -156,14 +156,33 @@ theorem steps_times {n₁ n₂ n₃ : PNat} : (h : Derivation (.Times n₁ n₂ 
 end Derivation
 
 /--
+与えられた判断が導出できるという命題
+-/
+inductive Derivable (judge : Judgement) : Prop where
+  | intro (h : Derivation judge)
+
+/--
+導出の項が構築できたときは明らかに導出できるので型強制する
+-/
+instance : Coe (Derivation judge) (Derivable judge) where
+  coe h := ⟨h⟩
+
+/--
 任意のペアノ自然数$\MV{n}$に対して、判断"$\TT{Z plus $\MV{n}$ is $\MV{n}$}$"は規則P_Zeroによって導出できる。
 -/
-def Z_plus : ∀ n : PNat, Derivation (.Plus .Z n n) :=
-  .P_Zero
+theorem Z_plus : ∀ n : PNat, Derivable (.Plus .Z n n)
+  | n => Derivation.P_Zero n
 
-def plus_Z : ∀ n : PNat, Derivation (.Plus n .Z n)
+theorem plus_Z : ∀ n : PNat, Derivable (.Plus n .Z n) :=
   -- ペアノ自然数`n`に関する（構造）帰納法で示す
-  -- `n ≡ Z`のとき"Z plus Z is Z"を示す
-  | .Z   => .P_Zero .Z
-  -- `n`で成立（`plus_Z n` ≡ "n plus Z is n"）を仮定して"Sn plus Z is Sn"を示す
-  | .S n => .P_Succ (n₁ := n) (plus_Z n)
+  fun n => PNat.recOn n
+    -- `n ≡ Z`のとき"Z plus Z is Z"を示す
+    (Derivation.P_Zero .Z)
+    -- `n`で成立（`plus_Z n` ≡ "n plus Z is n"）を仮定して"Sn plus Z is Sn"を示す
+    (fun n ⟨𝒟⟩ => Derivation.P_Succ (n₁ := n) 𝒟)
+
+theorem plus_Z' : ∀ n : PNat, Derivable (.Plus n .Z n)
+  | .Z => Derivation.P_Zero .Z
+  | .S n =>
+      have ⟨𝒟⟩ := plus_Z' n
+      Derivation.P_Succ (n₁ := n) 𝒟
