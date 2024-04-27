@@ -158,18 +158,12 @@ end Derivation
 /--
 任意のペアノ自然数$\MV{n}$に対して、判断"$\TT{Z plus $\MV{n}$ is $\MV{n}$}$"は規則P_Zeroによって導出できる。
 -/
-theorem Z_plus : ∀ n : PNat, Derivation (.Plus .Z n n) :=
+def Z_plus : ∀ n : PNat, Derivation (.Plus .Z n n) :=
   .P_Zero
 
-theorem plus_Z : ∀ n : PNat, Derivation (.Plus n .Z n) :=
+def plus_Z : ∀ n : PNat, Derivation (.Plus n .Z n)
   -- ペアノ自然数`n`に関する（構造）帰納法で示す
-  fun n => PNat.recOn n
-    -- `n ≡ Z`のとき`Z plus Z is Z`を示す
-    (.P_Zero .Z)
-    -- `n`で成立（`n plus Z is n`）を仮定して`Sn plus Z is Sn`を示す
-    (fun n 𝒟 => .P_Succ (n₁ := n) 𝒟)
-
--- Lean 4の等式コンパイラに頼ってもっと簡単に書いていく：
-theorem plus_Z' : ∀ n : PNat, Derivation (.Plus n .Z n)
+  -- `n ≡ Z`のとき"Z plus Z is Z"を示す
   | .Z   => .P_Zero .Z
-  | .S n => .P_Succ (plus_Z' n) -- `plus_Z' n`は帰納法の仮定
+  -- `n`で成立（`plus_Z n` ≡ "n plus Z is n"）を仮定して"Sn plus Z is Sn"を示す
+  | .S n => .P_Succ (n₁ := n) (plus_Z n)
