@@ -211,3 +211,26 @@ theorem thm_2_2' {n₁ n₂ n₃ n₄ : PNat} : Derivable (.Plus n₁ n₂ n₃)
 theorem thm_2_2'' {n₁ n₂ n₃ n₄ : PNat} : Derivable (.Plus n₁ n₂ n₃) → Derivable (.Plus n₁ n₂ n₄) → n₃ = n₄
   | ⟨h₁⟩, ⟨h₂⟩ => thm_2_2 h₁ h₂
 -/
+
+theorem thm_2_3 : ∀ n₁ n₂ : PNat, ∃ n₃ : PNat, Derivable (.Plus n₁ n₂ n₃)
+  | .Z,   k => Exists.intro k (Z_plus k)
+  | .S n, k =>
+      have ⟨«n+k», ⟨h⟩⟩ := thm_2_3 n k
+      Exists.intro «n+k».S (Derivation.P_Succ h)
+
+theorem plus_S {n₁ n₂ n₃ : PNat} : Derivation (.Plus n₁ n₂ n₃) → Derivable (.Plus n₁ n₂.S n₃.S)
+  | .P_Zero n₂ => Derivation.P_Zero n₂.S
+  | .P_Succ 𝒟  =>
+      have ⟨h⟩ := plus_S 𝒟
+      Derivation.P_Succ h
+
+/--
+加算の交換則
+-/
+theorem thm_2_4 {n₂ n₃ : PNat} : ∀ n₁ : PNat, Derivation (.Plus n₁ n₂ n₃) → Derivable (.Plus n₂ n₁ n₃)
+  | .Z,   .P_Zero n => plus_Z n
+  | .S n, .P_Succ k =>
+      have ⟨h⟩ := thm_2_4 n k
+      plus_S h
+-- 等式コンパイラに頼らない書き方（PNat.recOnするやり方？）がわからない
+-- n₁に依存してDerivation ...の項が決まるのが難しさ？
