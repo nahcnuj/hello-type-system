@@ -181,8 +181,33 @@ theorem plus_Z : ∀ n : PNat, Derivable (.Plus n .Z n) :=
     -- `n`で成立（`plus_Z n` ≡ "n plus Z is n"）を仮定して"Sn plus Z is Sn"を示す
     (fun n ⟨𝒟⟩ => Derivation.P_Succ (n₁ := n) 𝒟)
 
+/-
 theorem plus_Z' : ∀ n : PNat, Derivable (.Plus n .Z n)
-  | .Z => Derivation.P_Zero .Z
+  | .Z   => Derivation.P_Zero .Z
   | .S n =>
       have ⟨𝒟⟩ := plus_Z' n
       Derivation.P_Succ (n₁ := n) 𝒟
+-/
+
+/--
+任意のペアノ自然数$\MV{n_1},\MV{n_2},\MV{n_3},\MV{n_4}$に対して、
+$\TT{$\MV{n_1}$ plus $\MV{n_2}$ is $\MV{n_3}$}$かつ$\TT{$\MV{n_1}$ plus $\MV{n_2}$ is $\MV{n_4}$}$ならば
+$\MV{n_3} \equiv \MV{n_4}$
+-/
+theorem thm_2_2 {n₁ n₂ n₃ n₄ : PNat} : Derivation (.Plus n₁ n₂ n₃) → Derivation (.Plus n₁ n₂ n₄) → n₃ = n₄
+  | .P_Zero _,  .P_Zero _  => rfl
+  | .P_Succ ha, .P_Succ hb => congrArg PNat.S (thm_2_2 ha hb)
+
+/-
+逆のn₃ = n₄だったら...を書こうと思うと引数もPropにしたくなったが、
+それは自明だし、引数がPropでなければならないというわけでもなかった。
+
+theorem thm_2_2' {n₁ n₂ n₃ n₄ : PNat} : Derivable (.Plus n₁ n₂ n₃) → Derivable (.Plus n₁ n₂ n₄) → n₃ = n₄ :=
+  fun ⟨h₁⟩ ⟨h₂⟩ => thm_2_2 h₁ h₂
+    -- match h₁, h₂ with
+    --   | .P_Zero _,  .P_Zero _  => rfl
+    --   | .P_Succ ha, .P_Succ hb => congrArg PNat.S (thm_2_2' ⟨ha⟩ ⟨hb⟩)
+
+theorem thm_2_2'' {n₁ n₂ n₃ n₄ : PNat} : Derivable (.Plus n₁ n₂ n₃) → Derivable (.Plus n₁ n₂ n₄) → n₃ = n₄
+  | ⟨h₁⟩, ⟨h₂⟩ => thm_2_2 h₁ h₂
+-/
