@@ -190,13 +190,13 @@ theorem plus_Z' : ∀ n : PNat, Derivable (.Plus n .Z n)
 -/
 
 /--
-任意のペアノ自然数$\MV{n_1},\MV{n_2},\MV{n_3},\MV{n_4}$に対して、
-$\TT{$\MV{n_1}$ plus $\MV{n_2}$ is $\MV{n_3}$}$かつ$\TT{$\MV{n_1}$ plus $\MV{n_2}$ is $\MV{n_4}$}$ならば
+ペアノ自然数$\MV{n_1},\MV{n_2}$に対する加算の判断が
+$\TT{$\MV{n_1}$ plus $\MV{n_2}$ is $\MV{n_3}$}$と$\TT{$\MV{n_1}$ plus $\MV{n_2}$ is $\MV{n_4}$}$の2通り得られたとすると、
 $\MV{n_3} \equiv \MV{n_4}$
 -/
-theorem thm_2_2 {n₁ n₂ n₃ n₄ : PNat} : Derivation (.Plus n₁ n₂ n₃) → Derivation (.Plus n₁ n₂ n₄) → n₃ = n₄
+theorem plus_uniq {n₁ n₂ n₃ n₄ : PNat} : Derivation (.Plus n₁ n₂ n₃) → Derivation (.Plus n₁ n₂ n₄) → n₃ = n₄
   | .P_Zero _,  .P_Zero _  => rfl
-  | .P_Succ ha, .P_Succ hb => congrArg PNat.S (thm_2_2 ha hb)
+  | .P_Succ ha, .P_Succ hb => congrArg PNat.S (plus_uniq ha hb)
 
 /-
 逆のn₃ = n₄だったら...を書こうと思うと引数もPropにしたくなったが、
@@ -212,10 +212,10 @@ theorem thm_2_2'' {n₁ n₂ n₃ n₄ : PNat} : Derivable (.Plus n₁ n₂ n₃
   | ⟨h₁⟩, ⟨h₂⟩ => thm_2_2 h₁ h₂
 -/
 
-theorem thm_2_3 : ∀ n₁ n₂ : PNat, ∃ n₃ : PNat, Derivable (.Plus n₁ n₂ n₃)
+theorem derive_plus : ∀ n₁ n₂ : PNat, ∃ n₃ : PNat, Derivable (.Plus n₁ n₂ n₃)
   | .Z,   k => Exists.intro k (Z_plus k)
   | .S n, k =>
-      have ⟨«n+k», ⟨h⟩⟩ := thm_2_3 n k
+      have ⟨«n+k», ⟨h⟩⟩ := derive_plus n k
       Exists.intro «n+k».S (Derivation.P_Succ h)
 
 theorem plus_S {n₁ n₂ n₃ : PNat} : Derivation (.Plus n₁ n₂ n₃) → Derivable (.Plus n₁ n₂.S n₃.S)
@@ -227,10 +227,10 @@ theorem plus_S {n₁ n₂ n₃ : PNat} : Derivation (.Plus n₁ n₂ n₃) → D
 /--
 加算の交換則
 -/
-theorem thm_2_4 {n₂ n₃ : PNat} : ∀ {n₁ : PNat}, Derivation (.Plus n₁ n₂ n₃) → Derivable (.Plus n₂ n₁ n₃)
+theorem plus_comm {n₂ n₃ : PNat} : ∀ {n₁ : PNat}, Derivation (.Plus n₁ n₂ n₃) → Derivable (.Plus n₂ n₁ n₃)
   | .Z,   .P_Zero n => plus_Z n
   | .S _, .P_Succ 𝒟 =>
-      have ⟨h⟩ := thm_2_4 𝒟
+      have ⟨h⟩ := plus_comm 𝒟
       plus_S h
 -- 等式コンパイラに頼らない書き方（PNat.recOnするやり方？）がわからない
 -- n₁に依存してDerivation ...の項が決まるのが難しさ？
@@ -245,3 +245,36 @@ theorem thm_2_5 {n₂ n₃ n₄ n₅ : PNat} : ∀ {n₁ : PNat}, Derivation (.P
   | .S _, .P_Succ h₁, .P_Succ (n₃ := n₅) h₂ =>
       have ⟨k, ⟨ha, ⟨hb⟩⟩⟩ := thm_2_5 h₁ h₂
       Exists.intro k ⟨ha, Derivation.P_Succ hb⟩
+
+/--
+ペアノ自然数$\MV{n_1},\MV{n_2}$に対する乗算の判断が
+$\TT{$\MV{n_1}$ times $\MV{n_2}$ is $\MV{n_3}$}$と$\TT{$\MV{n_1}$ times $\MV{n_2}$ is $\MV{n_4}$}$の2通り得られたとすると、
+$\MV{n_3} \equiv \MV{n_4}$
+-/
+theorem times_uniq {n₂ n₃ n₄ : PNat} : (n₁ : PNat) → Derivation (.Times n₁ n₂ n₃) → Derivation (.Times n₁ n₂ n₄) → n₃ = n₄
+  | .Z,    .T_Zero _,               .T_Zero _               => rfl
+  | .S n₁, .T_Succ (n₃ := k) ha hb, .T_Succ (n₃ := l) hc hd =>
+      -- hb : Derivation (Judgement.Plus n₂ k n₃)
+      -- hd : Derivation (Judgement.Plus n₂ l n₄)
+      have : k = l := times_uniq n₁ ha hc
+      plus_uniq (this ▸ hb) hd
+
+theorem derive_times : (n₁ n₂ : PNat) → ∃ n₃ : PNat, Derivable (.Times n₁ n₂ n₃)
+  | .Z,   k => Exists.intro .Z (Derivation.T_Zero k)
+  | .S n, k =>
+      have ⟨«n*k», ⟨h⟩⟩ := derive_times n k
+      match h with
+        | .T_Zero _   =>
+            have ⟨hp⟩ := plus_Z k
+            Exists.intro k (Derivation.T_Succ (.T_Zero k) hp)
+        | .T_Succ ht hp =>
+            have ⟨«k+n*k», ⟨h⟩⟩ := derive_plus k «n*k»
+            Exists.intro «k+n*k» (Derivation.T_Succ (Derivation.T_Succ ht hp) h)
+
+theorem Z_times {n : PNat} : Derivable (.Times .Z n .Z) := Derivation.T_Zero n
+
+theorem times_Z : (n : PNat) → Derivable (.Times n .Z .Z)
+  | .Z   => Derivation.T_Zero .Z
+  | .S n =>
+      have ⟨h⟩ := times_Z n
+      Derivation.T_Succ h (.P_Zero .Z)
