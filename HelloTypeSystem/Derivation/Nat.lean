@@ -227,10 +227,21 @@ theorem plus_S {n₁ n₂ n₃ : PNat} : Derivation (.Plus n₁ n₂ n₃) → D
 /--
 加算の交換則
 -/
-theorem thm_2_4 {n₂ n₃ : PNat} : ∀ n₁ : PNat, Derivation (.Plus n₁ n₂ n₃) → Derivable (.Plus n₂ n₁ n₃)
+theorem thm_2_4 {n₂ n₃ : PNat} : ∀ {n₁ : PNat}, Derivation (.Plus n₁ n₂ n₃) → Derivable (.Plus n₂ n₁ n₃)
   | .Z,   .P_Zero n => plus_Z n
-  | .S n, .P_Succ k =>
-      have ⟨h⟩ := thm_2_4 n k
+  | .S _, .P_Succ 𝒟 =>
+      have ⟨h⟩ := thm_2_4 𝒟
       plus_S h
 -- 等式コンパイラに頼らない書き方（PNat.recOnするやり方？）がわからない
 -- n₁に依存してDerivation ...の項が決まるのが難しさ？
+
+/--
+$n_1 + n_2 = n_4 \land n_4 + n_3 = n_5 \implies n_1 + n_2 + n_3 = n_5$。
+$n_6 := n_2 + n_3$とすれば$n_1 + n_6 = n_1 + n_2 + n_3 = n_5$、という気持ちを
+$\MV{n_1}$に関する帰納法で示す。
+-/
+theorem thm_2_5 {n₂ n₃ n₄ n₅ : PNat} : ∀ {n₁ : PNat}, Derivation (.Plus n₁ n₂ n₄) → Derivation (.Plus n₄ n₃ n₅) → ∃ n₆ : PNat, Derivable (.Plus n₂ n₃ n₆) ∧ Derivable (.Plus n₁ n₆ n₅)
+  | .Z,   .P_Zero n₂, h₂                    => Exists.intro n₅ ⟨h₂, Derivation.P_Zero n₅⟩
+  | .S _, .P_Succ h₁, .P_Succ (n₃ := n₅) h₂ =>
+      have ⟨k, ⟨ha, ⟨hb⟩⟩⟩ := thm_2_5 h₁ h₂
+      Exists.intro k ⟨ha, Derivation.P_Succ hb⟩
