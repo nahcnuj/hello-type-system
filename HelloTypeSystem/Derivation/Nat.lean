@@ -229,9 +229,9 @@ theorem plus_S {n₁ n₂ n₃ : PNat} : Derivation (.Plus n₁ n₂ n₃) → D
 -/
 theorem plus_comm {n₂ n₃ : PNat} : ∀ {n₁ : PNat}, Derivation (.Plus n₁ n₂ n₃) → Derivable (.Plus n₂ n₁ n₃)
   | .Z,   .P_Zero n => plus_Z n
-  | .S _, .P_Succ 𝒟 =>
-      have ⟨h⟩ := plus_comm 𝒟
-      plus_S h
+  | .S _, .P_Succ h =>
+      have ⟨𝒟⟩ := plus_comm h
+      plus_S 𝒟
 -- 等式コンパイラに頼らない書き方（PNat.recOnするやり方？）がわからない
 -- n₁に依存してDerivation ...の項が決まるのが難しさ？
 
@@ -251,12 +251,12 @@ theorem thm_2_5 {n₂ n₃ n₄ n₅ : PNat} : ∀ {n₁ : PNat}, Derivation (.P
 $\TT{$\MV{n_1}$ times $\MV{n_2}$ is $\MV{n_3}$}$と$\TT{$\MV{n_1}$ times $\MV{n_2}$ is $\MV{n_4}$}$の2通り得られたとすると、
 $\MV{n_3} \equiv \MV{n_4}$
 -/
-theorem times_uniq {n₂ n₃ n₄ : PNat} : (n₁ : PNat) → Derivation (.Times n₁ n₂ n₃) → Derivation (.Times n₁ n₂ n₄) → n₃ = n₄
-  | .Z,    .T_Zero _,               .T_Zero _               => rfl
-  | .S n₁, .T_Succ (n₃ := k) ha hb, .T_Succ (n₃ := l) hc hd =>
+theorem times_uniq {n₂ n₃ n₄ : PNat} : {n₁ : PNat} → Derivation (.Times n₁ n₂ n₃) → Derivation (.Times n₁ n₂ n₄) → n₃ = n₄
+  | .Z,   .T_Zero _,               .T_Zero _               => rfl
+  | .S _, .T_Succ (n₃ := k) ha hb, .T_Succ (n₃ := l) hc hd =>
       -- hb : Derivation (Judgement.Plus n₂ k n₃)
       -- hd : Derivation (Judgement.Plus n₂ l n₄)
-      have : k = l := times_uniq n₁ ha hc
+      have : k = l := times_uniq ha hc
       plus_uniq (this ▸ hb) hd
 
 theorem derive_times : (n₁ n₂ : PNat) → ∃ n₃ : PNat, Derivable (.Times n₁ n₂ n₃)
@@ -276,5 +276,5 @@ theorem Z_times {n : PNat} : Derivable (.Times .Z n .Z) := Derivation.T_Zero n
 theorem times_Z : (n : PNat) → Derivable (.Times n .Z .Z)
   | .Z   => Derivation.T_Zero .Z
   | .S n =>
-      have ⟨h⟩ := times_Z n
-      Derivation.T_Succ h (.P_Zero .Z)
+      have ⟨𝒟⟩ := times_Z n
+      Derivation.T_Succ 𝒟 (.P_Zero .Z)
