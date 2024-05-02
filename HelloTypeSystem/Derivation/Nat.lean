@@ -173,6 +173,7 @@ instance : Coe (Derivation judge) (Derivable judge) where
 theorem Z_plus : ∀ n : PNat, Derivable (.Plus .Z n n)
   | n => Derivation.P_Zero n
 
+/-
 theorem plus_Z : ∀ n : PNat, Derivable (.Plus n .Z n) :=
   -- ペアノ自然数`n`に関する（構造）帰納法で示す
   fun n => PNat.recOn n
@@ -180,14 +181,16 @@ theorem plus_Z : ∀ n : PNat, Derivable (.Plus n .Z n) :=
     (Derivation.P_Zero .Z)
     -- `n`で成立（`plus_Z n` ≡ "n plus Z is n"）を仮定して"Sn plus Z is Sn"を示す
     (fun n ⟨𝒟⟩ => Derivation.P_Succ (n₁ := n) 𝒟)
-
-/-
-theorem plus_Z' : ∀ n : PNat, Derivable (.Plus n .Z n)
-  | .Z   => Derivation.P_Zero .Z
-  | .S n =>
-      have ⟨𝒟⟩ := plus_Z' n
-      Derivation.P_Succ (n₁ := n) 𝒟
 -/
+
+theorem plus_Z : ∀ n : PNat, Derivable (.Plus n .Z n)
+  -- `n ≡ Z`のとき"Z plus Z is Z"を示す
+  | .Z =>
+      Derivation.P_Zero .Z
+  -- `n`で成立（`plus_Z n` ≡ "n plus Z is n"）を仮定して"Sn plus Z is Sn"を示す
+  | .S n =>
+      have ⟨𝒟⟩ := plus_Z n
+      Derivation.P_Succ (n₁ := n) 𝒟
 
 /--
 ペアノ自然数$\MV{n_1},\MV{n_2}$に対する加算の判断が
@@ -212,6 +215,9 @@ theorem thm_2_2'' {n₁ n₂ n₃ n₄ : PNat} : Derivable (.Plus n₁ n₂ n₃
   | ⟨h₁⟩, ⟨h₂⟩ => thm_2_2 h₁ h₂
 -/
 
+/--
+$$\forall \MV{n_1}, \MV{n_2}. \exists \MV{n_3}. \TT{$\MV{n_1}$ plus $\MV{n_2}$ is $\MV{n_3}$}$$
+-/
 theorem derive_plus : ∀ n₁ n₂ : PNat, ∃ n₃ : PNat, Derivable (.Plus n₁ n₂ n₃)
   | .Z,   k => Exists.intro k (Z_plus k)
   | .S n, k =>
@@ -236,15 +242,14 @@ theorem plus_comm {n₂ n₃ : PNat} : ∀ {n₁ : PNat}, Derivation (.Plus n₁
 -- n₁に依存してDerivation ...の項が決まるのが難しさ？
 
 /--
-$n_1 + n_2 = n_4 \land n_4 + n_3 = n_5 \implies n_1 + n_2 + n_3 = n_5$。
-$n_6 := n_2 + n_3$とすれば$n_1 + n_6 = n_1 + n_2 + n_3 = n_5$、という気持ちを
-$\MV{n_1}$に関する帰納法で示す。
+加算の結合則$(n_1 + n_2) + n_3 = n_1 + (n_2 + n_3)$
 -/
-theorem thm_2_5 {n₂ n₃ n₄ n₅ : PNat} : ∀ {n₁ : PNat}, Derivation (.Plus n₁ n₂ n₄) → Derivation (.Plus n₄ n₃ n₅) → ∃ n₆ : PNat, Derivable (.Plus n₂ n₃ n₆) ∧ Derivable (.Plus n₁ n₆ n₅)
-  | .Z,   .P_Zero n₂, h₂                    => Exists.intro n₅ ⟨h₂, Derivation.P_Zero n₅⟩
+theorem plus_assoc {n₂ n₃ «n₁+n₂» «n₁+n₂+n₃» : PNat} : ∀ {n₁ : PNat}, Derivation (.Plus n₁ n₂ «n₁+n₂») → Derivation (.Plus «n₁+n₂» n₃ «n₁+n₂+n₃») → ∃ «n₂+n₃» : PNat, Derivable (.Plus n₂ n₃ «n₂+n₃») ∧ Derivable (.Plus n₁ «n₂+n₃» «n₁+n₂+n₃»)
+  | .Z, .P_Zero n₂, h₂ =>
+      Exists.intro «n₁+n₂+n₃» ⟨h₂, Derivation.P_Zero «n₁+n₂+n₃»⟩
   | .S _, .P_Succ h₁, .P_Succ (n₃ := n₅) h₂ =>
-      have ⟨k, ⟨ha, ⟨hb⟩⟩⟩ := thm_2_5 h₁ h₂
-      Exists.intro k ⟨ha, Derivation.P_Succ hb⟩
+      have ⟨«n₂+n₃», ⟨ha, ⟨hb⟩⟩⟩ := plus_assoc h₁ h₂
+      Exists.intro «n₂+n₃» ⟨ha, Derivation.P_Succ hb⟩
 
 /--
 ペアノ自然数$\MV{n_1},\MV{n_2}$に対する乗算の判断が
@@ -259,6 +264,9 @@ theorem times_uniq {n₂ n₃ n₄ : PNat} : {n₁ : PNat} → Derivation (.Time
       have : k = l := times_uniq ha hc
       plus_uniq (this ▸ hb) hd
 
+/--
+$$\forall \MV{n_1}, \MV{n_2}. \exists \MV{n_3}. \TT{$\MV{n_1}$ times $\MV{n_2}$ is $\MV{n_3}$}$$
+-/
 theorem derive_times : (n₁ n₂ : PNat) → ∃ n₃ : PNat, Derivable (.Times n₁ n₂ n₃)
   | .Z,   k => Exists.intro .Z (Derivation.T_Zero k)
   | .S n, k =>
