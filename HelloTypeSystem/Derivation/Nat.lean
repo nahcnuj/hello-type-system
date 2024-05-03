@@ -177,7 +177,7 @@ theorem plus_Z : ∀ n : PNat, Derivable (.Plus n .Z n) :=
     (fun n ⟨𝒟⟩ => Derivation.P_Succ (n₁ := n) 𝒟)
 -/
 
-def plus_Z : (n : PNat) → Derivation (.Plus n .Z n)
+def Derivation.plus_Z : (n : PNat) → Derivation (.Plus n .Z n)
   -- `n ≡ Z`のとき"Z plus Z is Z"を示す
   | .Z => Derivation.P_Zero .Z
   -- `n`で成立（`plus_Z n` ≡ "n plus Z is n"）を仮定して"Sn plus Z is Sn"を示す
@@ -270,7 +270,7 @@ theorem derive_times : (n₁ n₂ : PNat) → ∃ n₃ : PNat, Derivable (.Times
       have ⟨«n*k», ⟨h⟩⟩ := derive_times n k
       match h with
         | .T_Zero _ =>
-            Exists.intro k (Derivation.T_Succ (.T_Zero k) (plus_Z k))
+            Exists.intro k (Derivation.T_Succ (.T_Zero k) (Derivation.plus_Z k))
         | .T_Succ ht hp =>
             have ⟨«k+n*k», ⟨h⟩⟩ := derive_plus k «n*k»
             Exists.intro «k+n*k» (Derivation.T_Succ (Derivation.T_Succ ht hp) h)
@@ -289,7 +289,7 @@ $(n_1 + 1) \times n_2 = n_1 \times n_2 + n_2$
 -/
 theorem S_times : {n₁ : PNat} → Derivation (.Times n₁ n₂ «n₁*n₂») → ∃ «Sn₁*n₂», Derivable (.Times n₁.S n₂ «Sn₁*n₂») ∧ Derivable (.Plus «n₁*n₂» n₂ «Sn₁*n₂»)
   | .Z, .T_Zero n₂ =>
-      have 𝒟p := plus_Z n₂
+      have 𝒟p := Derivation.plus_Z n₂
       have 𝒟' := Derivation.T_Succ (.T_Zero n₂) 𝒟p
       Exists.intro n₂ ⟨𝒟', 𝒟p.plus_comm⟩
   | .S _, .T_Succ 𝒟t' 𝒟p' =>
