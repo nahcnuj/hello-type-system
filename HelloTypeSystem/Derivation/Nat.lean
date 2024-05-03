@@ -167,12 +167,6 @@ inductive Derivable (judge : Judgement) : Prop where
 instance : Coe (Derivation judge) (Derivable judge) where
   coe h := ⟨h⟩
 
-/--
-任意のペアノ自然数$\MV{n}$に対して、判断"$\TT{Z plus $\MV{n}$ is $\MV{n}$}$"は規則P_Zeroによって導出できる。
--/
-theorem Z_plus : ∀ n : PNat, Derivable (.Plus .Z n n)
-  | n => Derivation.P_Zero n
-
 /-
 theorem plus_Z : ∀ n : PNat, Derivable (.Plus n .Z n) :=
   -- ペアノ自然数`n`に関する（構造）帰納法で示す
@@ -183,14 +177,11 @@ theorem plus_Z : ∀ n : PNat, Derivable (.Plus n .Z n) :=
     (fun n ⟨𝒟⟩ => Derivation.P_Succ (n₁ := n) 𝒟)
 -/
 
-theorem plus_Z : ∀ n : PNat, Derivable (.Plus n .Z n)
+def plus_Z : (n : PNat) → Derivation (.Plus n .Z n)
   -- `n ≡ Z`のとき"Z plus Z is Z"を示す
-  | .Z =>
-      Derivation.P_Zero .Z
+  | .Z => Derivation.P_Zero .Z
   -- `n`で成立（`plus_Z n` ≡ "n plus Z is n"）を仮定して"Sn plus Z is Sn"を示す
-  | .S n =>
-      have ⟨𝒟⟩ := plus_Z n
-      Derivation.P_Succ (n₁ := n) 𝒟
+  | .S n => Derivation.P_Succ (n₁ := n) (plus_Z n)
 
 /--
 ペアノ自然数$\MV{n_1},\MV{n_2}$に対する加算の判断が
@@ -219,25 +210,21 @@ theorem thm_2_2'' {n₁ n₂ n₃ n₄ : PNat} : Derivable (.Plus n₁ n₂ n₃
 $$\forall \MV{n_1}, \MV{n_2}. \exists \MV{n_3}. \TT{$\MV{n_1}$ plus $\MV{n_2}$ is $\MV{n_3}$}$$
 -/
 theorem derive_plus : ∀ n₁ n₂ : PNat, ∃ n₃ : PNat, Derivable (.Plus n₁ n₂ n₃)
-  | .Z,   k => Exists.intro k (Z_plus k)
+  | .Z,   k => Exists.intro k (Derivation.Z_plus k)
   | .S n, k =>
       have ⟨«n+k», ⟨h⟩⟩ := derive_plus n k
       Exists.intro «n+k».S (Derivation.P_Succ h)
 
-theorem plus_S {n₁ n₂ n₃ : PNat} : Derivation (.Plus n₁ n₂ n₃) → Derivable (.Plus n₁ n₂.S n₃.S)
+def Derivation.plus_S {n₁ n₂ n₃ : PNat} : Derivation (.Plus n₁ n₂ n₃) → Derivation (.Plus n₁ n₂.S n₃.S)
   | .P_Zero n₂ => Derivation.P_Zero n₂.S
-  | .P_Succ 𝒟  =>
-      have ⟨h⟩ := plus_S 𝒟
-      Derivation.P_Succ h
+  | .P_Succ 𝒟  => Derivation.P_Succ 𝒟.plus_S
 
 /--
 加算の交換則
 -/
-theorem plus_comm {n₂ n₃ : PNat} : ∀ {n₁ : PNat}, Derivation (.Plus n₁ n₂ n₃) → Derivable (.Plus n₂ n₁ n₃)
+def Derivation.plus_comm {n₂ n₃ : PNat} : ∀ {n₁ : PNat}, Derivation (.Plus n₁ n₂ n₃) → Derivation (.Plus n₂ n₁ n₃)
   | .Z,   .P_Zero n => plus_Z n
-  | .S _, .P_Succ h =>
-      have ⟨𝒟⟩ := plus_comm h
-      plus_S 𝒟
+  | .S _, .P_Succ 𝒟 => plus_S 𝒟.plus_comm
 -- 等式コンパイラに頼らない書き方（PNat.recOnするやり方？）がわからない
 -- n₁に依存してDerivation ...の項が決まるのが難しさ？
 
@@ -282,20 +269,17 @@ theorem derive_times : (n₁ n₂ : PNat) → ∃ n₃ : PNat, Derivable (.Times
   | .S n, k =>
       have ⟨«n*k», ⟨h⟩⟩ := derive_times n k
       match h with
-        | .T_Zero _   =>
-            have ⟨hp⟩ := plus_Z k
-            Exists.intro k (Derivation.T_Succ (.T_Zero k) hp)
+        | .T_Zero _ =>
+            Exists.intro k (Derivation.T_Succ (.T_Zero k) (plus_Z k))
         | .T_Succ ht hp =>
             have ⟨«k+n*k», ⟨h⟩⟩ := derive_plus k «n*k»
             Exists.intro «k+n*k» (Derivation.T_Succ (Derivation.T_Succ ht hp) h)
 
-theorem Z_times (n : PNat) : Derivable (.Times .Z n .Z) := Derivation.T_Zero n
+def Derivation.Z_times (n : PNat) : Derivation (.Times .Z n .Z) := Derivation.T_Zero n
 
-theorem times_Z : (n : PNat) → Derivable (.Times n .Z .Z)
+def Derivation.times_Z : (n : PNat) → Derivation (.Times n .Z .Z)
   | .Z   => Derivation.T_Zero .Z
-  | .S n =>
-      have ⟨𝒟⟩ := times_Z n
-      Derivation.T_Succ 𝒟 (.P_Zero .Z)
+  | .S n => Derivation.T_Succ (times_Z n) (.P_Zero .Z)
 
 /--
 $\TT{$\MV{n_1}$ times $\MV{n_2}$ is $\MV{n_3}$}$の導出から、
@@ -305,13 +289,13 @@ $(n_1 + 1) \times n_2 = n_1 \times n_2 + n_2$
 -/
 theorem S_times : {n₁ : PNat} → Derivation (.Times n₁ n₂ «n₁*n₂») → ∃ «Sn₁*n₂», Derivable (.Times n₁.S n₂ «Sn₁*n₂») ∧ Derivable (.Plus «n₁*n₂» n₂ «Sn₁*n₂»)
   | .Z, .T_Zero n₂ =>
-      have ⟨𝒟p⟩ := plus_Z n₂
+      have 𝒟p := plus_Z n₂
       have 𝒟' := Derivation.T_Succ (.T_Zero n₂) 𝒟p
-      Exists.intro n₂ ⟨𝒟', plus_comm 𝒟p⟩
+      Exists.intro n₂ ⟨𝒟', 𝒟p.plus_comm⟩
   | .S _, .T_Succ 𝒟t' 𝒟p' =>
       have ⟨«Sn₁*n₂», ⟨𝒟p⟩⟩ := derive_plus n₂ «n₁*n₂»
       have 𝒟' := Derivation.T_Succ (.T_Succ 𝒟t' 𝒟p') 𝒟p
-      Exists.intro «Sn₁*n₂» ⟨𝒟', plus_comm 𝒟p⟩
+      Exists.intro «Sn₁*n₂» ⟨𝒟', 𝒟p.plus_comm⟩
 
 /--
 $\TT{$\MV{n_1}$ times $\MV{n_2}$ is $\MV{n_3}$}$の導出から、
@@ -327,26 +311,22 @@ theorem times_S : {n₁ : PNat} → Derivation (.Times n₁ n₂ «n₁*n₂») 
       have ⟨«n₁'*Sn₂», ⟨𝒟⟩, ⟨dp⟩⟩ := times_S (n₁ := n₁') ht
       -- `(n₁'*n₂ + n₁') + n₂`
       have ⟨«n₁'*Sn₂+n₂», ⟨𝒟p'⟩⟩ := derive_plus «n₁'*Sn₂» n₂
-      -- `n₁'*n₂ + (n₁' + n₂)`
+      -- = `n₁'*n₂ + (n₁' + n₂)`
       have ⟨_, ⟨d₁⟩, ⟨d₂⟩⟩ := plus_assoc_right dp 𝒟p'
-      -- `n₁'*n₂ + (n₂ + n₁')`
-      have ⟨d₁'⟩ := plus_comm d₁
-      -- `(n₁'*n₂ + n₂) + n₁'`
-      have ⟨_, ⟨d₁⟩, ⟨d₂⟩⟩ := plus_assoc_left d₂ d₁'
-      -- `(n₁'*n₂ + n₂) + n₁`
-      have ⟨d⟩ := plus_S d₂
+      -- = `n₁'*n₂ + (n₂ + n₁')` = `(n₁'*n₂ + n₂) + n₁'`
+      have ⟨_, ⟨d₃⟩, ⟨d₄⟩⟩ := plus_assoc_left d₂ d₁.plus_comm
+      -- = `(n₁'*n₂ + n₂) + Sn₁'`
+      have d := d₄.plus_S
 
-      have ⟨𝒟p''⟩ := plus_comm 𝒟p'
-      have ⟨d₁'⟩ := plus_comm d₁
-      have heq := plus_uniq hp d₁'
-      Exists.intro (PNat.S «n₁'*Sn₂+n₂») ⟨Derivation.T_Succ 𝒟 (.P_Succ 𝒟p''), heq ▸ d⟩
+      have heq := plus_uniq hp d₃.plus_comm
+      Exists.intro (PNat.S «n₁'*Sn₂+n₂») ⟨Derivation.T_Succ 𝒟 (.P_Succ 𝒟p'.plus_comm), heq ▸ d⟩
 
 /--
 乗法の交換則
 -/
 theorem times_comm : {n₁ : PNat} → Derivation (.Times n₁ n₂ «n₁*n₂») → Derivable (.Times n₂ n₁ «n₁*n₂»)
   | .Z, .T_Zero _ =>
-      times_Z n₂
+      Derivation.times_Z n₂
   | .S _, .T_Succ 𝒟t 𝒟p => -- 𝒟t : `n₁' times n₂ is n₁'*n₂`, 𝒟p : `n₂ plus n₁'*n₂ is n₁*n₂`
       -- `n₂ times n₁' is n₁'*n₂`
       have ⟨𝒟t⟩ := times_comm 𝒟t
@@ -354,6 +334,26 @@ theorem times_comm : {n₁ : PNat} → Derivation (.Times n₁ n₂ «n₁*n₂�
       have ⟨_, ⟨d₁⟩, ⟨d₂⟩⟩ := times_S 𝒟t
       -- d₁ : `n₂ times n₁ is n₁*n₂`
       -- d₂ : `n₁'*n₂ plus n₂ is n₁*n₂`
-      have ⟨d₂'⟩ := plus_comm d₂
-      have heq := plus_uniq 𝒟p d₂'
+      have heq := plus_uniq 𝒟p d₂.plus_comm
       heq ▸ d₁
+/-
+これはDerivableをDerivationに変えるとtimes_Sがこうなって死ぬ：
+```
+tactic 'cases' failed, nested error:
+tactic 'induction' failed, recursor 'Exists.casesOn' can only eliminate into Prop
+
+n₂ «n₁*n₂» n✝ n₃✝ : PNat
+motive : (∃ «n₁*Sn₂», Derivable (Judgement.Times n₂ (PNat.S n✝) «n₁*Sn₂») ∧ Derivable (Judgement.Plus n₃✝ n₂ «n₁*Sn₂»)) →
+  Sort ?u.23945
+h_1 : (w : PNat) →
+  (d₁ : Derivation (Judgement.Times n₂ (PNat.S n✝) w)) → (d₂ : Derivation (Judgement.Plus n₃✝ n₂ w)) → motive ⋯
+x✝ : ∃ «n₁*Sn₂», Derivable (Judgement.Times n₂ (PNat.S n✝) «n₁*Sn₂») ∧ Derivable (Judgement.Plus n₃✝ n₂ «n₁*Sn₂»)
+⊢ motive x✝
+ after processing
+  _
+the dependent pattern matcher can solve the following kinds of equations
+- <var> = <term> and <term> = <var>
+- <term> = <term> where the terms are definitionally equal
+- <constructor> = <constructor>, examples: List.cons x xs = List.cons y ys, and List.cons x xs = List.nil
+```
+-/
