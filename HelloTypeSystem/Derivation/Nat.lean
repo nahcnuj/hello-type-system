@@ -242,14 +242,24 @@ theorem plus_comm {n₂ n₃ : PNat} : ∀ {n₁ : PNat}, Derivation (.Plus n₁
 -- n₁に依存してDerivation ...の項が決まるのが難しさ？
 
 /--
-加算の結合則$(n_1 + n_2) + n_3 = n_1 + (n_2 + n_3)$
+加算の結合則$(n_1 + n_2) + n_3 \to n_1 + (n_2 + n_3)$
 -/
-theorem plus_assoc {n₂ n₃ «n₁+n₂» «n₁+n₂+n₃» : PNat} : ∀ {n₁ : PNat}, Derivation (.Plus n₁ n₂ «n₁+n₂») → Derivation (.Plus «n₁+n₂» n₃ «n₁+n₂+n₃») → ∃ «n₂+n₃» : PNat, Derivable (.Plus n₂ n₃ «n₂+n₃») ∧ Derivable (.Plus n₁ «n₂+n₃» «n₁+n₂+n₃»)
+theorem plus_assoc_right {n₂ n₃ «n₁+n₂» «n₁+n₂+n₃» : PNat} : ∀ {n₁ : PNat}, Derivation (.Plus n₁ n₂ «n₁+n₂») → Derivation (.Plus «n₁+n₂» n₃ «n₁+n₂+n₃») → ∃ «n₂+n₃» : PNat, Derivable (.Plus n₂ n₃ «n₂+n₃») ∧ Derivable (.Plus n₁ «n₂+n₃» «n₁+n₂+n₃»)
   | .Z, .P_Zero n₂, h₂ =>
       Exists.intro «n₁+n₂+n₃» ⟨h₂, Derivation.P_Zero «n₁+n₂+n₃»⟩
   | .S _, .P_Succ h₁, .P_Succ (n₃ := n₅) h₂ =>
-      have ⟨«n₂+n₃», ⟨ha, ⟨hb⟩⟩⟩ := plus_assoc h₁ h₂
+      have ⟨«n₂+n₃», ⟨ha, ⟨hb⟩⟩⟩ := plus_assoc_right h₁ h₂
       Exists.intro «n₂+n₃» ⟨ha, Derivation.P_Succ hb⟩
+
+/--
+加算の結合則$ n_1 + (n_2 + n_3) \to (n_1 + n_2) + n_3$
+-/
+theorem plus_assoc_left : {n₁ : PNat} → Derivation (.Plus n₁ «n₂+n₃» «n₁+n₂+n₃») → Derivation (.Plus n₂ n₃ «n₂+n₃») → ∃ «n₁+n₂» : PNat, Derivable (.Plus n₁ n₂ «n₁+n₂») ∧ Derivable (.Plus «n₁+n₂» n₃ «n₁+n₂+n₃»)
+  | .Z, .P_Zero «n₂+n₃», h₂ =>
+      Exists.intro n₂ ⟨Derivation.P_Zero n₂, h₂⟩
+  | .S _, .P_Succ h₁, h₂ =>
+      have ⟨«n₁'+n₂», ⟨ha⟩, ⟨hb⟩⟩ := plus_assoc_left h₁ h₂
+      Exists.intro «n₁'+n₂».S ⟨Derivation.P_Succ ha, Derivation.P_Succ hb⟩
 
 /--
 ペアノ自然数$\MV{n_1},\MV{n_2}$に対する乗算の判断が
@@ -279,10 +289,71 @@ theorem derive_times : (n₁ n₂ : PNat) → ∃ n₃ : PNat, Derivable (.Times
             have ⟨«k+n*k», ⟨h⟩⟩ := derive_plus k «n*k»
             Exists.intro «k+n*k» (Derivation.T_Succ (Derivation.T_Succ ht hp) h)
 
-theorem Z_times {n : PNat} : Derivable (.Times .Z n .Z) := Derivation.T_Zero n
+theorem Z_times (n : PNat) : Derivable (.Times .Z n .Z) := Derivation.T_Zero n
 
 theorem times_Z : (n : PNat) → Derivable (.Times n .Z .Z)
   | .Z   => Derivation.T_Zero .Z
   | .S n =>
       have ⟨𝒟⟩ := times_Z n
       Derivation.T_Succ 𝒟 (.P_Zero .Z)
+
+/--
+$\TT{$\MV{n_1}$ times $\MV{n_2}$ is $\MV{n_3}$}$の導出から、
+$\TT{S$\MV{n_1}$ times $\MV{n_2}$ is $\MV{n_4}$}$と
+$\TT{$\MV{n_3}$ plus $\MV{n_2}$ is $\MV{n_4}$}$の導出を得る。
+$(n_1 + 1) \times n_2 = n_1 \times n_2 + n_2$
+-/
+theorem S_times : {n₁ : PNat} → Derivation (.Times n₁ n₂ «n₁*n₂») → ∃ «Sn₁*n₂», Derivable (.Times n₁.S n₂ «Sn₁*n₂») ∧ Derivable (.Plus «n₁*n₂» n₂ «Sn₁*n₂»)
+  | .Z, .T_Zero n₂ =>
+      have ⟨𝒟p⟩ := plus_Z n₂
+      have 𝒟' := Derivation.T_Succ (.T_Zero n₂) 𝒟p
+      Exists.intro n₂ ⟨𝒟', plus_comm 𝒟p⟩
+  | .S _, .T_Succ 𝒟t' 𝒟p' =>
+      have ⟨«Sn₁*n₂», ⟨𝒟p⟩⟩ := derive_plus n₂ «n₁*n₂»
+      have 𝒟' := Derivation.T_Succ (.T_Succ 𝒟t' 𝒟p') 𝒟p
+      Exists.intro «Sn₁*n₂» ⟨𝒟', plus_comm 𝒟p⟩
+
+/--
+$\TT{$\MV{n_1}$ times $\MV{n_2}$ is $\MV{n_3}$}$の導出から、
+$\TT{$\MV{n_1}$ times S$\MV{n_2}$ is $\MV{n_4}$}$と
+$\TT{$\MV{n_3}$ plus $\MV{n_1}$ is $\MV{n_4}$}$の導出を得る。
+$n_1 \times (n_2 + 1) = n_1 \times n_2 + n_1$
+-/
+theorem times_S : {n₁ : PNat} → Derivation (.Times n₁ n₂ «n₁*n₂») → ∃ «n₁*Sn₂» : PNat, Derivable (.Times n₁ n₂.S «n₁*Sn₂») ∧ Derivable (.Plus «n₁*n₂» n₁ «n₁*Sn₂»)
+  | .Z, .T_Zero n =>
+      Exists.intro .Z ⟨Derivation.T_Zero n.S, Derivation.P_Zero .Z⟩
+  | .S n₁', .T_Succ ht hp =>
+      -- `n₁'*n₂ + n₁'`
+      have ⟨«n₁'*Sn₂», ⟨𝒟⟩, ⟨dp⟩⟩ := times_S (n₁ := n₁') ht
+      -- `(n₁'*n₂ + n₁') + n₂`
+      have ⟨«n₁'*Sn₂+n₂», ⟨𝒟p'⟩⟩ := derive_plus «n₁'*Sn₂» n₂
+      -- `n₁'*n₂ + (n₁' + n₂)`
+      have ⟨_, ⟨d₁⟩, ⟨d₂⟩⟩ := plus_assoc_right dp 𝒟p'
+      -- `n₁'*n₂ + (n₂ + n₁')`
+      have ⟨d₁'⟩ := plus_comm d₁
+      -- `(n₁'*n₂ + n₂) + n₁'`
+      have ⟨_, ⟨d₁⟩, ⟨d₂⟩⟩ := plus_assoc_left d₂ d₁'
+      -- `(n₁'*n₂ + n₂) + n₁`
+      have ⟨d⟩ := plus_S d₂
+
+      have ⟨𝒟p''⟩ := plus_comm 𝒟p'
+      have ⟨d₁'⟩ := plus_comm d₁
+      have heq := plus_uniq hp d₁'
+      Exists.intro (PNat.S «n₁'*Sn₂+n₂») ⟨Derivation.T_Succ 𝒟 (.P_Succ 𝒟p''), heq ▸ d⟩
+
+/--
+乗法の交換則
+-/
+theorem times_comm : {n₁ : PNat} → Derivation (.Times n₁ n₂ «n₁*n₂») → Derivable (.Times n₂ n₁ «n₁*n₂»)
+  | .Z, .T_Zero _ =>
+      times_Z n₂
+  | .S _, .T_Succ 𝒟t 𝒟p => -- 𝒟t : `n₁' times n₂ is n₁'*n₂`, 𝒟p : `n₂ plus n₁'*n₂ is n₁*n₂`
+      -- `n₂ times n₁' is n₁'*n₂`
+      have ⟨𝒟t⟩ := times_comm 𝒟t
+      -- `n₂ times n₁ is n₁*n₂`
+      have ⟨_, ⟨d₁⟩, ⟨d₂⟩⟩ := times_S 𝒟t
+      -- d₁ : `n₂ times n₁ is n₁*n₂`
+      -- d₂ : `n₁'*n₂ plus n₂ is n₁*n₂`
+      have ⟨d₂'⟩ := plus_comm d₂
+      have heq := plus_uniq 𝒟p d₂'
+      heq ▸ d₁
