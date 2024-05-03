@@ -247,7 +247,7 @@ theorem plus_comm {n₂ n₃ : PNat} : ∀ {n₁ : PNat}, Derivation (.Plus n₁
 theorem plus_assoc_right {n₂ n₃ «n₁+n₂» «n₁+n₂+n₃» : PNat} : ∀ {n₁ : PNat}, Derivation (.Plus n₁ n₂ «n₁+n₂») → Derivation (.Plus «n₁+n₂» n₃ «n₁+n₂+n₃») → ∃ «n₂+n₃» : PNat, Derivable (.Plus n₂ n₃ «n₂+n₃») ∧ Derivable (.Plus n₁ «n₂+n₃» «n₁+n₂+n₃»)
   | .Z, .P_Zero n₂, h₂ =>
       Exists.intro «n₁+n₂+n₃» ⟨h₂, Derivation.P_Zero «n₁+n₂+n₃»⟩
-  | .S _, .P_Succ h₁, .P_Succ (n₃ := n₅) h₂ =>
+  | .S _, .P_Succ h₁, .P_Succ h₂ =>
       have ⟨«n₂+n₃», ⟨ha, ⟨hb⟩⟩⟩ := plus_assoc_right h₁ h₂
       Exists.intro «n₂+n₃» ⟨ha, Derivation.P_Succ hb⟩
 
