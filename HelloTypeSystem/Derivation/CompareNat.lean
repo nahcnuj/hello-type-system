@@ -96,7 +96,8 @@ theorem Z_lt_S' : (n : PNat) → Derivable (.LT .Z n.S)
 -/
 
 /--
-CompareNat1における$\TT{$\MV{n_1}$ is less than $\MV{n_2}$}$の導出に関する帰納法
+CompareNat1における$\TT{$\MV{n_1}$ is less than $\MV{n_2}$}$の導出に関する帰納法で、
+ペアノ自然数に関する2項述語$P$について$\forall\MV{n_1},\MV{n_2}. \bigl[\TT{$\MV{n_1}$ is less than $\MV{n_2}$} \implies P(\MV{n_1},\MV{n_2})\bigr]$を示す。
 
 `motive n₁ n₂`が$P(\MV{n_1},\MV{n_2})$に対応する。
 -/
@@ -117,7 +118,7 @@ def Derivation.induction
 -/
 
 /--
-$\forall \MV{n_1},\MV{n_2}. \bigl[\TT{S$\MV{n_1}$ is less than $\MV{n_2}$} \implies \exists \MV{n_3}. \MV{n_2} \equiv \TT{S$\MV{n_3}$}\bigr]$
+$\forall\MV{n_1},\MV{n_2}. \bigl[\TT{S$\MV{n_1}$ is less than $\MV{n_2}$} \implies \exists\MV{n_3}. \MV{n_2} \equiv \TT{S$\MV{n_3}$}\bigr]$
 -/
 theorem exists_succ_of_succ_lt {n₁ n₂ : PNat} : Derivation (.LT n₁.S n₂) → ∃ n₃ : PNat, n₂ = n₃.S :=
   Derivation.induction (motive := fun _ n₂ => ∃ n₃ : PNat, n₂ = n₃.S)
