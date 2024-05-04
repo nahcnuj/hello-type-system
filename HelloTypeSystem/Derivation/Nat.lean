@@ -167,6 +167,7 @@ inductive Derivable (judge : Judgement) : Prop where
 instance : Coe (Derivation judge) (Derivable judge) where
   coe h := ⟨h⟩
 
+namespace Derivation
 /-
 theorem plus_Z : ∀ n : PNat, Derivable (.Plus n .Z n) :=
   -- ペアノ自然数`n`に関する（構造）帰納法で示す
@@ -177,7 +178,7 @@ theorem plus_Z : ∀ n : PNat, Derivable (.Plus n .Z n) :=
     (fun n ⟨𝒟⟩ => Derivation.P_Succ (n₁ := n) 𝒟)
 -/
 
-def Derivation.plus_Z : (n : PNat) → Derivation (.Plus n .Z n)
+def plus_Z : (n : PNat) → Derivation (.Plus n .Z n)
   -- `n ≡ Z`のとき"Z plus Z is Z"を示す
   | .Z => Derivation.P_Zero .Z
   -- `n`で成立（`plus_Z n` ≡ "n plus Z is n"）を仮定して"Sn plus Z is Sn"を示す
@@ -215,14 +216,14 @@ theorem derive_plus : ∀ n₁ n₂ : PNat, ∃ n₃ : PNat, Derivable (.Plus n�
       have ⟨«n+k», ⟨h⟩⟩ := derive_plus n k
       Exists.intro «n+k».S (Derivation.P_Succ h)
 
-def Derivation.plus_S {n₁ n₂ n₃ : PNat} : Derivation (.Plus n₁ n₂ n₃) → Derivation (.Plus n₁ n₂.S n₃.S)
+def plus_S {n₁ n₂ n₃ : PNat} : Derivation (.Plus n₁ n₂ n₃) → Derivation (.Plus n₁ n₂.S n₃.S)
   | .P_Zero n₂ => Derivation.P_Zero n₂.S
   | .P_Succ 𝒟  => Derivation.P_Succ 𝒟.plus_S
 
 /--
 加算の交換則
 -/
-def Derivation.plus_comm {n₂ n₃ : PNat} : ∀ {n₁ : PNat}, Derivation (.Plus n₁ n₂ n₃) → Derivation (.Plus n₂ n₁ n₃)
+def plus_comm {n₂ n₃ : PNat} : ∀ {n₁ : PNat}, Derivation (.Plus n₁ n₂ n₃) → Derivation (.Plus n₂ n₁ n₃)
   | .Z,   .P_Zero n => plus_Z n
   | .S _, .P_Succ 𝒟 => plus_S 𝒟.plus_comm
 -- 等式コンパイラに頼らない書き方（PNat.recOnするやり方？）がわからない
@@ -275,9 +276,9 @@ theorem derive_times : (n₁ n₂ : PNat) → ∃ n₃ : PNat, Derivable (.Times
             have ⟨«k+n*k», ⟨h⟩⟩ := derive_plus k «n*k»
             Exists.intro «k+n*k» (Derivation.T_Succ (Derivation.T_Succ ht hp) h)
 
-def Derivation.Z_times (n : PNat) : Derivation (.Times .Z n .Z) := Derivation.T_Zero n
+def Z_times (n : PNat) : Derivation (.Times .Z n .Z) := Derivation.T_Zero n
 
-def Derivation.times_Z : (n : PNat) → Derivation (.Times n .Z .Z)
+def times_Z : (n : PNat) → Derivation (.Times n .Z .Z)
   | .Z   => Derivation.T_Zero .Z
   | .S n => Derivation.T_Succ (times_Z n) (.P_Zero .Z)
 
