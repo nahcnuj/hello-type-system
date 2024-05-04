@@ -11,6 +11,8 @@ inductive Derivation : Judgement → Type where
   | LT_Trans {n₁ n₂ n₃ : PNat}
     : Derivation (.LT n₁ n₂) → Derivation (.LT n₂ n₃) → Derivation (.LT n₁ n₃)
 
+private abbrev Derivable := (@HelloTypeSystem.Derivable · Derivation)
+
 /--
 判断"Z is less than SSZ"のCompareNat1による導出
 -/

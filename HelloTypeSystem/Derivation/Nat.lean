@@ -27,6 +27,8 @@ inductive Derivation : Judgement → Type where
   | T_Succ {n₁ n₂ n₃ n₄ : PNat}
     : Derivation (.Times n₁ n₂ n₃) → Derivation (.Plus n₂ n₃ n₄) → Derivation (.Times n₁.S n₂ n₄)
 
+private abbrev Derivable := (@HelloTypeSystem.Derivable · Derivation)
+
 /-!
 "Z plus SSSSSZ is SSSSSZ"は規則P_Zeroで$\MV{n} = \TT{SSSSSZ}$とすれば導ける。
 -/
@@ -154,18 +156,6 @@ theorem steps_times {n₁ n₂ n₃ : PNat} : (h : Derivation (.Times n₁ n₂ 
         _ = (n₁ + 1) * (n₂ + 2) + 1      := congrArg (· + 1) (Nat.succ_mul ..).symm
 
 end Derivation
-
-/--
-与えられた判断が導出できるという命題
--/
-inductive Derivable (judge : Judgement) : Prop where
-  | intro (h : Derivation judge)
-
-/--
-導出の項が構築できたときは明らかに導出できるので型強制する
--/
-instance : Coe (Derivation judge) (Derivable judge) where
-  coe h := ⟨h⟩
 
 namespace Derivation
 /-

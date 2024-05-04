@@ -83,3 +83,15 @@ notation:50 e:51 " ⇓ " n:51  => Judgement.Eval e n
 notation:50 e:51 " ⟶ " e':51 => Judgement.Reduce e e'
 notation:50 e:51 " ⟶* " e':51 => Judgement.MReduce e e'
 notation:50 e:51 " ⟶' " e':51 => Judgement.DReduce e e'
+
+/--
+与えられた判断が導出できるという命題
+-/
+inductive Derivable (judge : Judgement) {Derivation : Judgement → Type u} : Prop where
+  | intro (h : Derivation judge)
+
+/--
+導出の項が構築できたときは明らかに導出できるので型強制する
+-/
+instance {Derivation : Judgement → Type u} : Coe (Derivation judge) (@Derivable judge Derivation) where
+  coe h := Derivable.intro h
