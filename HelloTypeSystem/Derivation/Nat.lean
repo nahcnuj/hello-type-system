@@ -27,7 +27,7 @@ inductive Derivation : Judgement → Type where
   | T_Succ {n₁ n₂ n₃ n₄ : PNat}
     : Derivation (.Times n₁ n₂ n₃) → Derivation (.Plus n₂ n₃ n₄) → Derivation (.Times n₁.S n₂ n₄)
 
-private abbrev Derivable := (@HelloTypeSystem.Derivable · Derivation)
+private abbrev Derivable := @HelloTypeSystem.Derivable Derivation
 
 /-!
 "Z plus SSSSSZ is SSSSSZ"は規則P_Zeroで$\MV{n} = \TT{SSSSSZ}$とすれば導ける。

@@ -87,11 +87,11 @@ notation:50 e:51 " ⟶' " e':51 => Judgement.DReduce e e'
 /--
 与えられた判断が導出できるという命題
 -/
-inductive Derivable (judge : Judgement) {Derivation : Judgement → Type u} : Prop where
-  | intro (h : Derivation judge)
+inductive Derivable {Derivation : Judgement → Type v} (𝒥 : Judgement) : Prop where
+  | intro (h : Derivation 𝒥)
 
 /--
 導出の項が構築できたときは明らかに導出できるので型強制する
 -/
-instance {Derivation : Judgement → Type u} : Coe (Derivation judge) (@Derivable judge Derivation) where
-  coe h := Derivable.intro h
+instance {𝒥 : Judgement} {Derivation : Judgement → Type u} : Coe (Derivation 𝒥) (Derivable (Derivation := Derivation) 𝒥) where
+  coe := Derivable.intro
