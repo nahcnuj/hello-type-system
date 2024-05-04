@@ -106,12 +106,10 @@ def Derivation.induction
   {n₁ n₂ : PNat}
   (H0 : ∀ n : PNat, motive n n.S)
   (H1 : ∀ {n₁ n₂ n₃ : PNat}, Derivation (.LT n₁ n₂) → Derivation (.LT n₂ n₃) → motive n₁ n₂ → motive n₂ n₃ → motive n₁ n₃)
-  (d : Derivation (.LT n₁ n₂))
-: motive n₁ n₂ :=
-  match d with
-    | .LT_Succ k => H0 k
-    | .LT_Trans d12 d23 =>
-          H1 d12 d23 (induction H0 H1 d12) (induction H0 H1 d23)
+: Derivation (.LT n₁ n₂) → motive n₁ n₂
+  | .LT_Succ k      => H0 k
+  | .LT_Trans 𝒟₁ 𝒟₂ => H1 𝒟₁ 𝒟₂ (induction H0 H1 𝒟₁) (induction H0 H1 𝒟₂)
+
 /-!
 自動で生成される`casesOn`や`rec`などは`motive`の型が`(a : Judgement) → Derivation a → Sort u`となっていて、
 ペアノ自然数に関する述語$P(\MV{n_1},\MV{n_2})$を扱うには`PNat → PNat → Sort u`な関数を作る必要があった。
@@ -141,6 +139,18 @@ inductive Derivation : Judgement → Type where
 private abbrev Derivable := @HelloTypeSystem.Derivable Derivation
 
 /--
+CompareNat2における$\TT{$\MV{n_1}$ is less than $\MV{n_2}$}$の導出に関する帰納法
+-/
+def Derivation.induction
+  {motive : PNat → PNat → Sort _} -- P(n₁,n₂)
+  {n₁ n₂ : PNat}
+  (H0 : ∀ n : PNat, motive .Z n.S)
+  (H1 : ∀ {n₁ n₂ : PNat}, Derivation (.LT n₁ n₂) → motive n₁ n₂ → motive n₁.S n₂.S)
+: Derivation (.LT n₁ n₂) → motive n₁ n₂
+  | .LT_Zero n     => H0 n
+  | .LT_SuccSucc 𝒟 => H1 𝒟 (induction H0 H1 𝒟)
+
+/--
 判断"Z is less than SSZ"のCompareNat2による導出
 -/
 def Z_lt_SSZ : Derivation (.LT .Z PNat.Z.S.S) :=
@@ -162,6 +172,11 @@ def SSZ_lt_SSSSZ : Derivation (.LT PNat.Z.S.S PNat.Z.S.S.S.S) :=
 def Z_lt_S : (n : PNat) → Derivation (.LT .Z n.S)
   | n => .LT_Zero n
 
+theorem exists_succ_of_succ_lt {n₁ n₂ : PNat} : Derivation (.LT n₁.S n₂) → ∃ n₃ : PNat, n₂ = n₃.S :=
+  Derivation.induction (motive := fun _ n₂ => ∃ n₃ : PNat, n₂ = n₃.S)
+    (fun n => Exists.intro n rfl)
+    (fun _ ⟨n₂', h₂'⟩ => Exists.intro n₂'.S (h₂' ▸ rfl))
+
 end CompareNat2
 
 namespace CompareNat3
@@ -175,6 +190,19 @@ inductive Derivation : Judgement → Type where
     : Derivation (.LT n₁ n₂) → Derivation (.LT n₁ n₂.S)
 
 private abbrev Derivable := @HelloTypeSystem.Derivable Derivation
+
+/--
+CompareNat3における$\TT{$\MV{n_1}$ is less than $\MV{n_2}$}$の導出に関する帰納法
+-/
+def Derivation.induction
+  {motive : PNat → PNat → Sort _} -- P(n₁,n₂)
+  {n₁ n₂ : PNat}
+  (H0 : ∀ n : PNat, motive n n.S)
+  (H1 : ∀ {n₁ n₂ : PNat}, Derivation (.LT n₁ n₂) → motive n₁ n₂ → motive n₁ n₂.S)
+: Derivation (.LT n₁ n₂) → motive n₁ n₂
+  | .LT_Succ n  => H0 n
+  | .LT_SuccR 𝒟 => H1 𝒟 (induction H0 H1 𝒟)
+
 
 /--
 判断"Z is less than SSZ"のCompareNat3による導出
@@ -197,5 +225,10 @@ def SSZ_lt_SSSSZ : Derivation (.LT PNat.Z.S.S PNat.Z.S.S.S.S) :=
 def Z_lt_S : (n : PNat) → Derivation (.LT .Z n.S)
   | .Z   => .LT_Succ .Z
   | .S n => .LT_SuccR (Z_lt_S n)
+
+theorem exists_succ_of_succ_lt {n₁ n₂ : PNat} : Derivation (.LT n₁.S n₂) → ∃ n₃ : PNat, n₂ = n₃.S :=
+  Derivation.induction (motive := fun _ n₂ => ∃ n₃ : PNat, n₂ = n₃.S)
+    (fun n => Exists.intro n rfl)
+    (fun _ ⟨n₂',h₂'⟩ => Exists.intro n₂'.S (h₂' ▸ rfl))
 
 end CompareNat3
