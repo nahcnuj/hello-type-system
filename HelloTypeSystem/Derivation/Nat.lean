@@ -216,9 +216,16 @@ theorem derive_plus : ∀ n₁ n₂ : PNat, ∃ n₃ : PNat, Derivable (.Plus n�
       have ⟨«n+k», ⟨h⟩⟩ := derive_plus n k
       Exists.intro «n+k».S (Derivation.P_Succ h)
 
-def plus_S {n₁ n₂ n₃ : PNat} : Derivation (.Plus n₁ n₂ n₃) → Derivation (.Plus n₁ n₂.S n₃.S)
-  | .P_Zero n₂ => Derivation.P_Zero n₂.S
-  | .P_Succ 𝒟  => Derivation.P_Succ 𝒟.plus_S
+def plus_S {n₂ n₃ : PNat} : {n₁ : PNat} → Derivation (.Plus n₁ n₂ n₃) → Derivation (.Plus n₁ n₂.S n₃.S)
+  | .Z, .P_Zero n₂ => Derivation.P_Zero n₂.S
+  | .S _, .P_Succ 𝒟  => Derivation.P_Succ 𝒟.plus_S
+
+def of_plus_S {n₂ : PNat} : {n₁ : PNat} → Derivation (.Plus n₁ n₂.S «n₁+n₂+1») → ∃ «n₁+n₂» : PNat, Derivable (.Plus n₁ n₂ «n₁+n₂»)
+  | .Z, _ =>
+      Exists.intro n₂ (Derivation.P_Zero n₂)
+  | .S n₁', _ =>
+      have ⟨«n₁'+n₂», ⟨dp⟩⟩ := derive_plus n₁' n₂
+      Exists.intro «n₁'+n₂».S (dp.P_Succ)
 
 /--
 加算の交換則
@@ -230,7 +237,7 @@ def plus_comm {n₂ n₃ : PNat} : ∀ {n₁ : PNat}, Derivation (.Plus n₁ n�
 -- n₁に依存してDerivation ...の項が決まるのが難しさ？
 
 /--
-加算の結合則$(n_1 + n_2) + n_3 \to n_1 + (n_2 + n_3)$
+加算の結合則：$(n_1 + n_2) + n_3 \to n_1 + (n_2 + n_3)$
 -/
 theorem plus_assoc_right {n₂ n₃ «n₁+n₂» «n₁+n₂+n₃» : PNat} : ∀ {n₁ : PNat}, Derivation (.Plus n₁ n₂ «n₁+n₂») → Derivation (.Plus «n₁+n₂» n₃ «n₁+n₂+n₃») → ∃ «n₂+n₃» : PNat, Derivable (.Plus n₂ n₃ «n₂+n₃») ∧ Derivable (.Plus n₁ «n₂+n₃» «n₁+n₂+n₃»)
   | .Z, .P_Zero n₂, h₂ =>
@@ -240,7 +247,7 @@ theorem plus_assoc_right {n₂ n₃ «n₁+n₂» «n₁+n₂+n₃» : PNat} : �
       Exists.intro «n₂+n₃» ⟨ha, Derivation.P_Succ hb⟩
 
 /--
-加算の結合則$ n_1 + (n_2 + n_3) \to (n_1 + n_2) + n_3$
+加算の結合則：$n_1 + (n_2 + n_3) \to (n_1 + n_2) + n_3$
 -/
 theorem plus_assoc_left : {n₁ : PNat} → Derivation (.Plus n₁ «n₂+n₃» «n₁+n₂+n₃») → Derivation (.Plus n₂ n₃ «n₂+n₃») → ∃ «n₁+n₂» : PNat, Derivable (.Plus n₁ n₂ «n₁+n₂») ∧ Derivable (.Plus «n₁+n₂» n₃ «n₁+n₂+n₃»)
   | .Z, .P_Zero «n₂+n₃», h₂ =>
@@ -305,8 +312,8 @@ $\TT{$\MV{n_3}$ plus $\MV{n_1}$ is $\MV{n_4}$}$の導出を得る。
 $n_1 \times (n_2 + 1) = n_1 \times n_2 + n_1$
 -/
 theorem times_S : {n₁ : PNat} → Derivation (.Times n₁ n₂ «n₁*n₂») → ∃ «n₁*Sn₂» : PNat, Derivable (.Times n₁ n₂.S «n₁*Sn₂») ∧ Derivable (.Plus «n₁*n₂» n₁ «n₁*Sn₂»)
-  | .Z, .T_Zero n =>
-      Exists.intro .Z ⟨Derivation.T_Zero n.S, Derivation.P_Zero .Z⟩
+  | .Z, .T_Zero n₂ =>
+      Exists.intro .Z ⟨Derivation.T_Zero n₂.S, Derivation.P_Zero .Z⟩
   | .S n₁', .T_Succ ht hp =>
       -- `n₁'*n₂ + n₁'`
       have ⟨«n₁'*Sn₂», ⟨𝒟⟩, ⟨dp⟩⟩ := times_S (n₁ := n₁') ht
@@ -358,3 +365,93 @@ the dependent pattern matcher can solve the following kinds of equations
 - <constructor> = <constructor>, examples: List.cons x xs = List.cons y ys, and List.cons x xs = List.nil
 ```
 -/
+
+/--
+分配法則：$n_1 \times (n_2 + n_3) \to n_1 \times n_2 + n_1 \times n_3$
+-/
+theorem left_distrib : {n₃ : PNat} → Derivation (.Plus n₂ n₃ «n₂+n₃») → Derivation (.Times n₁ «n₂+n₃» «n₁*(n₂+n₃)»)
+                       → ∃ «n₁*n₂» «n₁*n₃» : PNat, Derivable (.Times n₁ n₂ «n₁*n₂») ∧ Derivable (.Times n₁ n₃ «n₁*n₃») ∧ Derivable (.Plus «n₁*n₂» «n₁*n₃» «n₁*(n₂+n₃)»)
+  | .Z, dp, dt =>
+      have heq : «n₂+n₃» = n₂ := plus_uniq dp (plus_Z n₂)
+      have ⟨«n₁*n₂», ⟨dt'⟩⟩ := derive_times n₁ n₂
+      have heq : «n₁*n₂» = «n₁*(n₂+n₃)» := times_uniq dt' (heq ▸ dt)
+      Exists.intro «n₁*n₂» <| Exists.intro .Z ⟨dt', Derivation.times_Z n₁, ⟨heq ▸ Derivation.plus_Z «n₁*(n₂+n₃)»⟩⟩
+  | .S _, dp, dt =>
+      have ⟨«n₂+n₃'», ⟨dp'⟩⟩ := of_plus_S dp
+      have ⟨«n₁*(n₂+n₃')», ⟨dt'⟩⟩ := derive_times n₁ «n₂+n₃'»
+      have ⟨«n₁*n₂», _, ⟨dt12⟩, ⟨dt13'⟩, ⟨dd⟩⟩ := left_distrib dp' dt'
+      have ⟨dt13'⟩ := dt13'.times_comm
+      have ⟨_, ⟨ds⟩⟩ := derive_plus «n₁*(n₂+n₃')» n₁
+      have ⟨«n₁*n₃'+n₁», ⟨dt13⟩, ⟨ds'⟩⟩ := plus_assoc_right dd ds
+      have ⟨dt13⟩ := Derivation.T_Succ dt13' dt13.plus_comm |> Derivation.times_comm
+      have heq : «n₂+n₃» = «n₂+n₃'».S := plus_uniq dp dp'.plus_S
+      have ⟨dt'⟩ := dt'.times_comm
+      have ⟨dt'⟩ := Derivation.times_comm <| heq.symm ▸ Derivation.T_Succ dt' ds.plus_comm
+      have ds' := times_uniq dt dt' ▸ ds'
+      Exists.intro «n₁*n₂» (Exists.intro «n₁*n₃'+n₁» ⟨dt12, dt13, ds'⟩)
+
+/--
+分配法則：$(n_1 + n_2) \times n_3 \to n_1 \times n_3 + n_2 \times n_3$
+-/
+theorem right_distrib : Derivation (.Plus n₁ n₂ «n₁+n₂») → Derivation (.Times «n₁+n₂» n₃ «(n₁+n₂)*n₃»)
+                        → ∃ «n₁*n₃» «n₂*n₃» : PNat, Derivable (.Times n₁ n₃ «n₁*n₃») ∧ Derivable (.Times n₂ n₃ «n₂*n₃») ∧ Derivable (.Plus «n₁*n₃» «n₂*n₃» «(n₁+n₂)*n₃»)
+  | d₁, d₂ =>
+      have ⟨d₂⟩ := d₂.times_comm
+      have ⟨«n₃*n₁», «n₃*n₂», ⟨d31⟩, ⟨d32⟩, dp⟩ := left_distrib d₁ d₂
+      have ⟨d13⟩ := d31.times_comm
+      have ⟨d23⟩ := d32.times_comm
+      Exists.intro «n₃*n₁» <| Exists.intro «n₃*n₂» ⟨d13, d23, dp⟩
+
+theorem S_plus_of_plus_S : {n₁ : PNat} → Derivation (.Plus n₁ n₂.S n₃) → Derivable (.Plus n₁.S n₂ n₃)
+  | .Z, d =>
+      have := Derivation.P_Zero n₂ |> Derivation.plus_S
+      have heq : n₃ = n₂.S := plus_uniq d this
+      heq ▸ Derivation.P_Succ (.P_Zero n₂)
+  | .S _, d =>
+      have ⟨«n₁+n₂», ⟨d'⟩⟩ := d.of_plus_S -- Prop (Derivable)からDerivationを取り出したかったら、Prop (Derivable)にしないといけない？
+      have heq : n₃ = «n₁+n₂».S := plus_uniq d d'.plus_S
+      heq ▸ Derivation.P_Succ d'
+
+theorem of_times_S : {n₁ : PNat} → Derivation (.Times n₁ n₂.S «n₁*Sn₂») → ∃ «n₁*n₂» : PNat, Derivable (.Times n₁ n₂ «n₁*n₂») ∧ Derivable (.Plus «n₁*n₂» n₁ «n₁*Sn₂»)
+  | .Z, d =>
+      have heq := times_uniq d (Derivation.T_Zero _)
+      Exists.intro .Z ⟨Derivation.T_Zero n₂, heq.symm ▸ Derivation.P_Zero .Z⟩
+  | .S _, .T_Succ dt dp =>
+      have ⟨_, ⟨dt'⟩, ⟨dp'⟩⟩ := of_times_S dt
+      have ⟨«n₁*n₂+1», ⟨d1⟩, ⟨d2⟩⟩ := plus_assoc_right dp'.plus_comm dp.plus_comm
+      have ⟨«n₁*n₂», ⟨dr⟩⟩ := d1.of_plus_S
+      have heq : «n₁*n₂+1» = «n₁*n₂».S := plus_uniq d1 dr.plus_S
+      have ⟨dl⟩ := S_plus_of_plus_S (heq ▸ d2)
+      Exists.intro «n₁*n₂» ⟨Derivation.T_Succ dt' dr.plus_comm, dl.plus_comm⟩
+
+/--
+分配法則の逆：$n_1 \times n_2 + n_1 \times n_3 \to n_1 \times (n_2 + n_3)$
+-/
+theorem left_distrib_inv : {n₃ : PNat} → Derivation (.Times n₁ n₂ «n₁*n₂») → Derivation (.Times n₁ n₃ «n₁*n₃») → Derivation (.Plus n₂ n₃ «n₂+n₃»)
+                          → ∃ «n₁*(n₂+n₃)» : PNat, Derivable (.Times n₁ «n₂+n₃» «n₁*(n₂+n₃)»)
+  | .Z, dl, _, dp =>
+      have heq : «n₂+n₃» = n₂ := plus_uniq dp (plus_Z n₂)
+      Exists.intro «n₁*n₂» (heq ▸ dl)
+  | .S _, dl, dr, dp =>
+      have ⟨_, ⟨dr1⟩, _⟩ := of_times_S dr
+      have ⟨«n₂+n₃'», ⟨dp'⟩⟩ := dp.of_plus_S
+      have ⟨_, ⟨d⟩⟩ := left_distrib_inv dl dr1 dp'
+      have heq : «n₂+n₃» = «n₂+n₃'».S := plus_uniq dp dp'.plus_S
+      have ⟨«n₁*(n₂+n₃)», 𝒟, _⟩ := d.times_S
+      Exists.intro «n₁*(n₂+n₃)» (heq ▸ 𝒟)
+
+/--
+乗算の結合則：$(n_1 \times n_2) \times n_3 \to n_1 \times (n_2 \times n_3)$
+-/
+theorem times_assoc_right : {n₁ : PNat} → Derivation (.Times n₁ n₂ «n₁*n₂») → Derivation (.Times «n₁*n₂» n₃ «n₁*n₂*n₃»)
+                            → ∃ «n₂*n₃» : PNat, Derivable (.Times n₂ n₃ «n₂*n₃») ∧ Derivable (.Times n₁ «n₂*n₃» «n₁*n₂*n₃»)
+  | .Z, .T_Zero _, d₂ =>
+      have heq : «n₁*n₂*n₃» = .Z := times_uniq d₂ (Derivation.T_Zero n₃)
+      have ⟨«n₂*n₃», d23⟩ := derive_times n₂ n₃
+      Exists.intro «n₂*n₃» ⟨d23, heq.symm ▸ Derivation.T_Zero «n₂*n₃»⟩
+  | .S _, .T_Succ d₁t d₁p, d₂ =>
+      have ⟨«n₂*n₃», _, ⟨dl⟩,⟨dr⟩,⟨dp⟩⟩ := right_distrib d₁p d₂
+      have ⟨_, ⟨drl⟩, ⟨drr⟩⟩ := times_assoc_right d₁t dr
+      have drr := times_uniq drl dl ▸ drr
+      have d := Derivation.T_Succ drr dp
+      Exists.intro «n₂*n₃» ⟨dl, d⟩
