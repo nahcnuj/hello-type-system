@@ -43,7 +43,7 @@
    "rev": "a34d3c1f7b72654c08abe5741d94794db40dbb2e",
    "name": "«doc-gen4»",
    "manifestFile": "lake-manifest.json",
-   "inputRev": "main",
+   "inputRev": "a34d3c1f7b72654c08abe5741d94794db40dbb2e",
    "inherited": false,
    "configFile": "lakefile.lean"}],
  "name": "HelloTypeSystem",
