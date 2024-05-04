@@ -453,5 +453,4 @@ theorem times_assoc_right : {n₁ : PNat} → Derivation (.Times n₁ n₂ «n�
       have ⟨«n₂*n₃», _, ⟨dl⟩,⟨dr⟩,⟨dp⟩⟩ := right_distrib d₁p d₂
       have ⟨_, ⟨drl⟩, ⟨drr⟩⟩ := times_assoc_right d₁t dr
       have drr := times_uniq drl dl ▸ drr
-      have d := Derivation.T_Succ drr dp
-      Exists.intro «n₂*n₃» ⟨dl, d⟩
+      Exists.intro «n₂*n₃» ⟨dl, Derivation.T_Succ drr dp⟩
