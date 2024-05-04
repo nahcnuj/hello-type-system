@@ -82,6 +82,18 @@ def Z_lt_SSSSZ'' : Derivation (.LT .Z (.S (.S (.S (.S .Z))))) :=
     )
     (.LT_Succ (.S (.S (.S .Z))))
 
+def Z_lt_S : (n : PNat) → Derivation (.LT .Z n.S)
+  | .Z   => .LT_Succ .Z
+  | .S n => .LT_Trans (Z_lt_S n) (.LT_Succ n.S)
+
+/-
+theorem Z_lt_S' : (n : PNat) → Derivable (.LT .Z n.S)
+  | .Z   => Derivation.LT_Succ .Z
+  | .S n =>
+      have ⟨𝒟⟩ := Z_lt_S' n
+      Derivation.LT_Trans 𝒟 (.LT_Succ n.S)
+-/
+
 end CompareNat1
 
 namespace CompareNat2
@@ -93,6 +105,8 @@ inductive Derivation : Judgement → Type where
     : Derivation (.LT .Z n.S)
   | LT_SuccSucc {n₁ n₂ : PNat}
     : Derivation (.LT n₁ n₂) → Derivation (.LT n₁.S n₂.S)
+
+private abbrev Derivable := (@HelloTypeSystem.Derivable · Derivation)
 
 /--
 判断"Z is less than SSZ"のCompareNat2による導出
@@ -112,6 +126,10 @@ def SSZ_lt_SSSSZ : Derivation (.LT PNat.Z.S.S PNat.Z.S.S.S.S) :=
 /-!
 導出システムCompareNat2による導出では、前提に選択の余地がないから導出木の曖昧さは生じない。
 -/
+
+def Z_lt_S : (n : PNat) → Derivation (.LT .Z n.S)
+  | n => .LT_Zero n
+
 end CompareNat2
 
 namespace CompareNat3
@@ -123,6 +141,8 @@ inductive Derivation : Judgement → Type where
     : Derivation (.LT n n.S)
   | LT_SuccR {n₁ n₂ : PNat}
     : Derivation (.LT n₁ n₂) → Derivation (.LT n₁ n₂.S)
+
+private abbrev Derivable := (@HelloTypeSystem.Derivable · Derivation)
 
 /--
 判断"Z is less than SSZ"のCompareNat3による導出
@@ -141,4 +161,9 @@ def SSZ_lt_SSSSZ : Derivation (.LT PNat.Z.S.S PNat.Z.S.S.S.S) :=
 /-!
 導出システムCompareNat3による導出では、前提に選択の余地がないから導出木の曖昧さは生じない。
 -/
+
+def Z_lt_S : (n : PNat) → Derivation (.LT .Z n.S)
+  | .Z   => .LT_Succ .Z
+  | .S n => .LT_SuccR (Z_lt_S n)
+
 end CompareNat3
