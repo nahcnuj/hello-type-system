@@ -1,6 +1,7 @@
 import HelloTypeSystem.Basic
 open HelloTypeSystem (PNat Judgement)
 
+/-! $\newcommand\Set[1]{\mathbf{#1}}$ $\newcommand\MV[1]{\boldsymbol{#1}}$ $\newcommand\TT[1]{\texttt{#1}}$ $\newcommand\Evals{\mathrel{\Downarrow}}$ $\newcommand\Reduces{\mathrel{\longrightarrow}}$ $\newcommand\MReduces{\mathrel{\longrightarrow^{\\!*}}}$ $\newcommand\DReduces{\mathrel{\longrightarrow_{\\!d}}}$ -/
 namespace CompareNat1
 /--
 導出システムCompareNat1の推論規則
@@ -93,6 +94,36 @@ theorem Z_lt_S' : (n : PNat) → Derivable (.LT .Z n.S)
       have ⟨𝒟⟩ := Z_lt_S' n
       Derivation.LT_Trans 𝒟 (.LT_Succ n.S)
 -/
+
+/--
+CompareNat1における$\TT{$\MV{n_1}$ is less than $\MV{n_2}$}$の導出に関する帰納法
+
+`motive n₁ n₂`が$P(\MV{n_1},\MV{n_2})$に対応する。
+-/
+def Derivation.induction
+  {motive : PNat → PNat → Sort _} -- P(n₁,n₂)
+  {n₁ n₂ : PNat}
+  (H0 : ∀ n : PNat, motive n n.S)
+  (H1 : ∀ {n₁ n₂ n₃ : PNat}, Derivation (.LT n₁ n₂) → Derivation (.LT n₂ n₃) → motive n₁ n₂ → motive n₂ n₃ → motive n₁ n₃)
+  (d : Derivation (.LT n₁ n₂))
+: motive n₁ n₂ :=
+  match d with
+    | .LT_Succ k => H0 k
+    | .LT_Trans d12 d23 =>
+          H1 d12 d23 (induction H0 H1 d12) (induction H0 H1 d23)
+/-!
+自動で生成される`casesOn`や`rec`などは`motive`の型が`(a : Judgement) → Derivation a → Sort u`となっていて、
+ペアノ自然数に関する述語$P(\MV{n_1},\MV{n_2})$を扱うには`PNat → PNat → Sort u`な関数を作る必要があった。
+-/
+
+/--
+$\forall \MV{n_1},\MV{n_2}. \bigl[\TT{S$\MV{n_1}$ is less than $\MV{n_2}$} \implies \exists \MV{n_3}. \MV{n_2} \equiv \TT{S$\MV{n_3}$}\bigr]$
+-/
+theorem exists_succ_of_succ_lt {n₁ n₂ : PNat} : Derivation (.LT n₁.S n₂) → ∃ n₃ : PNat, n₂ = n₃.S :=
+  Derivation.induction (motive := fun _ n₂ => ∃ n₃ : PNat, n₂ = n₃.S)
+    (fun n => Exists.intro n rfl)
+ -- (fun {n₁ n₂ n₃} lt12 lt23 ⟨n₂', h₂'⟩ ⟨n₃', h₃'⟩ =>
+    (fun _ _ _ ⟨n₃',h₃'⟩ => Exists.intro n₃' h₃')
 
 end CompareNat1
 
