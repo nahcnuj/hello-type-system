@@ -27,17 +27,18 @@ jobs:
           restore-keys: |
             deps-${{ runner.os }}-${{ hashFiles('lean-toolchain') }}-${{ hashFiles('lake-manifest.json') }}
             deps-${{ runner.os }}-${{ hashFiles('lean-toolchain') }}
+      - name: Build
+        run: |
+          lake build
       - name: Generate docs
         run: |
           ./build-doc.bash
       - name: Upload Pages artifact
-        if: ${{ github.event_name == 'push' }}
         uses: actions/upload-pages-artifact@v3
         with:
           path: ".lake/build/doc"
       - id: deployment
         name: Deploy docs to GitHub Pages
-        if: ${{ github.event_name == 'push' }}
         uses: actions/deploy-pages@v4
     permissions:
       contents: read
