@@ -272,8 +272,7 @@ theorem lt_trans : {n₁ n₂ n₃ : PNat} → Derivation (.LT n₁ n₂) → De
       )
 /-!
 判断`n₁ is less than n₂`の導出に関する帰納法で示す。
-$P(\MV{n_1},\MV{n_2})$は
-$$\TT{$\MV{n_2}$ is less than $\MV{n_3}$} \implies \TT{$\MV{n_1}$ is less than $\MV{n_3}$}.$$
+$$P(\MV{n_1},\MV{n_2}) := \TT{$\MV{n_2}$ is less than $\MV{n_3}$} \implies \TT{$\MV{n_1}$ is less than $\MV{n_3}$}.$$
 $\MV{n_3} \equiv \TT{Z}$のときは前提の判断が導出できない（`nomatch`）ので、
 以下$\MV{n_3} \equiv \TT{S$\MV{n'_3}$}$とおく。
 `n₁ is less than n₂`の導出によって場合分け：
@@ -370,4 +369,21 @@ theorem lt_of_S_lt_S {n₁ n₂ : PNat} : Derivation (.LT n₁.S n₂.S) → Der
       | .Z,   _,    _, _    => True.intro
     )
 
+theorem lt_trans : {n₁ n₂ n₃ : PNat} → Derivation (.LT n₁ n₂) → Derivation (.LT n₂ n₃) → Derivable (.LT n₁ n₃) :=
+  fun {_ _ n₃} =>
+    Derivation.induction (motive := fun n₁ n₂ => Derivation (.LT n₂ n₃) → Derivable (.LT n₁ n₃))
+      (fun _ d23 =>
+        match n₃ with
+        | .Z   => nomatch d23
+        | .S _ =>
+            have ⟨𝒟⟩ := lt_of_S_lt_S d23
+            Derivation.LT_SuccR 𝒟
+      )
+      (fun _ h d23 =>
+        match n₃ with
+        | .Z   => nomatch d23
+        | .S _ =>
+            have ⟨𝒟₂₃⟩ := lt_of_S_lt_S d23
+            h <| 𝒟₂₃.LT_SuccR
+      )
 end CompareNat3
