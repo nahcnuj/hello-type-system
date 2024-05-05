@@ -18,77 +18,11 @@ inductive Derivation : Judgement → Type where
 private abbrev Derivable := @HelloTypeSystem.Derivable Derivation
 
 /--
-判断"Z is less than SSZ"のCompareNat1による導出
--/
-def Z_lt_SSZ : Derivation (.LT .Z (.S (.S .Z))) :=
-  .LT_Trans (n₁ := .Z) (n₂ := .S .Z) (n₃ := .S (.S .Z))
-    (.LT_Succ (.Z))
-    (.LT_Succ (.S .Z))
-
-/--
-判断"SSZ is less than SSSSZ"のCompareNat1による導出
--/
-def SSZ_lt_SSSSZ : Derivation (.LT (.S (.S .Z)) (.S (.S (.S (.S .Z))))) :=
-  .LT_Trans (n₁ := .S (.S .Z)) (n₂ := (.S (.S (.S .Z)))) (n₃ := .S (.S (.S (.S .Z))))
-    (.LT_Succ (.S (.S .Z)))
-    (.LT_Succ (.S (.S (.S .Z))))
-
-/-!
-導出システムCompareNat1は判断"$\TT{$\MV{n_1}$ is less than $\MV{n_2}$}$"に対して、
-規則LT_Transにおける中間の項（`n₂`）の取り方によって異なる導出を与える。
--/
-
-/--
-判断"Z is less than SSSSZ"のCompareNat1による導出
-
-規則LT_Transで$\MV{n_2} = \TT{SZ}$, $\MV{n_2} = \TT{SSZ}$, $\MV{n_2} = \TT{SSSZ}$として導出する。
--/
-def Z_lt_SSSSZ : Derivation (.LT .Z (.S (.S (.S (.S .Z))))) :=
-  .LT_Trans (n₁ := .Z) (n₂ := .S .Z) (n₃ := .S (.S (.S (.S .Z))))
-    (.LT_Succ .Z)
-    (.LT_Trans (n₁ := .S .Z) (n₂ := .S (.S .Z)) (n₃ := .S (.S (.S (.S .Z))))
-      (.LT_Succ (.S .Z))
-      (.LT_Trans (n₁ := .S (.S .Z)) (n₂ := .S (.S (.S .Z))) (n₃ := .S (.S (.S (.S .Z))))
-        (.LT_Succ (.S (.S .Z)))
-        (.LT_Succ (.S (.S (.S .Z))))
-      )
-    )
-
-/--
-判断"Z is less than SSSSZ"のCompareNat1による導出
-
-規則LT_Transで$\MV{n_2} = \TT{SSZ}$, $\MV{n_2} = \TT{SZ}$, $\MV{n_2} = \TT{SSSZ}$として導出する。
--/
-def Z_lt_SSSSZ' : Derivation (.LT .Z (.S (.S (.S (.S .Z))))) :=
-  .LT_Trans (n₁ := .Z) (n₂ := .S (.S .Z)) (n₃ := .S (.S (.S (.S .Z))))
-    (.LT_Trans (n₁ := .Z) (n₃ := .S (.S .Z))
-      (.LT_Succ .Z)
-      (.LT_Succ (.S .Z))
-    )
-    (.LT_Trans (n₁ := .S (.S .Z)) (n₃ := .S (.S (.S (.S .Z))))
-      (.LT_Succ (.S (.S .Z)))
-      (.LT_Succ (.S (.S (.S .Z))))
-    )
-
-/--
-判断"Z is less than SSSSZ"のCompareNat1による導出
-
-規則LT_Transで$\MV{n_2} = \TT{SSSZ}$, $\MV{n_2} = \TT{SZ}$, $\MV{n_2} = \TT{SSZ}$として導出する。
--/
-def Z_lt_SSSSZ'' : Derivation (.LT .Z (.S (.S (.S (.S .Z))))) :=
-  .LT_Trans (n₁ := .Z) (n₂ := .S (.S (.S .Z))) (n₃ := .S (.S (.S (.S .Z))))
-    (.LT_Trans (n₁ := .Z) (n₂ := .S .Z) (n₃ := .S (.S (.S .Z)))
-      (.LT_Succ .Z)
-      (.LT_Trans (n₁ := .S .Z) (n₂ := .S (.S .Z)) (n₃ := .S (.S (.S .Z)))
-        (.LT_Succ (.S .Z))
-        (.LT_Succ (.S (.S .Z)))
-      )
-    )
-    (.LT_Succ (.S (.S (.S .Z))))
-
-/--
 CompareNat1における$\TT{$\MV{n_1}$ is less than $\MV{n_2}$}$の導出に関する帰納法で、
 ペアノ自然数に関する2項述語$P$について$\forall\MV{n_1},\MV{n_2}. \bigl[\TT{$\MV{n_1}$ is less than $\MV{n_2}$} \implies P(\MV{n_1},\MV{n_2})\bigr]$を示す。
+
+自動で生成される`casesOn`や`rec`などは`motive`の型が`(a : Judgement) → Derivation a → Sort u`となっていて、
+ペアノ自然数に関する述語$P(\MV{n_1},\MV{n_2})$を扱うには`PNat → PNat → Sort u`な関数を作る必要があった。
 -/
 def Derivation.induction
   {motive : PNat → PNat → Sort _} -- P(n₁,n₂)
@@ -98,11 +32,6 @@ def Derivation.induction
 : Derivation (.LT n₁ n₂) → motive n₁ n₂
   | .LT_Succ k      => H0 k
   | .LT_Trans 𝒟₁ 𝒟₂ => H1 𝒟₁ 𝒟₂ (induction H0 H1 𝒟₁) (induction H0 H1 𝒟₂)
-
-/-!
-自動で生成される`casesOn`や`rec`などは`motive`の型が`(a : Judgement) → Derivation a → Sort u`となっていて、
-ペアノ自然数に関する述語$P(\MV{n_1},\MV{n_2})$を扱うには`PNat → PNat → Sort u`な関数を作る必要があった。
--/
 
 end CompareNat1
 
@@ -130,25 +59,6 @@ def Derivation.induction
   | .LT_Zero n     => H0 n
   | .LT_SuccSucc 𝒟 => H1 𝒟 (induction H0 H1 𝒟)
 
-/--
-判断"Z is less than SSZ"のCompareNat2による導出
--/
-def Z_lt_SSZ : Derivation (.LT .Z PNat.Z.S.S) :=
-  .LT_Zero PNat.Z.S
-
-/--
-判断"SSZ is less than SSSSZ"のCompareNat2による導出
--/
-def SSZ_lt_SSSSZ : Derivation (.LT PNat.Z.S.S PNat.Z.S.S.S.S) :=
-  .LT_SuccSucc (n₁ := PNat.Z.S) (n₂ := PNat.Z.S.S.S)
-    (.LT_SuccSucc (n₁ := .Z) (n₂ := PNat.Z.S.S)
-      (.LT_Zero PNat.Z.S)
-    )
-
-/-!
-導出システムCompareNat2による導出では、前提に選択の余地がないから導出木の曖昧さは生じない。
--/
-
 end CompareNat2
 
 namespace CompareNat3
@@ -175,25 +85,102 @@ def Derivation.induction
   | .LT_Succ n  => H0 n
   | .LT_SuccR 𝒟 => H1 𝒟 (induction H0 H1 𝒟)
 
-/--
-判断"Z is less than SSZ"のCompareNat3による導出
+end CompareNat3
+
+/-!
+## CompareNat1–3による導出の例
+### 練習問題1.5 [基礎概念,§1.3]
+#### (1) `Z is less than SSZ`
 -/
-def Z_lt_SSZ : Derivation (.LT .Z PNat.Z.S.S) :=
+def CompareNat1.Z_lt_SSZ : Derivation (.LT .Z (.S (.S .Z))) :=
+  .LT_Trans (n₁ := .Z) (n₂ := .S .Z) (n₃ := .S (.S .Z))
+    (.LT_Succ (.Z))
+    (.LT_Succ (.S .Z))
+
+def CompareNat2.Z_lt_SSZ : Derivation (.LT .Z PNat.Z.S.S) :=
+  .LT_Zero PNat.Z.S
+
+def CompareNat3.Z_lt_SSZ : Derivation (.LT .Z PNat.Z.S.S) :=
   .LT_SuccR (n₁ := .Z) (n₂ := PNat.Z.S)
     (.LT_Succ .Z)
 
-/--
-判断"SSZ is less than SSSSZ"のCompareNat3による導出
+/-!
+#### (2) `SSZ is less than SSSSZ`
 -/
-def SSZ_lt_SSSSZ : Derivation (.LT PNat.Z.S.S PNat.Z.S.S.S.S) :=
+def CompareNat1.SSZ_lt_SSSSZ : Derivation (.LT (.S (.S .Z)) (.S (.S (.S (.S .Z))))) :=
+  .LT_Trans (n₁ := .S (.S .Z)) (n₂ := (.S (.S (.S .Z)))) (n₃ := .S (.S (.S (.S .Z))))
+    (.LT_Succ (.S (.S .Z)))
+    (.LT_Succ (.S (.S (.S .Z))))
+
+def CompareNat2.SSZ_lt_SSSSZ : Derivation (.LT PNat.Z.S.S PNat.Z.S.S.S.S) :=
+  .LT_SuccSucc (n₁ := PNat.Z.S) (n₂ := PNat.Z.S.S.S)
+    (.LT_SuccSucc (n₁ := .Z) (n₂ := PNat.Z.S.S)
+      (.LT_Zero PNat.Z.S)
+    )
+
+def CompareNat3.SSZ_lt_SSSSZ : Derivation (.LT PNat.Z.S.S PNat.Z.S.S.S.S) :=
   .LT_SuccR (n₁ := PNat.Z.S.S) (n₂ := PNat.Z.S.S.S)
     (.LT_Succ PNat.Z.S.S)
 
 /-!
-導出システムCompareNat3による導出では、前提に選択の余地がないから導出木の曖昧さは生じない。
+### 練習問題1.6 [基礎概念,§1.3]
+
+導出システムCompareNat1は判断"$\TT{$\MV{n_1}$ is less than $\MV{n_2}$}$"に対して、
+規則LT_Transにおける中間の項（`n₂`）の取り方によって異なる導出を与える。
 -/
 
-end CompareNat3
+namespace CompareNat1
+/-!
+例えば判断"Z is less than SSSSZ"に対して、
+規則LT_Transにおける$\MV{n_2}$の選び方によって異なる導出木が得られる：
+- $\MV{n_2} = \TT{SZ}$, $\MV{n_2} = \TT{SSZ}$, $\MV{n_2} = \TT{SSSZ}$
+- $\MV{n_2} = \TT{SSZ}$, $\MV{n_2} = \TT{SZ}$, $\MV{n_2} = \TT{SSSZ}$
+- $\MV{n_2} = \TT{SSSZ}$, $\MV{n_2} = \TT{SZ}$, $\MV{n_2} = \TT{SSZ}$
+-/
+
+/-- 規則LT_Transで$\MV{n_2} = \TT{SZ}$, $\MV{n_2} = \TT{SSZ}$, $\MV{n_2} = \TT{SSSZ}$として導出する。 -/
+example : Derivation (.LT .Z (.S (.S (.S (.S .Z))))) :=
+  .LT_Trans (n₁ := .Z) (n₂ := .S .Z) (n₃ := .S (.S (.S (.S .Z))))
+    (.LT_Succ .Z)
+    (.LT_Trans (n₁ := .S .Z) (n₂ := .S (.S .Z)) (n₃ := .S (.S (.S (.S .Z))))
+      (.LT_Succ (.S .Z))
+      (.LT_Trans (n₁ := .S (.S .Z)) (n₂ := .S (.S (.S .Z))) (n₃ := .S (.S (.S (.S .Z))))
+        (.LT_Succ (.S (.S .Z)))
+        (.LT_Succ (.S (.S (.S .Z))))
+      )
+    )
+
+/-- 規則LT_Transで$\MV{n_2} = \TT{SSZ}$, $\MV{n_2} = \TT{SZ}$, $\MV{n_2} = \TT{SSSZ}$として導出する。 -/
+example : Derivation (.LT .Z (.S (.S (.S (.S .Z))))) :=
+  .LT_Trans (n₁ := .Z) (n₂ := .S (.S .Z)) (n₃ := .S (.S (.S (.S .Z))))
+    (.LT_Trans (n₁ := .Z) (n₃ := .S (.S .Z))
+      (.LT_Succ .Z)
+      (.LT_Succ (.S .Z))
+    )
+    (.LT_Trans (n₁ := .S (.S .Z)) (n₃ := .S (.S (.S (.S .Z))))
+      (.LT_Succ (.S (.S .Z)))
+      (.LT_Succ (.S (.S (.S .Z))))
+    )
+
+/-- 規則LT_Transで$\MV{n_2} = \TT{SSSZ}$, $\MV{n_2} = \TT{SZ}$, $\MV{n_2} = \TT{SSZ}$として導出する。 -/
+example : Derivation (.LT .Z (.S (.S (.S (.S .Z))))) :=
+  .LT_Trans (n₁ := .Z) (n₂ := .S (.S (.S .Z))) (n₃ := .S (.S (.S (.S .Z))))
+    (.LT_Trans (n₁ := .Z) (n₂ := .S .Z) (n₃ := .S (.S (.S .Z)))
+      (.LT_Succ .Z)
+      (.LT_Trans (n₁ := .S .Z) (n₂ := .S (.S .Z)) (n₃ := .S (.S (.S .Z)))
+        (.LT_Succ (.S .Z))
+        (.LT_Succ (.S (.S .Z)))
+      )
+    )
+    (.LT_Succ (.S (.S (.S .Z))))
+end CompareNat1
+
+/-!
+一方、導出システムCompareNat2とCompareNat3は、前提に選択の余地がないから導出木の曖昧さは生じない。
+-/
+
+-- TODO: 曖昧でないことは「2つあったら一致する」やつで示せる？
+-- TODO: \[基礎理論,§1.3.2]の曖昧性の定義に従って証明できるか？
 
 /-!
 ## CompareNat1–3に関するメタ定理
