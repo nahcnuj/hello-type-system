@@ -1,6 +1,8 @@
 import HelloTypeSystem.Basic
 open HelloTypeSystem (PNat Judgement)
 
+namespace HelloTypeSystem
+
 /-!
 # 自然数の大小比較
 -/

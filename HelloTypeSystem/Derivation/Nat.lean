@@ -2,10 +2,10 @@ import HelloTypeSystem.Basic
 open HelloTypeSystem (PNat Judgement)
 
 namespace HelloTypeSystem
+
 /-!
 # 自然数の加算・乗算
 -/
-
 namespace Nat
 /--
 導出システムNatの推論規則による導出

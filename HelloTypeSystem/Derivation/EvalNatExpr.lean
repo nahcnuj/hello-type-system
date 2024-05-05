@@ -1,6 +1,8 @@
 import HelloTypeSystem.Basic
 open HelloTypeSystem (PNat Judgement Expr)
 
+namespace HelloTypeSystem
+
 namespace EvalNatExpr
 
 /--

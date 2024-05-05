@@ -5,6 +5,8 @@ def   Z : PNat := .Z
 def  SZ : PNat := Z.S
 def SSZ : PNat := SZ.S
 
+namespace HelloTypeSystem
+
 namespace ReduceNatExpr
 
 /--
