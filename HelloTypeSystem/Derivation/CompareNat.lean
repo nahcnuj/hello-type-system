@@ -181,6 +181,12 @@ theorem lt_of_S_lt_S {n₁ n₂ : PNat} : Derivation (.LT n₁.S n₂.S) → Der
       | .Z,   _, _,  _, _ => True.intro
     )
 
+theorem lt_trans : {n₁ n₂ n₃ : PNat} → Derivation (.LT n₁ n₂) → Derivation (.LT n₂ n₃) → Derivable (.LT n₁ n₃) :=
+  fun {_ _ n₃} =>
+    Derivation.induction (motive := fun n₁ n₂ => Derivation (.LT n₂ n₃) → Derivable (.LT n₁ n₃))
+      (fun n d => Derivation.LT_Trans (Derivation.LT_Succ n) d)
+      (fun d1 d2 _ _ d => Derivation.LT_Trans (Derivation.LT_Trans d1 d2) d)
+
 end CompareNat1
 
 namespace CompareNat2
@@ -247,6 +253,23 @@ theorem lt_of_S_lt_S {n₁ n₂ : PNat} : Derivation (.LT n₁.S n₂.S) → Der
       | .S _, .S _, _,  ⟨d2⟩ => Derivation.LT_SuccSucc d2
       | .Z,   _,    d1, _    => d1
     )
+
+theorem lt_trans : {n₁ n₂ n₃ : PNat} → Derivation (.LT n₁ n₂) → Derivation (.LT n₂ n₃) → Derivable (.LT n₁ n₃) :=
+  fun {_ _ n₃} =>
+    Derivation.induction (motive := fun n₁ n₂ => Derivation (.LT n₂ n₃) → Derivable (.LT n₁ n₃))
+      (fun _ d =>
+        match n₃ with
+        | .Z     => nomatch d -- `Sn is less than Z`
+        | .S n₃' => Derivation.LT_Zero n₃'
+      )
+      (fun d12 _ d =>
+        match n₃ with
+        | .Z   => nomatch d -- `Sn₂ is less than Z`
+        | .S _ =>
+            have ⟨d⟩ := lt_of_S_lt_S d
+            have ⟨d⟩ := lt_trans d12 d
+            Derivation.LT_SuccSucc d
+      )
 end CompareNat2
 
 namespace CompareNat3
