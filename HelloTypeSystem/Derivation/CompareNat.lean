@@ -181,6 +181,12 @@ theorem lt_of_S_lt_S {n₁ n₂ : PNat} : Derivation (.LT n₁.S n₂.S) → Der
       | .Z,   _, _,  _, _ => True.intro
     )
 
+theorem lt_trans : {n₁ n₂ n₃ : PNat} → Derivation (.LT n₁ n₂) → Derivation (.LT n₂ n₃) → Derivable (.LT n₁ n₃) :=
+  fun {_ _ n₃} =>
+    Derivation.induction (motive := fun n₁ n₂ => Derivation (.LT n₂ n₃) → Derivable (.LT n₁ n₃))
+      (fun n d => Derivation.LT_Trans (Derivation.LT_Succ n) d)
+      (fun d1 d2 _ _ d => Derivation.LT_Trans (Derivation.LT_Trans d1 d2) d)
+
 end CompareNat1
 
 namespace CompareNat2
@@ -247,6 +253,51 @@ theorem lt_of_S_lt_S {n₁ n₂ : PNat} : Derivation (.LT n₁.S n₂.S) → Der
       | .S _, .S _, _,  ⟨d2⟩ => Derivation.LT_SuccSucc d2
       | .Z,   _,    d1, _    => d1
     )
+
+theorem lt_trans : {n₁ n₂ n₃ : PNat} → Derivation (.LT n₁ n₂) → Derivation (.LT n₂ n₃) → Derivable (.LT n₁ n₃) :=
+  fun {_ _ n₃} =>
+    Derivation.induction (motive := fun n₁ n₂ => Derivation (.LT n₂ n₃) → Derivable (.LT n₁ n₃))
+      (fun _ d23 =>
+        match n₃ with
+        | .Z     => nomatch d23 -- `Sn is less than Z`
+        | .S n₃' => Derivation.LT_Zero n₃'
+      )
+      (fun d12 _ d23 =>
+        match n₃ with
+        | .Z   => nomatch d23 -- `Sn₂ is less than Z`
+        | .S _ =>
+            have ⟨d⟩ := lt_of_S_lt_S d23
+            have ⟨d⟩ := lt_trans d12 d
+            Derivation.LT_SuccSucc d
+      )
+/-!
+判断`n₁ is less than n₂`の導出に関する帰納法で示す。
+$$P(\MV{n_1},\MV{n_2}) := \TT{$\MV{n_2}$ is less than $\MV{n_3}$} \implies \TT{$\MV{n_1}$ is less than $\MV{n_3}$}.$$
+$\MV{n_3} \equiv \TT{Z}$のときは前提の判断が導出できない（`nomatch`）ので、
+以下$\MV{n_3} \equiv \TT{S$\MV{n'_3}$}$とおく。
+`n₁ is less than n₂`の導出によって場合分け：
+- `LT_Zero`
+  - $\forall\MV{n}. P(\TT{Z},\TT{S$\MV{n}$})$
+  - $\TT{S$\MV{n}$ is less than S$\MV{n'_3}$} \implies \TT{Z is less than S$\MV{n'_3}$}$
+  - $$
+    \dfrac{}{
+      \TT{Z is less than S$\MV{n'_3}$}
+    }\mathsf{LT\\_Zero}
+    $$
+- `LT_SuccSucc`
+  - $\forall\MV{n_1},\MV{n_2}. \bigl[\text{“$\MV{n_1}<\MV{n_2}$”} \land P(\MV{n_1},\MV{n_2}) \implies P(\TT{S$\MV{n_1}$},\TT{S$\MV{n_2}$})\bigr]$
+  - $\TT{S$\MV{n_2}$ is less than S$\MV{n'_3}$} \implies \TT{S$\MV{n_1}$ is less than S$\MV{n'_3}$}$
+  - $\mathcal{D}_{12} \in \TT{$\MV{n_1}$ is less than $\MV{n_2}$}$ ∵帰納法の仮定
+  - $\mathcal{D}_{23'} \in \TT{$\MV{n_2}$ is less than $\MV{n'_3}$}$ ∵仮定に`lt_of_S_lt_S`を適用
+  - $\mathcal{D} \in \TT{$\MV{n\_1}$ is less than $\MV{n'\_3}$}$ ∵`lt_trans` to $\mathcal{D}\_{12}$ and $\mathcal{D}\_{23'}$
+  - $$
+    \dfrac{
+      \mathcal{D} \equiv \dfrac{\vdots}{\TT{$\MV{n_1}$ is less than $\MV{n'_3}$}}
+    }{
+      \TT{S$\MV{n_1}$ is less than S$\MV{n'_3}$}
+    }\mathsf{LT\\_SuccSucc}
+    $$
+-/
 end CompareNat2
 
 namespace CompareNat3
@@ -318,4 +369,21 @@ theorem lt_of_S_lt_S {n₁ n₂ : PNat} : Derivation (.LT n₁.S n₂.S) → Der
       | .Z,   _,    _, _    => True.intro
     )
 
+theorem lt_trans : {n₁ n₂ n₃ : PNat} → Derivation (.LT n₁ n₂) → Derivation (.LT n₂ n₃) → Derivable (.LT n₁ n₃) :=
+  fun {_ _ n₃} =>
+    Derivation.induction (motive := fun n₁ n₂ => Derivation (.LT n₂ n₃) → Derivable (.LT n₁ n₃))
+      (fun _ d23 =>
+        match n₃ with
+        | .Z   => nomatch d23
+        | .S _ =>
+            have ⟨𝒟⟩ := lt_of_S_lt_S d23
+            Derivation.LT_SuccR 𝒟
+      )
+      (fun _ h d23 =>
+        match n₃ with
+        | .Z   => nomatch d23
+        | .S _ =>
+            have ⟨𝒟₂₃⟩ := lt_of_S_lt_S d23
+            h <| 𝒟₂₃.LT_SuccR
+      )
 end CompareNat3

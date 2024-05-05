@@ -1,16 +1,11 @@
-name: CI
+name: Test
 
 on:
-  push:
-    branches:
-      - main
+  pull_request:
 
 jobs:
   build:
     runs-on: ubuntu-latest
-    environment:
-      name: github-pages
-      url: ${{steps.deployment.outputs.page_url}}
     steps:
       - uses: actions/checkout@v4
       - name: Install elan
@@ -27,19 +22,6 @@ jobs:
           restore-keys: |
             deps-${{ runner.os }}-${{ hashFiles('lean-toolchain') }}-${{ hashFiles('lake-manifest.json') }}
             deps-${{ runner.os }}-${{ hashFiles('lean-toolchain') }}
-      - name: Generate docs
+      - name: Build
         run: |
-          ./build-doc.bash
-      - name: Upload Pages artifact
-        if: ${{ github.event_name == 'push' }}
-        uses: actions/upload-pages-artifact@v3
-        with:
-          path: ".lake/build/doc"
-      - id: deployment
-        name: Deploy docs to GitHub Pages
-        if: ${{ github.event_name == 'push' }}
-        uses: actions/deploy-pages@v4
-    permissions:
-      contents: read
-      pages: write
-      id-token: write
+          lake build
