@@ -98,8 +98,6 @@ theorem Z_lt_S' : (n : PNat) → Derivable (.LT .Z n.S)
 /--
 CompareNat1における$\TT{$\MV{n_1}$ is less than $\MV{n_2}$}$の導出に関する帰納法で、
 ペアノ自然数に関する2項述語$P$について$\forall\MV{n_1},\MV{n_2}. \bigl[\TT{$\MV{n_1}$ is less than $\MV{n_2}$} \implies P(\MV{n_1},\MV{n_2})\bigr]$を示す。
-
-`motive n₁ n₂`が$P(\MV{n_1},\MV{n_2})$に対応する。
 -/
 def Derivation.induction
   {motive : PNat → PNat → Sort _} -- P(n₁,n₂)
@@ -117,12 +115,71 @@ def Derivation.induction
 
 /--
 $\forall\MV{n_1},\MV{n_2}. \bigl[\TT{S$\MV{n_1}$ is less than $\MV{n_2}$} \implies \exists\MV{n_3}. \MV{n_2} \equiv \TT{S$\MV{n_3}$}\bigr]$
+
+$P(\MV{n_1},\MV{n_2})$は以下のように考える：
+$$\begin{align*}
+& \bigl[\exists\MV{n'_1}. \MV{n_1} \equiv \TT{S$\MV{n'_1}$}] \\\\
+& {} \implies \bigl[ \TT{S$\MV{n'_1}$ is less than $\MV{n_2}$} \implies \exists\MV{n'_2}. \MV{n_2}\equiv\TT{S$\MV{n'_2}$} \bigr].
+\end{align*}$$
+`motive n₁ n₂`は
+$$(\bullet,\TT{$\MV{n_2}$}) \mapsto \exists\MV{n'_2}. \MV{n_2}\equiv\TT{S$\MV{n'_2}$}$$
+となるように定義する。
 -/
 theorem exists_succ_of_succ_lt {n₁ n₂ : PNat} : Derivation (.LT n₁.S n₂) → ∃ n₃ : PNat, n₂ = n₃.S :=
   Derivation.induction (motive := fun _ n₂ => ∃ n₃ : PNat, n₂ = n₃.S)
     (fun n => Exists.intro n rfl)
  -- (fun {n₁ n₂ n₃} lt12 lt23 ⟨n₂', h₂'⟩ ⟨n₃', h₃'⟩ =>
     (fun _ _ _ ⟨n₃',h₃'⟩ => Exists.intro n₃' h₃')
+
+/--
+$P(\MV{n_1},\MV{n_2})$を以下で定義する：
+$$\begin{align*}
+& \bigl[\exists\MV{n'_1},\MV{n'_2}. \MV{n_1} \equiv \TT{S$\MV{n'_1}$} \land \MV{n_2} \equiv \TT{S$\MV{n'_2}$}\bigr] \\\\
+& {} \implies \bigl[ \TT{S$\MV{n'_1}$ is less than S$\MV{n'_2}$} \implies \TT{$\MV{n'_1}$ is less than $\MV{n'_2}$} \bigr].
+\end{align*}$$
+`motive n₁ n₂`は
+$$(\TT{S$\MV{n'_1}$},\TT{S$\MV{n'_2}$}) \mapsto \TT{$\MV{n'_1}$ is less than $\MV{n'_2}$}$$
+となるように定義する。
+どちらかあるいは両方が`Z`である場合はDon't careで`True`としておく。
+（参考：[https://zenn.dev/tnyo43/scraps/afaa5fd8db3992#comment-41aa843ee675d1](https://zenn.dev/tnyo43/scraps/afaa5fd8db3992#comment-41aa843ee675d1)）
+
+`LT_Trans`の場合分け：
+- `n₁ = Sn₁'`かつ`n₂ = Sn₂'`かつ`n₃ = Sn₃'` ⇒ 仮定の導出からLT_Trans
+- `n₁ = Z`または`n₃ = Z` ⇒ 直ちに`True.intro`
+- 上記以外で`n₂ = Z` ⇒ 仮定と導出規則を駆使
+
+最後のパターンで仮定に`Sn₁' is less than Z`のような意味的に偽な判断が出てくるが、
+あくまで仮定として`n₁' is less than n₃'`の形を目指す。
+-/
+theorem lt_of_S_lt_S {n₁ n₂ : PNat} : Derivation (.LT n₁.S n₂.S) → Derivable (.LT n₁ n₂) :=
+  Derivation.induction
+    (motive := fun n₁ n₂ =>
+      match n₁,n₂ with
+      | .S n₁', .S n₂' => Derivable (.LT n₁' n₂')
+      | _,     _       => True -- don't care
+    )
+    (fun n =>
+      match n with
+      | .S n => Derivation.LT_Succ n
+      | .Z   => True.intro
+    )
+    (fun {n₁ n₂ n₃} d1 _ h1 h2 =>
+      match n₁,n₂,n₃,h1,h2 with
+      | .S _,   .S _, .S _,  ⟨d₁⟩, ⟨d₂⟩ => Derivation.LT_Trans d₁ d₂
+      | .S n₁', .Z,   .S .Z, _,    _    =>
+          Derivation.LT_Trans -- "n₁' < Z"
+            (Derivation.LT_Succ n₁') -- n₁' < Sn₁'
+            (d1)                     --       Sn₁' < Z
+      | .S n₁', .Z, .S (.S n₃'), _, _ =>
+          Derivation.LT_Trans -- "n₁' < Sn₃'"
+            (Derivation.LT_Succ n₁') --  n₁' < Sn₁'
+            (Derivation.LT_Trans     --        Sn₁' < Sn₃'
+              d1           -- Sn₁' < Z
+              (Z_lt_S n₃') --        Z < Sn₃'
+            )
+      | .S _, _, .Z, _, _ => True.intro
+      | .Z,   _, _,  _, _ => True.intro
+    )
 
 end CompareNat1
 
@@ -177,6 +234,19 @@ theorem exists_succ_of_succ_lt {n₁ n₂ : PNat} : Derivation (.LT n₁.S n₂)
     (fun n => Exists.intro n rfl)
     (fun _ ⟨n₂', h₂'⟩ => Exists.intro n₂'.S (h₂' ▸ rfl))
 
+theorem lt_of_S_lt_S {n₁ n₂ : PNat} : Derivation (.LT n₁.S n₂.S) → Derivable (.LT n₁ n₂) :=
+  Derivation.induction
+    (motive := fun n₁ n₂ =>
+      match n₁,n₂ with
+      | .S n₁', .S n₂' => Derivable (.LT n₁' n₂')
+      | _,     _       => True -- don't care
+    )
+    (fun _ => True.intro)
+    (fun {n₁ n₂} h1 h2 =>
+      match n₁,n₂,h1,h2 with
+      | .S _, .S _, _,  ⟨d2⟩ => Derivation.LT_SuccSucc d2
+      | .Z,   _,    d1, _    => d1
+    )
 end CompareNat2
 
 namespace CompareNat3
@@ -202,7 +272,6 @@ def Derivation.induction
 : Derivation (.LT n₁ n₂) → motive n₁ n₂
   | .LT_Succ n  => H0 n
   | .LT_SuccR 𝒟 => H1 𝒟 (induction H0 H1 𝒟)
-
 
 /--
 判断"Z is less than SSZ"のCompareNat3による導出
@@ -230,5 +299,23 @@ theorem exists_succ_of_succ_lt {n₁ n₂ : PNat} : Derivation (.LT n₁.S n₂)
   Derivation.induction (motive := fun _ n₂ => ∃ n₃ : PNat, n₂ = n₃.S)
     (fun n => Exists.intro n rfl)
     (fun _ ⟨n₂',h₂'⟩ => Exists.intro n₂'.S (h₂' ▸ rfl))
+
+theorem lt_of_S_lt_S {n₁ n₂ : PNat} : Derivation (.LT n₁.S n₂.S) → Derivable (.LT n₁ n₂) :=
+  Derivation.induction
+    (motive := fun n₁ n₂ =>
+      match n₁,n₂ with
+      | .S n₁', .S n₂' => Derivable (.LT n₁' n₂')
+      | _,     _       => True -- don't care
+    )
+    (fun n =>
+      match n with
+      | .Z    => True.intro
+      | .S n' => Derivation.LT_Succ n'
+    )
+    (fun {n₁ n₂} h1 h2 =>
+      match n₁,n₂,h1,h2 with
+      | .S _, .S _, _, ⟨d2⟩ => Derivation.LT_SuccR d2
+      | .Z,   _,    _, _    => True.intro
+    )
 
 end CompareNat3
