@@ -86,7 +86,7 @@ instance [OfNat PNat n] : OfNat Expr n where
 namespace Expr
 
 /--
-`size`は算術式の大きさを与える。
+`size`は算術式の大きさを与える。$\newcommand\Size{\mathord{\mathit{size}}}$
 -/
 def size : Expr → _root_.Nat
   | .Nat .Z     => 1
@@ -110,7 +110,7 @@ theorem size_uniq {e : Expr} : e.size = n → e.size = n' → n = n'
   | h, h' => Eq.trans h.symm h'
 
 /--
-`height`は算術式の高さを与える。
+`height`は算術式の高さを与える。$\newcommand\Height{\mathord{\mathit{height}}}$
 -/
 def height : Expr → _root_.Nat
   | .Nat .Z     => 1
@@ -133,6 +133,9 @@ theorem height_left_total : ∀ {e : Expr}, ∃ n, e.height = n
 theorem height_uniq {e : Expr} : e.height = n → e.height = n' → n = n'
   | h, h' => Eq.trans h.symm h'
 
+/--
+$$\forall\MV{e}\in\Set{Expr}. \Size(\MV{e}) \le 2^{\Height(\MV{e})} - 1.$$
+-/
 theorem size_le_prev_pow_2_height : (e : Expr) → e.size ≤ 2^e.height - 1
   | .Nat .Z =>
       calc
@@ -146,10 +149,10 @@ theorem size_le_prev_pow_2_height : (e : Expr) → e.size ≤ 2^e.height - 1
         _ ≤ 2 ^ height n.S   - 1
           := (Nat.sub_le_sub_right · 1) <|
             calc  2 ^ height n + 1
-              _ ≤ 2 ^ height n + 2 ^ height n         := Nat.add_le_add_left Nat.one_le_two_pow _
-              _ = 2 * 2 ^ height n                    := Nat.add_same
-              _ = 2 ^ (height n + 1)                  := Nat.pow_succ' |> .symm
-              _ = 2 ^ height n.S                      := by simp [height]
+              _ ≤ 2 ^ height n + 2 ^ height n := Nat.add_le_add_left Nat.one_le_two_pow _
+              _ = 2 * 2 ^ height n            := Nat.add_same
+              _ = 2 ^ (height n + 1)          := Nat.pow_succ' |> .symm
+              _ = 2 ^ height n.S              := by simp [height]
   | .Add e₁ e₂ =>
       calc
         _ = e₁.size + e₂.size + 1 := by simp [size]
