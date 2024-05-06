@@ -1,5 +1,5 @@
 import HelloTypeSystem.Basic
-open HelloTypeSystem (PNat Judgement Expr)
+import HelloTypeSystem.Derivation.Nat
 
 namespace HelloTypeSystem
 

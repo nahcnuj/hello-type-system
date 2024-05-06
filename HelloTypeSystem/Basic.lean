@@ -44,7 +44,7 @@ instance : Add Expr where
 instance : Mul Expr where
   mul := .Mul
 
-instance [OfNat PNat n]: OfNat Expr n where
+instance [OfNat PNat n] : OfNat Expr n where
   ofNat := Expr.Nat (OfNat.ofNat n)
 
 /--
