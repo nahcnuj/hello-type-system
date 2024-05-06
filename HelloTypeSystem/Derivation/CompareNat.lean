@@ -402,3 +402,46 @@ theorem CompareNat3.lt_trans : {n₁ n₂ n₃ : PNat} → Derivation (.LT n₁ 
             have ⟨𝒟₂₃⟩ := lt_of_S_lt_S d23
             h <| 𝒟₂₃.LT_SuccR
       )
+
+/-!
+### 定理2.14 [基礎概念,§2.1]
+1 ⇒ 2, 2 ⇒ 3, 3 ⇒ 1を示す。
+-/
+theorem CN2_of_CN1 : CompareNat1.Derivable (.LT n₁ n₂) → CompareNat2.Derivable (.LT n₁ n₂) :=
+  fun ⟨d⟩ => d.induction (motive := fun n₁ n₂ => CompareNat2.Derivable (.LT n₁ n₂))
+    (PNat.rec
+      (CompareNat2.Derivation.LT_Zero .Z)
+      (fun _ ⟨d⟩ => CompareNat2.Derivation.LT_SuccSucc d)
+    )
+    (fun _ _ ⟨d12⟩ ⟨d23⟩ => CompareNat2.lt_trans d12 d23)
+
+theorem CN3_of_CN2 : CompareNat2.Derivable (.LT n₁ n₂) → CompareNat3.Derivable (.LT n₁ n₂) :=
+  fun ⟨𝒟₂⟩ => 𝒟₂.induction (motive := fun n₁ n₂ => CompareNat3.Derivable (.LT n₁ n₂))
+    (PNat.rec
+      (CompareNat3.Derivation.LT_Succ .Z)
+      (fun _ ⟨d⟩ => CompareNat3.Derivation.LT_SuccR d)
+    )
+    (fun {_ n₂} _ ⟨𝒟₃⟩ =>
+      match n₂ with
+      | .Z   => nomatch 𝒟₃
+      | .S _ => 𝒟₃.induction (motive := fun n₁ n₂ => CompareNat3.Derivable (.LT n₁.S n₂.S))
+          (fun n => CompareNat3.Derivation.LT_Succ n.S)
+          (fun _ ⟨D⟩ => CompareNat3.Derivation.LT_SuccR D)
+    )
+
+theorem CN1_of_CN3 : CompareNat3.Derivable (.LT n₁ n₂) → CompareNat1.Derivable (.LT n₁ n₂) :=
+  fun ⟨𝒟₃⟩ => 𝒟₃.induction (motive := fun n₁ n₂ => CompareNat1.Derivable (.LT n₁ n₂))
+    (CompareNat1.Derivation.LT_Succ ·)
+    (fun {_ n₂} _ ⟨𝒟₁⟩ => CompareNat1.Derivation.LT_Trans 𝒟₁ (.LT_Succ n₂))
+
+/-!
+同値な命題として定義して練習問題2.9 [基礎概念,§2.5]の解答とする。
+-/
+theorem CN1_iff_CN2 : CompareNat1.Derivable (.LT n₁ n₂) ↔ CompareNat2.Derivable (.LT n₁ n₂) :=
+  ⟨CN2_of_CN1, CN1_of_CN3 ∘ CN3_of_CN2⟩
+
+theorem CN2_iff_CN3 : CompareNat2.Derivable (.LT n₁ n₂) ↔ CompareNat3.Derivable (.LT n₁ n₂) :=
+  ⟨CN3_of_CN2, CN2_of_CN1 ∘ CN1_of_CN3⟩
+
+theorem CN3_iff_CN1 : CompareNat3.Derivable (.LT n₁ n₂) ↔ CompareNat1.Derivable (.LT n₁ n₂) :=
+  ⟨CN1_of_CN3, CN3_of_CN2 ∘ CN2_of_CN1⟩
