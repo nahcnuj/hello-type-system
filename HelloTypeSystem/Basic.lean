@@ -1,3 +1,5 @@
+import «HelloTypeSystem».Util
+
 namespace HelloTypeSystem
 
 /-!
@@ -130,11 +132,6 @@ theorem height_left_total : ∀ {e : Expr}, ∃ n, e.height = n
 -/
 theorem height_uniq {e : Expr} : e.height = n → e.height = n' → n = n'
   | h, h' => Eq.trans h.symm h'
-
-theorem _root_.Nat.add_same {n : _root_.Nat} : n + n = 2 * n :=
-  calc
-    _ = 1 * n + 1 * n := by rw [Nat.one_mul]
-    _ = _             := Nat.add_mul 1 1 _ |> .symm
 
 theorem size_le_prev_pow_2_height : (e : Expr) → e.size ≤ 2^e.height - 1
   | .Nat .Z =>
