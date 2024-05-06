@@ -13,7 +13,7 @@
         "Gruntfuggly.todo-tree"
       ],
       "settings": {
-        "todo-tree.regex.regex": "(//|#|<!--|;|/\\*|^|^[ \\t]*(-|\\d+.))\\s*($TAGS)"
+        "todo-tree.regex.regex": "(--|//|#|<!--|;|/\\*|^|^[ \\t]*(-|\\d+.))\\s*($TAGS)"
       }
     }
   }

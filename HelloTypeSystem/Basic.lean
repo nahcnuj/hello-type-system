@@ -191,7 +191,8 @@ theorem size_le_prev_pow_2_height : (e : Expr) → e.size ≤ 2^e.height - 1
                 _ = _
                   := Nat.add_sub_add_right _ 1 1
         _ = _ := by simp [height]
-  | .Mul e₁ e₂ => sorry
+  | .Mul e₁ e₂ =>
+      sorry -- TODO prove the Mul case
 
 end Expr
 
