@@ -464,4 +464,59 @@ inductive Derivation : Judgement → Type where
   | DR_TimesR {n₁ : PNat}
     : Derivation (e₂ ⟶' e₂') → Derivation (n₁ * e₂ ⟶' n₁ * e₂')
 
+abbrev Derivable := @HelloTypeSystem.Derivable Derivation
+
 end ReduceNatExpr
+
+/-!
+### 決定的簡約${}\DReduces{}$の簡約順序（練習問題1.10 [基礎概念,§1.4]）
+ReduceNatExprは加算・乗算の左から簡約を進めるようになっていた。
+-/
+
+namespace ReduceNatExprR
+/--
+導出システムReduceNatExprRの推論規則
+
+ReduceNatExprの推論規則における決定的簡約${\DReduces}$のための規則を、加算・乗算の右側の部分式から簡約するように変更したもの。
+-/
+inductive Derivation : Judgement → Type where
+  | P_Zero (n : PNat)
+    : Derivation (.Plus 0 n n)
+  | P_Succ {n₁ n₂ n}
+    : Derivation (.Plus n₁ n₂ n) → Derivation (.Plus n₁.S n₂ n.S)
+  | T_Zero (n : PNat)
+    : Derivation (.Times 0 n 0)
+  | T_Succ {n₁ n₂ n₃ n₄ : PNat}
+    : Derivation (.Times n₁ n₂ n₃) → Derivation (.Plus n₂ n₃ n₄) → Derivation (.Times n₁.S n₂ n₄)
+  | R_Plus
+    : Derivation (.Plus n₁ n₂ n₃) → Derivation (n₁ + n₂ ⟶ n₃)
+  | R_Times
+    : Derivation (.Times n₁ n₂ n₃) → Derivation (n₁ * n₂ ⟶ n₃)
+  | R_PlusL
+    : Derivation (e₁ ⟶ e₁') → Derivation (e₁ + e₂ ⟶ e₁' + e₂)
+  | R_PlusR
+    : Derivation (e₂ ⟶ e₂') → Derivation (e₁ + e₂ ⟶ e₁ + e₂')
+  | R_TimesL
+    : Derivation (e₁ ⟶ e₁') → Derivation (e₁ * e₂ ⟶ e₁' * e₂)
+  | R_TimesR
+    : Derivation (e₂ ⟶ e₂') → Derivation (e₁ * e₂ ⟶ e₁ * e₂')
+  | MR_Zero
+    : Derivation (e ⟶* e)
+  | MR_Once
+    : Derivation (e ⟶ e') → Derivation (e ⟶* e')
+  | MR_Multi
+    : Derivation (e ⟶* e') → Derivation (e' ⟶* e'') → Derivation (e ⟶* e'')
+  | DR_Plus
+    : Derivation (.Plus n₁ n₂ n₃) → Derivation (n₁ + n₂ ⟶' n₃)
+  | DR_Times
+    : Derivation (.Times n₁ n₂ n₃) → Derivation (n₁ * n₂ ⟶' n₃)
+  | DR_PlusR'
+    : Derivation (e₂ ⟶' e₂') → Derivation (e₁ + e₂ ⟶' e₁ + e₂')
+  | DR_PlusL' {n₂ : PNat}
+    : Derivation (e₁ ⟶' e₁') → Derivation (e₁ + n₂ ⟶' e₁' + n₂)
+  | DR_TimesR'
+    : Derivation (e₂ ⟶' e₂') → Derivation (e₁ * e₂ ⟶' e₁ * e₂')
+  | DR_TimesL' {n₂ : PNat}
+    : Derivation (e₁ ⟶' e₁') → Derivation (e₁ * n₂ ⟶' e₁' * n₂)
+
+end ReduceNatExprR

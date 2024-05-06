@@ -81,58 +81,25 @@ ReduceNatExprは加算・乗算の左から簡約を進めるようになって�
 
 ### 練習問題1.10 [基礎概念,§1.4]
 -/
-namespace ReduceNatExprR
-/--
-導出システムReduceNatExprRの推論規則
 
-ReduceNatExprの推論規則における決定的簡約${\DReduces}$のための規則を、加算・乗算の右側の部分式から簡約するように変更したもの。
+/-!
+## 決定的簡約${}\DReduces{}$における簡約順序
+ReduceNatExprは加算・乗算の左から簡約を進めるようになっていた。
 -/
-inductive Derivation : Judgement → Type where
-  | P_Zero (n : PNat)
-    : Derivation (.Plus 0 n n)
-  | P_Succ {n₁ n₂ n}
-    : Derivation (.Plus n₁ n₂ n) → Derivation (.Plus n₁.S n₂ n.S)
-  | T_Zero (n : PNat)
-    : Derivation (.Times 0 n 0)
-  | T_Succ {n₁ n₂ n₃ n₄ : PNat}
-    : Derivation (.Times n₁ n₂ n₃) → Derivation (.Plus n₂ n₃ n₄) → Derivation (.Times n₁.S n₂ n₄)
-  | R_Plus
-    : Derivation (.Plus n₁ n₂ n₃) → Derivation (n₁ + n₂ ⟶ n₃)
-  | R_Times
-    : Derivation (.Times n₁ n₂ n₃) → Derivation (n₁ * n₂ ⟶ n₃)
-  | R_PlusL
-    : Derivation (e₁ ⟶ e₁') → Derivation (e₁ + e₂ ⟶ e₁' + e₂)
-  | R_PlusR
-    : Derivation (e₂ ⟶ e₂') → Derivation (e₁ + e₂ ⟶ e₁ + e₂')
-  | R_TimesL
-    : Derivation (e₁ ⟶ e₁') → Derivation (e₁ * e₂ ⟶ e₁' * e₂)
-  | R_TimesR
-    : Derivation (e₂ ⟶ e₂') → Derivation (e₁ * e₂ ⟶ e₁ * e₂')
-  | MR_Zero
-    : Derivation (e ⟶* e)
-  | MR_Once
-    : Derivation (e ⟶ e') → Derivation (e ⟶* e')
-  | MR_Multi
-    : Derivation (e ⟶* e') → Derivation (e' ⟶* e'') → Derivation (e ⟶* e'')
-  | DR_Plus
-    : Derivation (.Plus n₁ n₂ n₃) → Derivation (n₁ + n₂ ⟶' n₃)
-  | DR_Times
-    : Derivation (.Times n₁ n₂ n₃) → Derivation (n₁ * n₂ ⟶' n₃)
-  | DR_PlusR'
-    : Derivation (e₂ ⟶' e₂') → Derivation (e₁ + e₂ ⟶' e₁ + e₂')
-  | DR_PlusL' {n₂ : PNat}
-    : Derivation (e₁ ⟶' e₁') → Derivation (e₁ + n₂ ⟶' e₁' + n₂)
-  | DR_TimesR'
-    : Derivation (e₂ ⟶' e₂') → Derivation (e₁ * e₂ ⟶' e₁ * e₂')
-  | DR_TimesL' {n₂ : PNat}
-    : Derivation (e₁ ⟶' e₁') → Derivation (e₁ * n₂ ⟶' e₁' * n₂)
+namespace ReduceNatExprR
+/-!
+### ReduceNatExprRによる導出の例
+-/
 
 def derive_times_SZ_SZ : Derivation (.Times 1 1 1) :=
   (.T_Zero 1 |>
     (.T_Succ · (.P_Zero 0 |> .P_Succ)))
 
 /-!
-#### (1) $\TT{SZ * SZ + SZ * SZ} \DReduces \TT{SZ * SZ + SZ}$
+#### 練習問題1.10 [基礎概念,§1.4]
+-/
+/--
+(1) $\TT{SZ * SZ + SZ * SZ} \DReduces \TT{SZ * SZ + SZ}$
 -/
 def dreduce_add_mul_SZ_SZ_mul_SZ_SZ : Derivation (1 * 1 + 1 * 1 ⟶' 1 * 1 + 1) :=
   (.DR_PlusR'
@@ -146,3 +113,5 @@ def dreduce_add_mul_SZ_SZ_SZ : Derivation (1 * 1 + 1 ⟶' 1 + 1) :=
   (.DR_PlusL'
     (.DR_Times
       derive_times_SZ_SZ))
+
+end ReduceNatExprR
