@@ -27,10 +27,10 @@ Lean 4でプログラミング言語の型システムや意味論に入門す�
     - EvalNatExpr：算術式の評価
     - ReduceNatExpr：算術式の簡約
 - メタ定理の証明
-  - [導出システムNat](./HelloTypeSystem/Meta/Nat.lean)
-  - [導出システムCompareNat1--3](./HelloTypeSystem/Meta/CompareNat.lean)
-  - [導出システムEvalNatExpr](./HelloTypeSystem/Meta/EvalNatExpr.lean)
-  - [導出システムReduceNatExpr](./HelloTypeSystem/Meta/ReduceNatExpr.lean)
+  - [導出システムNat](./HelloTypeSystem/Meta/Nat.html)
+  - [導出システムCompareNat1--3](./HelloTypeSystem/Meta/CompareNat.html)
+  - [導出システムEvalNatExpr](./HelloTypeSystem/Meta/EvalNatExpr.html)
+  - [導出システムReduceNatExpr](./HelloTypeSystem/Meta/ReduceNatExpr.html)
 
 ## Notation
 - $\MV{n},\MV{n_1},\dots$（太字斜体）：メタ変数。特にペアノ自然数の場合はそれに対応する普通の自然数を$n,n_1,\dots$と書く。
