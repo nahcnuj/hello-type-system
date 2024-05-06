@@ -1,57 +1,10 @@
 import HelloTypeSystem.Basic
 
-namespace HelloTypeSystem
+namespace HelloTypeSystem.Nat
 
 /-!
 # 自然数の加算・乗算
--/
-namespace Nat
-/--
-導出システムNatの推論規則による導出
--/
-inductive Derivation : Judgement → Type where
-  /--
-  任意のペアノ自然数$\MV{n}$に対して、判断"$\TT{Z plus $\MV{n}$ is $\MV{n}$}$"を導いて良い。
-  -/
-  | P_Zero (n : PNat)
-    : Derivation (.Plus .Z n n)
-  /--
-  任意のペアノ自然数$\MV{n_1},\MV{n_2},\MV{n_3}$に対して、判断"$\TT{$\MV{n_1}$ plus $\MV{n_2}$ is $\MV{n_3}$}$"から"$\TT{S$\MV{n_1}$ plus $\MV{n_2}$ is S$\MV{n_3}$}$"を導いて良い。
-  -/
-  | P_Succ {n₁ n₂ n₃ : PNat}
-    : Derivation (.Plus n₁ n₂ n₃) → Derivation (.Plus n₁.S n₂ n₃.S)
-  /--
-  "$\TT{Z times $\MV{n}$ is Z}$"
-  -/
-  | T_Zero (n : PNat)
-    : Derivation (.Times .Z n .Z)
-  /--
-  "$\TT{$\MV{n_1}$ times $\MV{n_2}$ is $\MV{n_3}$}$"かつ"$\TT{$\MV{n_2}$ plus $\MV{n_3}$ is $\MV{n_4}$}$"ならば、"$\TT{S$\MV{n_1}$ times $\MV{n_2}$ is $\MV{n_4}$}$"
-  -/
-  | T_Succ {n₁ n₂ n₃ n₄ : PNat}
-    : Derivation (.Times n₁ n₂ n₃) → Derivation (.Plus n₂ n₃ n₄) → Derivation (.Times n₁.S n₂ n₄)
 
-private abbrev Derivable := @HelloTypeSystem.Derivable Derivation
-
-def Derivation.induction_plus
-  {motive : PNat → PNat → PNat → Sort _} -- P(n₁,n₂,n₃)
-  {n₁ n₂ n₃ : PNat}
-  (hP_Zero : ∀ n : PNat, motive .Z n n)
-  (hP_Succ : ∀ {n₁ n₂ n₃ : PNat}, Derivation (.Plus n₁ n₂ n₃) → motive n₁ n₂ n₃ → motive n₁.S n₂ n₃.S)
-: Derivation (.Plus n₁ n₂ n₃) → motive n₁ n₂ n₃
-  | .P_Zero n => hP_Zero n
-  | .P_Succ d => hP_Succ d (Derivation.induction_plus hP_Zero hP_Succ d)
-
-def Derivation.induction_times
-  {motive : PNat → PNat → PNat → Sort _} -- P(n₁,n₂,n₃)
-  {n₁ n₂ n₃ : PNat}
-  (hT_Zero : ∀ n : PNat, motive .Z n .Z)
-  (hT_Succ : ∀ {n₁ n₂ n₃ n₄: PNat}, Derivation (.Times n₁ n₂ n₃) → Derivation (.Plus n₂ n₃ n₄) → motive n₁ n₂ n₃ → motive n₁.S n₂ n₄)
-: Derivation (.Times n₁ n₂ n₃) → motive n₁ n₂ n₃
-  | .T_Zero n     => hT_Zero n
-  | .T_Succ dt dp => hT_Succ dt dp (dt.induction_times hT_Zero hT_Succ)
-
-/-!
 ## 導出システムNatによる導出の例
 -/
 

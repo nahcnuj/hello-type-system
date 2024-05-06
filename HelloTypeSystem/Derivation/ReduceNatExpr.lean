@@ -1,55 +1,10 @@
 import HelloTypeSystem.Basic
-open HelloTypeSystem (PNat Judgement Expr)
 
-namespace HelloTypeSystem
+namespace HelloTypeSystem.ReduceNatExpr
 
 /-!
 # 算術式の簡約
 -/
-
-namespace ReduceNatExpr
-/--
-導出システムReduceNatExprの推論規則
--/
-inductive Derivation : Judgement → Type where
-  | P_Zero (n : PNat)
-    : Derivation (.Plus 0 n n)
-  | P_Succ {n₁ n₂ n}
-    : Derivation (.Plus n₁ n₂ n) → Derivation (.Plus n₁.S n₂ n.S)
-  | T_Zero (n : PNat)
-    : Derivation (.Times 0 n 0)
-  | T_Succ {n₁ n₂ n₃ n₄ : PNat}
-    : Derivation (.Times n₁ n₂ n₃) → Derivation (.Plus n₂ n₃ n₄) → Derivation (.Times n₁.S n₂ n₄)
-  | R_Plus
-    : Derivation (.Plus n₁ n₂ n₃) → Derivation (n₁ + n₂ ⟶ n₃)
-  | R_Times
-    : Derivation (.Times n₁ n₂ n₃) → Derivation (n₁ * n₂ ⟶ n₃)
-  | R_PlusL
-    : Derivation (e₁ ⟶ e₁') → Derivation (e₁ + e₂ ⟶ e₁' + e₂)
-  | R_PlusR
-    : Derivation (e₂ ⟶ e₂') → Derivation (e₁ + e₂ ⟶ e₁ + e₂')
-  | R_TimesL
-    : Derivation (e₁ ⟶ e₁') → Derivation (e₁ * e₂ ⟶ e₁' * e₂)
-  | R_TimesR
-    : Derivation (e₂ ⟶ e₂') → Derivation (e₁ * e₂ ⟶ e₁ * e₂')
-  | MR_Zero
-    : Derivation (e ⟶* e)
-  | MR_Once
-    : Derivation (e ⟶ e') → Derivation (e ⟶* e')
-  | MR_Multi
-    : Derivation (e ⟶* e') → Derivation (e' ⟶* e'') → Derivation (e ⟶* e'')
-  | DR_Plus
-    : Derivation (.Plus n₁ n₂ n₃) → Derivation (n₁ + n₂ ⟶' n₃)
-  | DR_Times
-    : Derivation (.Times n₁ n₂ n₃) → Derivation (n₁ * n₂ ⟶' n₃)
-  | DR_PlusL
-    : Derivation (e₁ ⟶' e₁') → Derivation (e₁ + e₂ ⟶' e₁' + e₂)
-  | DR_PlusR {n₁ : PNat}
-    : Derivation (e₂ ⟶' e₂') → Derivation (n₁ + e₂ ⟶' n₁ + e₂')
-  | DR_TimesL
-    : Derivation (e₁ ⟶' e₁') → Derivation (e₁ * e₂ ⟶' e₁' * e₂)
-  | DR_TimesR {n₁ : PNat}
-    : Derivation (e₂ ⟶' e₂') → Derivation (n₁ * e₂ ⟶' n₁ * e₂')
 
 /-!
 ## 算術式の簡約の例

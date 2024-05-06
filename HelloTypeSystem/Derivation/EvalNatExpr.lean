@@ -1,33 +1,11 @@
 import HelloTypeSystem.Basic
 import HelloTypeSystem.Derivation.Nat
 
-namespace HelloTypeSystem
+namespace HelloTypeSystem.EvalNatExpr
 
 /-!
 # 算術式の評価
 -/
-
-namespace EvalNatExpr
-/--
-導出システムEvalNatExprの推論規則
--/
-inductive Derivation : Judgement → Type where
-  | P_Zero (n : PNat)
-    : Derivation (.Plus .Z n n)
-  | P_Succ {n₁ n₂ n}
-    : Derivation (.Plus n₁ n₂ n) → Derivation (.Plus n₁.S n₂ n.S)
-  | T_Zero (n : PNat)
-    : Derivation (.Times .Z n .Z)
-  | T_Succ {n₁ n₂ n₃ n₄ : PNat}
-    : Derivation (.Times n₁ n₂ n₃) → Derivation (.Plus n₂ n₃ n₄) → Derivation (.Times n₁.S n₂ n₄)
-  | E_Const (n : PNat)
-    : Derivation (n ⇓ n)
-  | E_Add
-    : Derivation (e₁ ⇓ n₁) → Derivation (e₂ ⇓ n₂) → Derivation (.Plus n₁ n₂ n) → Derivation (e₁ + e₂ ⇓ n)
-  | E_Mul
-    : Derivation (e₁ ⇓ n₁) → Derivation (e₂ ⇓ n₂) → Derivation (.Times n₁ n₂ n) → Derivation (e₁ * e₂ ⇓ n)
-
-private abbrev Derivable := @HelloTypeSystem.Derivable Derivation
 
 /-!
 ## 算術式の評価の例

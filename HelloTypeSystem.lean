@@ -15,21 +15,27 @@ $\newcommand\DReduces{\mathrel{\longrightarrow_{\\!d}}}$
 /-!
 # Hello, Type System
 Lean 4でプログラミング言語の型システムや意味論に入門するリポジトリです。
+
 ## Index
 - [諸定義](./HelloTypeSystem/Basic.html)
-  - [ペアノ自然数`PNat`](./HelloTypeSystem/Basic.html#HelloTypeSystem.PNat)
-  - [算術式`Expr`](./HelloTypeSystem/Basic.html#HelloTypeSystem.Expr)
-  - [判断(judgement)](./HelloTypeSystem/Basic.html#HelloTypeSystem.Judgement)
-- 導出システム(derivation systems)
-  - [`Nat`](./HelloTypeSystem/Derivation/Nat.html#Nat.Derivation)
-  - [`CompareNat1`](./HelloTypeSystem/Derivation/CompareNat.html#CompareNat1.Derivation)
-  - [`CompareNat2`](./HelloTypeSystem/Derivation/CompareNat.html#CompareNat2.Derivation)
-  - [`CompareNat3`](./HelloTypeSystem/Derivation/CompareNat.html#CompareNat3.Derivation)
-  - [`EvalNatExpr`](./HelloTypeSystem/Derivation/EvalNatExpr.html#EvalNatExpr.Derivation)
-  - [`ReduceNatExpr`](./HelloTypeSystem/Derivation/ReduceNatExpr.html#ReduceNatExpr.Derivation)
+  - ペアノ自然数
+  - 算術式
+  - 判断（judgement）
+  - 導出システム（derivation systems）
+    - Nat：ペアノ自然数の加算・乗算
+    - CompareNat1--3：ペアノ自然数の比較
+    - EvalNatExpr：算術式の評価
+    - ReduceNatExpr：算術式の簡約
+- メタ定理の証明
+  - [導出システムNat](./HelloTypeSystem/Derivation/Nat.lean)
+  - [導出システムCompareNat1--3](./HelloTypeSystem/Derivation/CompareNat.lean)
+  - [導出システムEvalNatExpr](./HelloTypeSystem/Derivation/EvalNatExpr.lean)
+  - [導出システムReduceNatExpr](./HelloTypeSystem/Derivation/ReduceNatExpr.lean)
+
 ## Notation
 - $\MV{n},\MV{n_1},\dots$（太字斜体）：メタ変数。特にペアノ自然数の場合はそれに対応する普通の自然数を$n,n_1,\dots$と書く。
 - $\Set{PNat},\Set{Expr},\dots$（太字立体）：BNFで定義された構文要素の集合
+
 ## References
 - 五十嵐淳 著. プログラミング言語の基礎概念, サイエンス社, 2011.7, (ライブラリ情報学コア・テキスト ; 24). 978-4-7819-1285-1. [https://ndlsearch.ndl.go.jp/books/R100000002-I000011238587](https://ndlsearch.ndl.go.jp/books/R100000002-I000011238587)
 - 大堀淳 著. プログラミング言語の基礎理論. 新装版, 共立出版, 2019.8. 978-4-320-12450-9. [https://ndlsearch.ndl.go.jp/books/R100000002-I029842615](https://ndlsearch.ndl.go.jp/books/R100000002-I029842615)

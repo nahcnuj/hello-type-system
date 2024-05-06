@@ -1,93 +1,10 @@
 import HelloTypeSystem.Basic
-open HelloTypeSystem (PNat Judgement)
 
 namespace HelloTypeSystem
 
 /-!
 # 自然数の大小比較
 -/
-
-namespace CompareNat1
-/--
-導出システムCompareNat1の推論規則
--/
-inductive Derivation : Judgement → Type where
-  | LT_Succ (n : PNat)
-    : Derivation (.LT n n.S)
-  | LT_Trans {n₁ n₂ n₃ : PNat}
-    : Derivation (.LT n₁ n₂) → Derivation (.LT n₂ n₃) → Derivation (.LT n₁ n₃)
-
-private abbrev Derivable := @HelloTypeSystem.Derivable Derivation
-
-/--
-CompareNat1における$\TT{$\MV{n_1}$ is less than $\MV{n_2}$}$の導出に関する帰納法で、
-ペアノ自然数に関する2項述語$P$について$\forall\MV{n_1},\MV{n_2}. \bigl[\TT{$\MV{n_1}$ is less than $\MV{n_2}$} \implies P(\MV{n_1},\MV{n_2})\bigr]$を示す。
-
-自動で生成される`casesOn`や`rec`などは`motive`の型が`(a : Judgement) → Derivation a → Sort u`となっていて、
-ペアノ自然数に関する述語$P(\MV{n_1},\MV{n_2})$を扱うには`PNat → PNat → Sort u`な関数を作る必要があった。
--/
-def Derivation.induction
-  {motive : PNat → PNat → Sort _} -- P(n₁,n₂)
-  {n₁ n₂ : PNat}
-  (H0 : ∀ n : PNat, motive n n.S)
-  (H1 : ∀ {n₁ n₂ n₃ : PNat}, Derivation (.LT n₁ n₂) → Derivation (.LT n₂ n₃) → motive n₁ n₂ → motive n₂ n₃ → motive n₁ n₃)
-: Derivation (.LT n₁ n₂) → motive n₁ n₂
-  | .LT_Succ k      => H0 k
-  | .LT_Trans 𝒟₁ 𝒟₂ => H1 𝒟₁ 𝒟₂ (induction H0 H1 𝒟₁) (induction H0 H1 𝒟₂)
-
-end CompareNat1
-
-namespace CompareNat2
-/--
-導出システムCompareNat2の推論規則
--/
-inductive Derivation : Judgement → Type where
-  | LT_Zero (n : PNat)
-    : Derivation (.LT .Z n.S)
-  | LT_SuccSucc {n₁ n₂ : PNat}
-    : Derivation (.LT n₁ n₂) → Derivation (.LT n₁.S n₂.S)
-
-private abbrev Derivable := @HelloTypeSystem.Derivable Derivation
-
-/--
-CompareNat2における$\TT{$\MV{n_1}$ is less than $\MV{n_2}$}$の導出に関する帰納法
--/
-def Derivation.induction
-  {motive : PNat → PNat → Sort _} -- P(n₁,n₂)
-  {n₁ n₂ : PNat}
-  (H0 : ∀ n : PNat, motive .Z n.S)
-  (H1 : ∀ {n₁ n₂ : PNat}, Derivation (.LT n₁ n₂) → motive n₁ n₂ → motive n₁.S n₂.S)
-: Derivation (.LT n₁ n₂) → motive n₁ n₂
-  | .LT_Zero n     => H0 n
-  | .LT_SuccSucc 𝒟 => H1 𝒟 (induction H0 H1 𝒟)
-
-end CompareNat2
-
-namespace CompareNat3
-/--
-導出システムCompareNat3の推論規則
--/
-inductive Derivation : Judgement → Type where
-  | LT_Succ (n : PNat)
-    : Derivation (.LT n n.S)
-  | LT_SuccR {n₁ n₂ : PNat}
-    : Derivation (.LT n₁ n₂) → Derivation (.LT n₁ n₂.S)
-
-private abbrev Derivable := @HelloTypeSystem.Derivable Derivation
-
-/--
-CompareNat3における$\TT{$\MV{n_1}$ is less than $\MV{n_2}$}$の導出に関する帰納法
--/
-def Derivation.induction
-  {motive : PNat → PNat → Sort _} -- P(n₁,n₂)
-  {n₁ n₂ : PNat}
-  (H0 : ∀ n : PNat, motive n n.S)
-  (H1 : ∀ {n₁ n₂ : PNat}, Derivation (.LT n₁ n₂) → motive n₁ n₂ → motive n₁ n₂.S)
-: Derivation (.LT n₁ n₂) → motive n₁ n₂
-  | .LT_Succ n  => H0 n
-  | .LT_SuccR 𝒟 => H1 𝒟 (induction H0 H1 𝒟)
-
-end CompareNat3
 
 /-!
 ## CompareNat1–3による導出の例
@@ -188,8 +105,7 @@ TODO: \[基礎理論,§1.3.2]の曖昧性の定義に従って証明できるか
 
 /-!
 ## CompareNat1–3に関するメタ定理
--/
-/-!
+
 ### 定理2.11 [基礎概念,§2.1]
 -/
 
