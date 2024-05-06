@@ -259,7 +259,7 @@ instance {𝒥 : Judgement} {Derivation : Judgement → Type u} : Coe (Derivatio
 /-!
 ### ペアノ自然数の加算・乗算：Nat
 -/
-namespace Nat
+namespace PeanoNat
 /--
 導出システムNatの推論規則による導出
 -/
@@ -305,7 +305,7 @@ def Derivation.induction_times
   | .T_Zero n     => hT_Zero n
   | .T_Succ dt dp => hT_Succ dt dp (dt.induction_times hT_Zero hT_Succ)
 
-end Nat
+end PeanoNat
 
 /-!
 ### ペアノ自然数の比較：CompareNat1--3

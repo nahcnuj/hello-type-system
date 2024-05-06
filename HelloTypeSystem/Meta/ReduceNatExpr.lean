@@ -76,7 +76,7 @@ def mreduce_add_mul_SZ_SZ_mul_SZ_SZ : Derivation (1 * 1 + 1 * 1 ⟶* 2) :=
 end ReduceNatExpr
 
 /-!
-## 決定的簡約$\DReduces$における簡約順序
+## 決定的簡約${}\DReduces{}$における簡約順序
 ReduceNatExprは加算・乗算の左から簡約を進めるようになっていた。
 
 ### 練習問題1.10 [基礎概念,§1.4]

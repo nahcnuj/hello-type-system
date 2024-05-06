@@ -1,6 +1,6 @@
 import HelloTypeSystem.Basic
 
-namespace HelloTypeSystem.Nat
+namespace HelloTypeSystem.PeanoNat
 
 /-!
 # 自然数の加算・乗算

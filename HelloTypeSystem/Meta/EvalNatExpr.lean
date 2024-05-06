@@ -1,5 +1,5 @@
 import HelloTypeSystem.Basic
-import HelloTypeSystem.Meta.Nat
+import HelloTypeSystem.Meta.PeanoNat
 
 namespace HelloTypeSystem.EvalNatExpr
 
@@ -97,31 +97,31 @@ def eval_mul_Z_add_SSZ_SSZ : Derivation (PNat.Z * (PNat.S (.S .Z) + PNat.S (.S .
     (.T_Zero (.S (.S (.S (.S .Z))))))
 
 /-!
-## EvalNatExprがNatの導出を含むこと
+## EvalNatExprがPeanoNatの導出を含むこと
 -/
 
-def Derivation.ofNatPlus : Nat.Derivation (.Plus n₁ n₂ n₃) → Derivation (.Plus n₁ n₂ n₃)
+def Derivation.ofNatPlus : PeanoNat.Derivation (.Plus n₁ n₂ n₃) → Derivation (.Plus n₁ n₂ n₃)
   | .P_Zero n => Derivation.P_Zero n
   | .P_Succ d => Derivation.P_Succ (ofNatPlus d)
-instance : Coe (Nat.Derivation (.Plus n₁ n₂ n₃)) (Derivation (.Plus n₁ n₂ n₃)) where
+instance : Coe (PeanoNat.Derivation (.Plus n₁ n₂ n₃)) (Derivation (.Plus n₁ n₂ n₃)) where
   coe := Derivation.ofNatPlus
 
-def Derivation.toNatPlus : Derivation (.Plus n₁ n₂ n₃) → Nat.Derivation (.Plus n₁ n₂ n₃)
-  | .P_Zero n => Nat.Derivation.P_Zero n
-  | .P_Succ 𝒟 => Nat.Derivation.P_Succ 𝒟.toNatPlus
-instance : Coe (Derivation (.Plus n₁ n₂ n₃)) (Nat.Derivation (.Plus n₁ n₂ n₃)) where
+def Derivation.toNatPlus : Derivation (.Plus n₁ n₂ n₃) → PeanoNat.Derivation (.Plus n₁ n₂ n₃)
+  | .P_Zero n => PeanoNat.Derivation.P_Zero n
+  | .P_Succ 𝒟 => PeanoNat.Derivation.P_Succ 𝒟.toNatPlus
+instance : Coe (Derivation (.Plus n₁ n₂ n₃)) (PeanoNat.Derivation (.Plus n₁ n₂ n₃)) where
   coe := Derivation.toNatPlus
 
-def Derivation.ofNatTimes : Nat.Derivation (.Times n₁ n₂ n₃) → Derivation (.Times n₁ n₂ n₃)
+def Derivation.ofNatTimes : PeanoNat.Derivation (.Times n₁ n₂ n₃) → Derivation (.Times n₁ n₂ n₃)
   | .T_Zero n => Derivation.T_Zero n
   | .T_Succ dt dp => Derivation.T_Succ (ofNatTimes dt) (ofNatPlus dp)
-instance : Coe (Nat.Derivation (.Times n₁ n₂ n₃)) (Derivation (.Times n₁ n₂ n₃)) where
+instance : Coe (PeanoNat.Derivation (.Times n₁ n₂ n₃)) (Derivation (.Times n₁ n₂ n₃)) where
   coe := Derivation.ofNatTimes
 
-def Derivation.toNatTimes : Derivation (.Times n₁ n₂ n₃) → Nat.Derivation (.Times n₁ n₂ n₃)
-  | .T_Zero n     => Nat.Derivation.T_Zero n
-  | .T_Succ dt dp => Nat.Derivation.T_Succ dt.toNatTimes dp
-instance : Coe (Derivation (.Times n₁ n₂ n₃)) (Nat.Derivation (.Times n₁ n₂ n₃)) where
+def Derivation.toNatTimes : Derivation (.Times n₁ n₂ n₃) → PeanoNat.Derivation (.Times n₁ n₂ n₃)
+  | .T_Zero n     => PeanoNat.Derivation.T_Zero n
+  | .T_Succ dt dp => PeanoNat.Derivation.T_Succ dt.toNatTimes dp
+instance : Coe (Derivation (.Times n₁ n₂ n₃)) (PeanoNat.Derivation (.Times n₁ n₂ n₃)) where
   coe := Derivation.toNatTimes
 
 /-!
@@ -133,11 +133,11 @@ theorem eval_left_total : (e : Expr) → ∃ n : PNat, Derivable (e ⇓ n) :=
   Expr.rec (motive := fun e => ∃ n : PNat, Derivable (e ⇓ n))
     (fun n => ⟨n, Derivation.E_Const n⟩)
     (fun _e₁ _e₂ ⟨n₁,⟨𝒟₁⟩⟩ ⟨n₂,⟨𝒟₂⟩⟩ =>
-      have ⟨«n₁+n₂», ⟨𝒟p⟩⟩ := Nat.derive_plus n₁ n₂
+      have ⟨«n₁+n₂», ⟨𝒟p⟩⟩ := PeanoNat.derive_plus n₁ n₂
       ⟨«n₁+n₂», ⟨Derivation.E_Add 𝒟₁ 𝒟₂ 𝒟p⟩⟩
     )
     (fun _e₁ _e₂ ⟨n₁,⟨𝒟₁⟩⟩ ⟨n₂,⟨𝒟₂⟩⟩ =>
-      have ⟨«n₁*n₂», ⟨𝒟t⟩⟩ := Nat.derive_times n₁ n₂
+      have ⟨«n₁*n₂», ⟨𝒟t⟩⟩ := PeanoNat.derive_times n₁ n₂
       ⟨«n₁*n₂», ⟨Derivation.E_Mul 𝒟₁ 𝒟₂ 𝒟t⟩⟩
     )
 
@@ -150,11 +150,11 @@ theorem eval_uniq : {e : Expr} → Derivation (.Eval e n₁) → Derivation (.Ev
   | .Add .., .E_Add 𝒟₁l 𝒟₁r 𝒟₁, .E_Add 𝒟₂l 𝒟₂r 𝒟₂ =>
       have heql := eval_uniq 𝒟₁l 𝒟₂l
       have heqr := eval_uniq 𝒟₁r 𝒟₂r
-      Nat.plus_uniq (heql ▸ heqr ▸ 𝒟₁.toNatPlus) 𝒟₂
+      PeanoNat.plus_uniq (heql ▸ heqr ▸ 𝒟₁.toNatPlus) 𝒟₂
   | .Mul ..,  .E_Mul 𝒟₁l 𝒟₁r 𝒟₁, .E_Mul 𝒟₂l 𝒟₂r 𝒟₂ =>
       have heql := eval_uniq 𝒟₁l 𝒟₂l
       have heqr := eval_uniq 𝒟₁r 𝒟₂r
-      Nat.times_uniq (heql ▸ heqr ▸ 𝒟₁.toNatTimes) 𝒟₂
+      PeanoNat.times_uniq (heql ▸ heqr ▸ 𝒟₁.toNatTimes) 𝒟₂
 
 /-!
 ### 算術式の諸性質
@@ -165,14 +165,15 @@ theorem eval_uniq : {e : Expr} → Derivation (.Eval e n₁) → Derivation (.Ev
 `+`の交換法則：定理2.17
 -/
 theorem eval_add_comm : Derivation (e₁ + e₂ ⇓ n) → Derivation (e₂ + e₁ ⇓ n)
-  | .E_Add e₁ e₂ 𝒟 => .E_Add e₂ e₁ (Nat.plus_comm 𝒟.toNatPlus)
+        -- TODO x
+  | .E_Add e₁ e₂ 𝒟 => .E_Add e₂ e₁ (PeanoNat.plus_comm 𝒟.toNatPlus)
 
 /--
 `+`の結合則：定理2.18
 -/
 theorem eval_add_assoc : Derivation ((e₁ + e₂) + e₃ ⇓ n) → Derivable (e₁ + (e₂ + e₃) ⇓ n)
   | .E_Add (.E_Add e₁ e₂ 𝒟') e₃ 𝒟 =>
-      have ⟨_, ⟨𝒟₁⟩, ⟨𝒟₂⟩⟩ := Nat.plus_assoc_right 𝒟'.toNatPlus 𝒟.toNatPlus
+      have ⟨_, ⟨𝒟₁⟩, ⟨𝒟₂⟩⟩ := PeanoNat.plus_assoc_right 𝒟'.toNatPlus 𝒟.toNatPlus
       ⟨Derivation.E_Add e₁ (.E_Add e₂ e₃ 𝒟₁) (Derivation.ofNatPlus 𝒟₂)⟩
 
 /--
@@ -180,7 +181,7 @@ theorem eval_add_assoc : Derivation ((e₁ + e₂) + e₃ ⇓ n) → Derivable (
 -/
 theorem eval_mul_comm : Derivation (e₁ * e₂ ⇓ n) → Derivable (e₂ * e₁ ⇓ n)
   | .E_Mul e₁ e₂ 𝒟 =>
-      have ⟨𝒟⟩ := Nat.times_comm 𝒟.toNatTimes
+      have ⟨𝒟⟩ := PeanoNat.times_comm 𝒟.toNatTimes
       Derivation.E_Mul e₂ e₁ (Derivation.ofNatTimes 𝒟)
 
 /--
@@ -188,5 +189,5 @@ theorem eval_mul_comm : Derivation (e₁ * e₂ ⇓ n) → Derivable (e₂ * e�
 -/
 theorem eval_mul_assoc : Derivation ((e₁ * e₂) * e₃ ⇓ n) → Derivable (e₁ * (e₂ * e₃) ⇓ n)
   | .E_Mul (.E_Mul e₁ e₂ 𝒟') e₃ 𝒟 =>
-      have ⟨_, ⟨𝒟₁⟩, ⟨𝒟₂⟩⟩:= Nat.times_assoc_right 𝒟'.toNatTimes 𝒟.toNatTimes
+      have ⟨_, ⟨𝒟₁⟩, ⟨𝒟₂⟩⟩:= PeanoNat.times_assoc_right 𝒟'.toNatTimes 𝒟.toNatTimes
       Derivation.E_Mul e₁ (.E_Mul e₂ e₃ 𝒟₁) (Derivation.ofNatTimes 𝒟₂)
