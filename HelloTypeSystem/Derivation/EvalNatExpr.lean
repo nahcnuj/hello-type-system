@@ -122,11 +122,11 @@ def eval_mul_Z_add_SSZ_SSZ : Derivation (PNat.Z * (PNat.S (.S .Z) + PNat.S (.S .
 ## EvalNatExprがNatの導出を含むこと
 -/
 
+def Derivation.ofNatPlus : Nat.Derivation (.Plus n₁ n₂ n₃) → Derivation (.Plus n₁ n₂ n₃)
+  | .P_Zero n => Derivation.P_Zero n
+  | .P_Succ d => Derivation.P_Succ (ofNatPlus d)
 instance : Coe (Nat.Derivation (.Plus n₁ n₂ n₃)) (Derivation (.Plus n₁ n₂ n₃)) where
-  coe :=
-    Nat.Derivation.induction_plus (motive := fun n₁ n₂ n₃ => Derivation (.Plus n₁ n₂ n₃))
-      (Derivation.P_Zero)
-      (fun _ => Derivation.P_Succ)
+  coe := Derivation.ofNatPlus
 
 def Derivation.toNatPlus : Derivation (.Plus n₁ n₂ n₃) → Nat.Derivation (.Plus n₁ n₂ n₃)
   | .P_Zero n => Nat.Derivation.P_Zero n
@@ -134,11 +134,11 @@ def Derivation.toNatPlus : Derivation (.Plus n₁ n₂ n₃) → Nat.Derivation 
 instance : Coe (Derivation (.Plus n₁ n₂ n₃)) (Nat.Derivation (.Plus n₁ n₂ n₃)) where
   coe := Derivation.toNatPlus
 
+def Derivation.ofNatTimes : Nat.Derivation (.Times n₁ n₂ n₃) → Derivation (.Times n₁ n₂ n₃)
+  | .T_Zero n => Derivation.T_Zero n
+  | .T_Succ dt dp => Derivation.T_Succ (ofNatTimes dt) (ofNatPlus dp)
 instance : Coe (Nat.Derivation (.Times n₁ n₂ n₃)) (Derivation (.Times n₁ n₂ n₃)) where
-  coe :=
-    Nat.Derivation.induction_times (motive := fun n₁ n₂ n₃ => Derivation (.Times n₁ n₂ n₃))
-      (Derivation.T_Zero ·)
-      (fun _ dp dt => Derivation.T_Succ dt dp)
+  coe := Derivation.ofNatTimes
 
 def Derivation.toNatTimes : Derivation (.Times n₁ n₂ n₃) → Nat.Derivation (.Times n₁ n₂ n₃)
   | .T_Zero n     => Nat.Derivation.T_Zero n
@@ -177,3 +177,38 @@ theorem eval_uniq : {e : Expr} → Derivation (.Eval e n₁) → Derivation (.Ev
       have heql := eval_uniq 𝒟₁l 𝒟₂l
       have heqr := eval_uniq 𝒟₁r 𝒟₂r
       Nat.times_uniq (heql ▸ heqr ▸ 𝒟₁.toNatTimes) 𝒟₂
+
+/-!
+### 算術式の諸性質
+[基礎概念,§2.1]より。
+-/
+
+/--
+`+`の交換法則：定理2.17
+-/
+theorem eval_add_comm : Derivation (e₁ + e₂ ⇓ n) → Derivation (e₂ + e₁ ⇓ n)
+  | .E_Add e₁ e₂ 𝒟 => .E_Add e₂ e₁ (Nat.plus_comm 𝒟.toNatPlus)
+
+/--
+`+`の結合則：定理2.18
+-/
+theorem eval_add_assoc : Derivation ((e₁ + e₂) + e₃ ⇓ n) → Derivable (e₁ + (e₂ + e₃) ⇓ n)
+  | .E_Add (.E_Add e₁ e₂ 𝒟') e₃ 𝒟 =>
+      have ⟨_, ⟨𝒟₁⟩, ⟨𝒟₂⟩⟩ := Nat.plus_assoc_right 𝒟'.toNatPlus 𝒟.toNatPlus
+      ⟨Derivation.E_Add e₁ (.E_Add e₂ e₃ 𝒟₁) (Derivation.ofNatPlus 𝒟₂)⟩
+
+/--
+`*`の交換法則：定理2.19
+-/
+theorem eval_mul_comm : Derivation (e₁ * e₂ ⇓ n) → Derivable (e₂ * e₁ ⇓ n)
+  | .E_Mul e₁ e₂ 𝒟 =>
+      have ⟨𝒟⟩ := Nat.times_comm 𝒟.toNatTimes
+      Derivation.E_Mul e₂ e₁ (Derivation.ofNatTimes 𝒟)
+
+/--
+`*`の結合則：定理2.20
+-/
+theorem eval_mul_assoc : Derivation ((e₁ * e₂) * e₃ ⇓ n) → Derivable (e₁ * (e₂ * e₃) ⇓ n)
+  | .E_Mul (.E_Mul e₁ e₂ 𝒟') e₃ 𝒟 =>
+      have ⟨_, ⟨𝒟₁⟩, ⟨𝒟₂⟩⟩:= Nat.times_assoc_right 𝒟'.toNatTimes 𝒟.toNatTimes
+      Derivation.E_Mul e₁ (.E_Mul e₂ e₃ 𝒟₁) (Derivation.ofNatTimes 𝒟₂)
