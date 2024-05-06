@@ -1,5 +1,5 @@
 import HelloTypeSystem.Basic
-import HelloTypeSystem.Derivation.Nat
+import HelloTypeSystem.Meta.Nat
 
 namespace HelloTypeSystem.EvalNatExpr
 
