@@ -3,8 +3,11 @@ open HelloTypeSystem (PNat Judgement Expr)
 
 namespace HelloTypeSystem
 
-namespace EvalNatExpr
+/-!
+# 算術式の評価
+-/
 
+namespace EvalNatExpr
 /--
 導出システムEvalNatExprの推論規則
 -/
@@ -24,6 +27,12 @@ inductive Derivation : Judgement → Type where
   | E_Mul
     : Derivation (e₁ ⇓ n₁) → Derivation (e₂ ⇓ n₂) → Derivation (.Times n₁ n₂ n) → Derivation (e₁ * e₂ ⇓ n)
 
+/-!
+## 算術式の評価の例
+### 練習問題1.8 [基礎概念,§1.4]
+#### (1) `Z + SSZ ⇓ SSZ`
+-/
+
 /--
 $$
 \dfrac{
@@ -33,19 +42,25 @@ $$
 }{\TT{Z + SSZ} \Evals \TT{SSZ}}\mathsf{E\\_Add}.
 $$
 -/
-def exercise_1_8_1 : Derivation (PNat.Z + PNat.S (.S .Z) ⇓ .S (.S .Z)) :=
+def eval_add_Z_SSZ : Derivation (PNat.Z + PNat.S (.S .Z) ⇓ .S (.S .Z)) :=
   (.E_Add
     (.E_Const .Z)
     (.E_Const (.S (.S .Z)))
     (.P_Zero (.S (.S .Z))))
 
-def exercise_1_8_2 : Derivation (PNat.S (.S .Z) + PNat.Z ⇓ .S (.S .Z)) :=
+/-!
+#### (2) `SSZ + Z ⇓ SSZ`
+-/
+def eval_add_SSZ_Z : Derivation (PNat.S (.S .Z) + PNat.Z ⇓ .S (.S .Z)) :=
   (.E_Add
     (.E_Const (.S (.S .Z)))
     (.E_Const .Z)
     (.P_Zero .Z |> .P_Succ |> .P_Succ))
 
-def exercise_1_8_3 : Derivation (PNat.S .Z + PNat.S .Z + PNat.S .Z ⇓ .S (.S (.S .Z))) :=
+/-!
+#### (3) `SZ + SZ + SZ ⇓ SSSZ`
+-/
+def eval_add_add_SZ_SZ_SZ : Derivation (PNat.S .Z + PNat.S .Z + PNat.S .Z ⇓ .S (.S (.S .Z))) :=
   (.E_Add
     (.E_Add
       (.E_Const (.S .Z))
@@ -54,7 +69,10 @@ def exercise_1_8_3 : Derivation (PNat.S .Z + PNat.S .Z + PNat.S .Z ⇓ .S (.S (.
     (.E_Const (.S .Z))
     (.P_Zero (.S .Z) |> .P_Succ |> .P_Succ))
 
-def exercise_1_8_4 : Derivation ((PNat.S (.S (.S .Z))) + (PNat.S (.S .Z)) * (PNat.S .Z) ⇓ .S (.S (.S (.S (.S .Z))))) :=
+/-!
+#### (4) `SSSZ + SSZ * SZ ⇓ SSSSSZ`
+-/
+def eval_add_SSSZ_mul_SSZ_SZ : Derivation ((PNat.S (.S (.S .Z))) + (PNat.S (.S .Z)) * (PNat.S .Z) ⇓ .S (.S (.S (.S (.S .Z))))) :=
   (.E_Add
     (.E_Const (.S (.S (.S .Z))))
     (.E_Mul
@@ -67,15 +85,21 @@ def exercise_1_8_4 : Derivation ((PNat.S (.S (.S .Z))) + (PNat.S (.S .Z)) * (PNa
         (.P_Zero (.S .Z) |> .P_Succ)))
     (.P_Zero (.S (.S .Z)) |> .P_Succ |> .P_Succ |> .P_Succ))
 
-def eval_SSZ_plus_SSZ : Derivation (PNat.S (.S .Z) + PNat.S (.S .Z) ⇓ .S (.S (.S (.S .Z)))) :=
+/-!
+(5),(6)には同じ`SSZ + SSZ`の評価が現れるので先に導出しておく。
+-/
+def eval_add_SSZ_SSZ : Derivation (PNat.S (.S .Z) + PNat.S (.S .Z) ⇓ .S (.S (.S (.S .Z)))) :=
     (.E_Add
       (.E_Const (.S (.S .Z)))
       (.E_Const (.S (.S .Z)))
       (.P_Zero (.S (.S .Z)) |> .P_Succ |> .P_Succ))
 
-def exercise_1_8_5 : Derivation (((PNat.S (.S .Z)) + (PNat.S (.S .Z))) * PNat.Z ⇓ .Z) :=
+/-!
+#### (5) `(SSZ + SSZ) * Z ⇓ Z`
+-/
+def eval_mul_add_SSZ_SSZ_Z : Derivation (((PNat.S (.S .Z)) + (PNat.S (.S .Z))) * PNat.Z ⇓ .Z) :=
   (.E_Mul
-    (eval_SSZ_plus_SSZ)
+    (eval_add_SSZ_SSZ)
     (.E_Const .Z)
     (.T_Zero .Z |>
       (.T_Succ · (.P_Zero .Z)) |>
@@ -83,8 +107,11 @@ def exercise_1_8_5 : Derivation (((PNat.S (.S .Z)) + (PNat.S (.S .Z))) * PNat.Z 
       (.T_Succ · (.P_Zero .Z)) |>
       (.T_Succ · (.P_Zero .Z))))
 
-def exercise_1_8_6 : Derivation (PNat.Z * (PNat.S (.S .Z) + PNat.S (.S .Z)) ⇓ .Z) :=
+/-!
+#### (6) `Z * (SSZ + SSZ) ⇓ Z`
+-/
+def eval_mul_Z_add_SSZ_SSZ : Derivation (PNat.Z * (PNat.S (.S .Z) + PNat.S (.S .Z)) ⇓ .Z) :=
   (.E_Mul
     (.E_Const .Z)
-    (eval_SSZ_plus_SSZ)
+    (eval_add_SSZ_SSZ)
     (.T_Zero (.S (.S (.S (.S .Z))))))
