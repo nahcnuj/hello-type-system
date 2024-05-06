@@ -9,8 +9,12 @@
         "leanprover.lean4",
         "ms-azuretools.vscode-docker",
         "github.vscode-github-actions",
-        "ms-vscode.live-server"
-      ]
+        "ms-vscode.live-server",
+        "Gruntfuggly.todo-tree"
+      ],
+      "settings": {
+        "todo-tree.regex.regex": "(//|#|<!--|;|/\\*|^|^[ \\t]*(-|\\d+.))\\s*($TAGS)"
+      }
     }
   }
 }
