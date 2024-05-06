@@ -32,6 +32,30 @@ instance : Coe PNat Nat where
 instance : ToString PNat where
   toString n := s!"{n.toNat}"
 
+namespace PNat
+
+/--
+`plus`はペアノ自然数上の加算関数である。
+-/
+def plus : PNat → PNat → PNat
+  | .Z,    n₂ => n₂
+  | .S n₁, n₂ => .S <| plus n₁ n₂
+
+/--
+加算関数`plus`の左全域性
+-/
+theorem plus_left_total : ∀ {n₁ n₂ : PNat}, ∃ n₃ : PNat, plus n₁ n₂ = n₃
+  | .Z,    n₂ => ⟨n₂, rfl⟩
+  | .S n₁, n₂ => ⟨.S <| plus n₁ n₂, rfl⟩
+
+/--
+加算関数`plus`の一意性
+-/
+theorem plus_uniq : plus n₁ n₂ = n₃ → plus n₁ n₂ = n₃' → n₃ = n₃'
+  | d, d' => Eq.trans d.symm d'
+
+end PNat
+
 /-!
 ## 算術式Expr
 -/
@@ -56,6 +80,58 @@ instance : Mul Expr where
 
 instance [OfNat PNat n] : OfNat Expr n where
   ofNat := Expr.Nat (OfNat.ofNat n)
+
+namespace Expr
+
+/--
+`size`は算術式の大きさを与える。
+-/
+def size : Expr → _root_.Nat
+  | .Nat .Z     => 1
+  | .Nat (.S n) => size n + 1
+  | .Add e₁ e₂  => e₁.size + e₂.size + 1
+  | .Mul e₁ e₂  => e₁.size + e₂.size + 1
+
+/--
+`size`の左全域性
+-/
+theorem size_left_total : ∀ {e : Expr}, ∃ n, e.size = n
+  | .Nat .Z     => ⟨1, rfl⟩
+  | .Nat (.S n) => ⟨size n + 1, by simp [size]⟩
+  | .Add e₁ e₂  => ⟨e₁.size + e₂.size + 1, by simp [size]⟩
+  | .Mul e₁ e₂  => ⟨e₁.size + e₂.size + 1, by simp [size]⟩
+
+/--
+`size`の一意性
+-/
+theorem size_uniq {e : Expr} : e.size = n → e.size = n' → n = n'
+  | h, h' => Eq.trans h.symm h'
+
+/--
+`height`は算術式の高さを与える。
+-/
+def height : Expr → _root_.Nat
+  | .Nat .Z     => 1
+  | .Nat (.S n) => height n + 1
+  | .Add e₁ e₂  => max e₁.height e₂.height + 1
+  | .Mul e₁ e₂  => max e₁.height e₂.height + 1
+
+/--
+`height`の左全域性
+-/
+theorem height_left_total : ∀ {e : Expr}, ∃ n, e.height = n
+  | .Nat .Z     => ⟨1, rfl⟩
+  | .Nat (.S n) => ⟨height n + 1, by simp [height]⟩
+  | .Add e₁ e₂  => ⟨max e₁.height e₂.height + 1, by simp [height]⟩
+  | .Mul e₁ e₂  => ⟨max e₁.height e₂.height + 1, by simp [height]⟩
+
+/--
+`height`の一意性
+-/
+theorem height_uniq {e : Expr} : e.height = n → e.height = n' → n = n'
+  | h, h' => Eq.trans h.symm h'
+
+end Expr
 
 /-!
 ## 判断（judgement）
