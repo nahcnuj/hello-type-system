@@ -128,11 +128,23 @@ instance : Coe (Nat.Derivation (.Plus n₁ n₂ n₃)) (Derivation (.Plus n₁ n
       (Derivation.P_Zero)
       (fun _ => Derivation.P_Succ)
 
+def Derivation.toNatPlus : Derivation (.Plus n₁ n₂ n₃) → Nat.Derivation (.Plus n₁ n₂ n₃)
+  | .P_Zero n => Nat.Derivation.P_Zero n
+  | .P_Succ 𝒟 => Nat.Derivation.P_Succ 𝒟.toNatPlus
+instance : Coe (Derivation (.Plus n₁ n₂ n₃)) (Nat.Derivation (.Plus n₁ n₂ n₃)) where
+  coe := Derivation.toNatPlus
+
 instance : Coe (Nat.Derivation (.Times n₁ n₂ n₃)) (Derivation (.Times n₁ n₂ n₃)) where
   coe :=
     Nat.Derivation.induction_times (motive := fun n₁ n₂ n₃ => Derivation (.Times n₁ n₂ n₃))
       (Derivation.T_Zero ·)
       (fun _ dp dt => Derivation.T_Succ dt dp)
+
+def Derivation.toNatTimes : Derivation (.Times n₁ n₂ n₃) → Nat.Derivation (.Times n₁ n₂ n₃)
+  | .T_Zero n     => Nat.Derivation.T_Zero n
+  | .T_Succ dt dp => Nat.Derivation.T_Succ dt.toNatTimes dp
+instance : Coe (Derivation (.Times n₁ n₂ n₃)) (Nat.Derivation (.Times n₁ n₂ n₃)) where
+  coe := Derivation.toNatTimes
 
 /-!
 ## 算術式の評価に関するメタ定理
@@ -151,28 +163,17 @@ theorem eval_left_total : (e : Expr) → ∃ n : PNat, Derivable (e ⇓ n) :=
       ⟨«n₁*n₂», ⟨Derivation.E_Mul 𝒟₁ 𝒟₂ 𝒟t⟩⟩
     )
 
-theorem plus_uniq {n₁ n₂ n₃ n₄ : PNat} : Derivation (.Plus n₁ n₂ n₃) → Derivation (.Plus n₁ n₂ n₄) → n₃ = n₄
-  | .P_Zero _,  .P_Zero _  => rfl
-  | .P_Succ ha, .P_Succ hb => congrArg PNat.S (plus_uniq ha hb)
-theorem times_uniq {n₂ n₃ n₄ : PNat} : {n₁ : PNat} → Derivation (.Times n₁ n₂ n₃) → Derivation (.Times n₁ n₂ n₄) → n₃ = n₄
-  | .Z,   .T_Zero _,               .T_Zero _               => rfl
-  | .S _, .T_Succ (n₃ := k) ha hb, .T_Succ (n₃ := l) hc hd =>
-      -- hb : Derivation (Judgement.Plus n₂ k n₃)
-      -- hd : Derivation (Judgement.Plus n₂ l n₄)
-      have : k = l := times_uniq ha hc
-      plus_uniq (this ▸ hb) hd
-
 /-!
 ### 評価の一意性：定理2.16 [基礎概念,§2.1]
 $$\forall\MV{e}\in\Set{Expr};\MV{n_1},\MV{n_2}\in\Set{PNat}. \bigl[\MV{e}\Evals\MV{n_1} \land \MV{e}\Evals\MV{n_2} \implies \MV{n_1}\equiv\MV{n_2}\bigr]$$
 -/
 theorem eval_uniq : {e : Expr} → Derivation (.Eval e n₁) → Derivation (.Eval e n₂) → n₁ = n₂
-  | .Nat n, .E_Const _, .E_Const _ => rfl
+  | .Nat n,  .E_Const _,        .E_Const _        => rfl
   | .Add .., .E_Add 𝒟₁l 𝒟₁r 𝒟₁, .E_Add 𝒟₂l 𝒟₂r 𝒟₂ =>
       have heql := eval_uniq 𝒟₁l 𝒟₂l
       have heqr := eval_uniq 𝒟₁r 𝒟₂r
-      plus_uniq (heql ▸ heqr ▸ 𝒟₁) 𝒟₂
+      Nat.plus_uniq (heql ▸ heqr ▸ 𝒟₁.toNatPlus) 𝒟₂
   | .Mul ..,  .E_Mul 𝒟₁l 𝒟₁r 𝒟₁, .E_Mul 𝒟₂l 𝒟₂r 𝒟₂ =>
       have heql := eval_uniq 𝒟₁l 𝒟₂l
       have heqr := eval_uniq 𝒟₁r 𝒟₂r
-      times_uniq (heql ▸ heqr ▸ 𝒟₁) 𝒟₂
+      Nat.times_uniq (heql ▸ heqr ▸ 𝒟₁.toNatTimes) 𝒟₂
