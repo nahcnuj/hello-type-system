@@ -406,6 +406,9 @@ theorem CompareNat3.lt_trans : {n₁ n₂ n₃ : PNat} → Derivation (.LT n₁ 
 /-!
 ### 定理2.14 [基礎概念,§2.1]
 1 ⇒ 2, 2 ⇒ 3, 3 ⇒ 1を示す。
+
+前提の導出に関する帰納法によって、
+前提の導出システムにおいて導出される各判断に対して、結論の導出システムにおいて導出木を構成する。
 -/
 theorem CN2_of_CN1 : CompareNat1.Derivable (.LT n₁ n₂) → CompareNat2.Derivable (.LT n₁ n₂) :=
   fun ⟨d⟩ => d.induction (motive := fun n₁ n₂ => CompareNat2.Derivable (.LT n₁ n₂))
