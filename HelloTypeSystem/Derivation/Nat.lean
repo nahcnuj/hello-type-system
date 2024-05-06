@@ -33,6 +33,24 @@ inductive Derivation : Judgement → Type where
 
 private abbrev Derivable := @HelloTypeSystem.Derivable Derivation
 
+def Derivation.induction_plus
+  {motive : PNat → PNat → PNat → Sort _} -- P(n₁,n₂,n₃)
+  {n₁ n₂ n₃ : PNat}
+  (hP_Zero : ∀ n : PNat, motive .Z n n)
+  (hP_Succ : ∀ {n₁ n₂ n₃ : PNat}, Derivation (.Plus n₁ n₂ n₃) → motive n₁ n₂ n₃ → motive n₁.S n₂ n₃.S)
+: Derivation (.Plus n₁ n₂ n₃) → motive n₁ n₂ n₃
+  | .P_Zero n => hP_Zero n
+  | .P_Succ d => hP_Succ d (Derivation.induction_plus hP_Zero hP_Succ d)
+
+def Derivation.induction_times
+  {motive : PNat → PNat → PNat → Sort _} -- P(n₁,n₂,n₃)
+  {n₁ n₂ n₃ : PNat}
+  (hT_Zero : ∀ n : PNat, motive .Z n .Z)
+  (hT_Succ : ∀ {n₁ n₂ n₃ n₄: PNat}, Derivation (.Times n₁ n₂ n₃) → Derivation (.Plus n₂ n₃ n₄) → motive n₁ n₂ n₃ → motive n₁.S n₂ n₄)
+: Derivation (.Times n₁ n₂ n₃) → motive n₁ n₂ n₃
+  | .T_Zero n     => hT_Zero n
+  | .T_Succ dt dp => hT_Succ dt dp (dt.induction_times hT_Zero hT_Succ)
+
 /-!
 ## 導出システムNatによる導出の例
 -/

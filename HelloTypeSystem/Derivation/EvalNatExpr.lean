@@ -27,6 +27,8 @@ inductive Derivation : Judgement → Type where
   | E_Mul
     : Derivation (e₁ ⇓ n₁) → Derivation (e₂ ⇓ n₂) → Derivation (.Times n₁ n₂ n) → Derivation (e₁ * e₂ ⇓ n)
 
+private abbrev Derivable := @HelloTypeSystem.Derivable Derivation
+
 /-!
 ## 算術式の評価の例
 ### 練習問題1.8 [基礎概念,§1.4]
@@ -115,3 +117,36 @@ def eval_mul_Z_add_SSZ_SSZ : Derivation (PNat.Z * (PNat.S (.S .Z) + PNat.S (.S .
     (.E_Const .Z)
     (eval_add_SSZ_SSZ)
     (.T_Zero (.S (.S (.S (.S .Z))))))
+
+/-!
+## EvalNatExprがNatの導出を含むこと
+-/
+
+instance : Coe (Nat.Derivation (.Plus n₁ n₂ n₃)) (Derivation (.Plus n₁ n₂ n₃)) where
+  coe :=
+    Nat.Derivation.induction_plus (motive := fun n₁ n₂ n₃ => Derivation (.Plus n₁ n₂ n₃))
+      (Derivation.P_Zero)
+      (fun _ => Derivation.P_Succ)
+
+instance : Coe (Nat.Derivation (.Times n₁ n₂ n₃)) (Derivation (.Times n₁ n₂ n₃)) where
+  coe :=
+    Nat.Derivation.induction_times (motive := fun n₁ n₂ n₃ => Derivation (.Times n₁ n₂ n₃))
+      (Derivation.T_Zero ·)
+      (fun _ dp dt => Derivation.T_Succ dt dp)
+
+/-!
+## 算術式の評価に関するメタ定理
+### 評価の（左）全域性（評価結果の存在性）：定理2.15 [基礎概念,§2.3]
+$$\forall\MV{e}\in\Set{Expr}. \exists\MV{n}\in\Set{PNat}. \MV{e}\Evals\MV{n}$$
+-/
+theorem eval_left_total : (e : Expr) → ∃ n : PNat, Derivable (e ⇓ n) :=
+  Expr.rec (motive := fun e => ∃ n : PNat, Derivable (e ⇓ n))
+    (fun n => ⟨n, Derivation.E_Const n⟩)
+    (fun _e₁ _e₂ ⟨n₁,⟨𝒟₁⟩⟩ ⟨n₂,⟨𝒟₂⟩⟩ =>
+      have ⟨«n₁+n₂», ⟨𝒟p⟩⟩ := Nat.derive_plus n₁ n₂
+      ⟨«n₁+n₂», ⟨Derivation.E_Add 𝒟₁ 𝒟₂ 𝒟p⟩⟩
+    )
+    (fun _e₁ _e₂ ⟨n₁,⟨𝒟₁⟩⟩ ⟨n₂,⟨𝒟₂⟩⟩ =>
+      have ⟨«n₁*n₂», ⟨𝒟t⟩⟩ := Nat.derive_times n₁ n₂
+      ⟨«n₁*n₂», ⟨Derivation.E_Mul 𝒟₁ 𝒟₂ 𝒟t⟩⟩
+    )
