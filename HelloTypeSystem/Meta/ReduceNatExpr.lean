@@ -160,25 +160,25 @@ instance : Coe (Derivation (.Times n₁ n₂ n₃)) (PeanoNat.Derivation (.Times
 異なるコンストラクタによる項`e₁,e₂`どうしの（自明な）不等式`e₁ ≠ e₂`は`Expr.noConfusion`で示せる。
 `• ≠ •`は`• = • → False`だから`Expr.noConfusion` = `fun (heq : e₁ = e₂) => Expr.noConfusion heq`に注意。
 -/
-theorem reduce_progressive : (e : Expr) → (∀ n, e ≠ .Nat n) → ∃ e', Derivable (e ⟶ e') :=
-  Expr.rec (motive := fun e => (∀ n, e ≠ .Nat n) → ∃ e', Derivable (e ⟶ e'))
-    (fun n hn => False.elim <| false_of_ne (hn n))
+theorem reduce_progressive : (e : Expr) → (∀ {n}, e ≠ .Nat n) → ∃ e', Derivable (e ⟶ e') :=
+  Expr.rec (motive := fun e => (∀ {n}, e ≠ .Nat n) → ∃ e', Derivable (e ⟶ e'))
+    (fun _ hn => False.elim <| false_of_ne hn)
     (fun e₁ e₂ h1 h2 =>
       match e₁, e₂ with
       | .Nat n, .Nat m =>
           have ⟨k, ⟨𝒟⟩⟩ := PeanoNat.derive_plus n m
           fun _ => ⟨k, ⟨Derivation.R_Plus 𝒟⟩⟩
       | .Nat n, .Add _ _ =>
-          have ⟨e₂', ⟨𝒟⟩⟩ := h2 (fun _ => Expr.noConfusion)
+          have ⟨e₂', ⟨𝒟⟩⟩ := h2 Expr.noConfusion
           fun _ => ⟨n + e₂', ⟨Derivation.R_PlusR 𝒟⟩⟩
       | .Nat n, .Mul _ _ =>
-          have ⟨e₂', ⟨𝒟⟩⟩ := h2 (fun _ => Expr.noConfusion)
+          have ⟨e₂', ⟨𝒟⟩⟩ := h2 Expr.noConfusion
           fun _ => ⟨n + e₂', ⟨Derivation.R_PlusR 𝒟⟩⟩
       | .Add _ _, e₂ =>
-          have ⟨e₁', ⟨𝒟⟩⟩ := h1 (fun _ => Expr.noConfusion)
+          have ⟨e₁', ⟨𝒟⟩⟩ := h1 Expr.noConfusion
           fun _ => ⟨e₁' + e₂, ⟨Derivation.R_PlusL 𝒟⟩⟩
       | .Mul _ _, e₂ =>
-          have ⟨e₁', ⟨𝒟⟩⟩ := h1 (fun _ => Expr.noConfusion)
+          have ⟨e₁', ⟨𝒟⟩⟩ := h1 Expr.noConfusion
           fun _ => ⟨e₁' + e₂, ⟨Derivation.R_PlusL 𝒟⟩⟩
     )
     (fun e₁ e₂ h1 h2 =>
@@ -187,15 +187,15 @@ theorem reduce_progressive : (e : Expr) → (∀ n, e ≠ .Nat n) → ∃ e', De
           have ⟨k, ⟨𝒟⟩⟩ := PeanoNat.derive_times n m
           fun _ => ⟨k, ⟨Derivation.R_Times 𝒟⟩⟩
       | .Nat n, .Add _ _ =>
-          have ⟨e₂', ⟨𝒟⟩⟩ := h2 (fun _ => Expr.noConfusion)
+          have ⟨e₂', ⟨𝒟⟩⟩ := h2 Expr.noConfusion
           fun _ => ⟨n * e₂', ⟨Derivation.R_TimesR 𝒟⟩⟩
       | .Nat n, .Mul _ _ =>
-          have ⟨e₂', ⟨𝒟⟩⟩ := h2 (fun _ => Expr.noConfusion)
+          have ⟨e₂', ⟨𝒟⟩⟩ := h2 Expr.noConfusion
           fun _ => ⟨n * e₂', ⟨Derivation.R_TimesR 𝒟⟩⟩
       | .Add _ _, e₂ =>
-          have ⟨e₁', ⟨𝒟⟩⟩ := h1 (fun _ => Expr.noConfusion)
+          have ⟨e₁', ⟨𝒟⟩⟩ := h1 Expr.noConfusion
           fun _ => ⟨e₁' * e₂, ⟨Derivation.R_TimesL 𝒟⟩⟩
       | .Mul _ _, e₂ =>
-          have ⟨e₁', ⟨𝒟⟩⟩ := h1 (fun _ => Expr.noConfusion)
+          have ⟨e₁', ⟨𝒟⟩⟩ := h1 Expr.noConfusion
           fun _ => ⟨e₁' * e₂, ⟨Derivation.R_TimesL 𝒟⟩⟩
     )
