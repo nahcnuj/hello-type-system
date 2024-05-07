@@ -97,7 +97,9 @@ def eval_mul_Z_add_SSZ_SSZ : Derivation (PNat.Z * (PNat.S (.S .Z) + PNat.S (.S .
     (.T_Zero (.S (.S (.S (.S .Z))))))
 
 /-!
-## EvalNatExprがPeanoNatの導出を含むこと
+## 算術式の評価に関するメタ定理
+
+### EvalNatExprがPeanoNatの導出を含むこと
 -/
 
 def Derivation.ofNatPlus : PeanoNat.Derivation (.Plus n₁ n₂ n₃) → Derivation (.Plus n₁ n₂ n₃)
@@ -125,7 +127,6 @@ instance : Coe (Derivation (.Times n₁ n₂ n₃)) (PeanoNat.Derivation (.Times
   coe := Derivation.toNatTimes
 
 /-!
-## 算術式の評価に関するメタ定理
 ### 評価の（左）全域性（評価結果の存在性）：定理2.15 [基礎概念,§2.3]
 $$\forall\MV{e}\in\Set{Expr}. \exists\MV{n}\in\Set{PNat}. \MV{e}\Evals\MV{n}$$
 -/
