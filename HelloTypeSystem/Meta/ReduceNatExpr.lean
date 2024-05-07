@@ -152,7 +152,7 @@ instance : Coe (Derivation (.Times n₁ n₂ n₃)) (PeanoNat.Derivation (.Times
   coe := Derivation.toNatTimes
 
 /-!
-### 簡約の前進性
+### 簡約の前進性：定理2.21 [基礎概念,§2.1]
 -/
 /--
 簡約の前進性

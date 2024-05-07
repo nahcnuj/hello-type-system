@@ -49,6 +49,7 @@ Lean 4でプログラミング言語の型システムや意味論に入門す�
       - 一意性 `HelloTypeSystem.EvalNatExpr.eval_uniq`
   - ReduceNatExpr
     - 簡約${}\Reduces{},{}\MReduces{}$
+      - [前進性](./HelloTypeSystem/Meta/ReduceNatExpr.html#簡約の前進性-定理2-21-基礎概念-2-1)
     - 決定的簡約${}\DReduces{}$
 
 ## Notation
