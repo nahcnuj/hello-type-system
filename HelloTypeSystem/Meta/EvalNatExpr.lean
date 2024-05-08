@@ -166,7 +166,6 @@ theorem eval_uniq : {e : Expr} → Derivation (.Eval e n₁) → Derivation (.Ev
 `+`の交換法則：定理2.17
 -/
 theorem eval_add_comm : Derivation (e₁ + e₂ ⇓ n) → Derivation (e₂ + e₁ ⇓ n)
-        -- TODO x
   | .E_Add e₁ e₂ 𝒟 => .E_Add e₂ e₁ (PeanoNat.plus_comm 𝒟.toNatPlus)
 
 /--
