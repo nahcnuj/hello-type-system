@@ -192,7 +192,43 @@ theorem size_le_prev_pow_2_height : (e : Expr) → e.size ≤ 2^e.height - 1
                   := Nat.add_sub_add_right _ 1 1
         _ = _ := by simp [height]
   | .Mul e₁ e₂ =>
-      sorry -- TODO prove the Mul case
+      calc
+        _ = e₁.size + e₂.size + 1 := by simp [size]
+        _ ≤ 2 ^ (max e₁.height e₂.height + 1) - 2 + 1
+          := (Nat.add_le_add_right · 1) <|
+              calc e₁.size + e₂.size
+                _ ≤ 2 ^ max e₁.height e₂.height - 1 + e₂.size
+                  := (Nat.add_le_add_right · _) <|
+                      calc e₁.size
+                        _ ≤ 2 ^ e₁.height - 1 := size_le_prev_pow_2_height e₁
+                        _ ≤ _
+                          := (Nat.sub_le_sub_right · 1) <|
+                              Nat.pow_le_pow_of_le Nat.one_lt_two (Nat.le_max_left ..)
+                _ ≤ 2 ^ max e₁.height e₂.height - 1 + (2 ^ max e₁.height e₂.height - 1)
+                  := (Nat.add_le_add_left · _) <|
+                      calc e₂.size
+                        _ ≤ 2 ^ e₂.height - 1 := size_le_prev_pow_2_height e₂
+                        _ ≤ _
+                          := (Nat.sub_le_sub_right · 1) <|
+                              Nat.pow_le_pow_of_le Nat.one_lt_two (Nat.le_max_right ..)
+                _ = 2 * 2 ^ max e₁.height e₂.height - 2
+                  := calc
+                        _ = 2 ^ max e₁.height e₂.height + (2 ^ max e₁.height e₂.height - 1) - 1
+                          := Nat.sub_add_comm (Nat.one_le_two_pow) |> .symm
+                        _ = 2 ^ max e₁.height e₂.height + 2 ^ max e₁.height e₂.height - 2
+                          := congrArg (· - 1) <| Nat.add_sub_assoc Nat.one_le_two_pow _ |> .symm
+                        _ = _ := congrArg (· - 2) Nat.add_same
+                _ = 2 ^ (max e₁.height e₂.height + 1) - 2
+                  := congrArg (· - 2) Nat.pow_succ'.symm
+        _ = 2 ^ (max e₁.height e₂.height + 1) - 1
+          := calc
+                _ = 2 ^ (max e₁.height e₂.height + 1) + 1 - 2
+                  := Nat.sub_add_comm (
+                      (Nat.pow_le_pow_iff_right Nat.one_lt_two).mpr <| Nat.succ_le_succ (Nat.zero_le _)
+                    ) |> .symm
+                _ = _
+                  := Nat.add_sub_add_right _ 1 1
+        _ = _ := by simp [height]
 
 end Expr
 
