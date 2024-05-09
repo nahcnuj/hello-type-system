@@ -50,6 +50,7 @@ Lean 4でプログラミング言語の型システムや意味論に入門す�
   - ReduceNatExpr
     - 簡約${}\Reduces{},{}\MReduces{}$
       - [前進性](./HelloTypeSystem/Meta/ReduceNatExpr.html#簡約の前進性-定理2-21-基礎概念-2-1)
+      - [合流性](./HelloTypeSystem/Meta/ReduceNatExpr.html#簡約の合流性-定理2-22-基礎概念-2-1)
     - 決定的簡約${}\DReduces{}$
 
 ## Notation
