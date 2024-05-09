@@ -199,3 +199,108 @@ theorem reduce_progressive : (e : Expr) → (∀ {n}, e ≠ .Nat n) → ∃ e', 
           have ⟨e₁', ⟨𝒟⟩⟩ := h1 Expr.noConfusion
           fun _ => ⟨e₁' * e₂, ⟨Derivation.R_TimesL 𝒟⟩⟩
     )
+
+/-!
+### 複数回簡約に関する補題
+簡約の合流性の証明に用いる複数回簡約に関する補題を証明しておく。
+-/
+
+/--
+加算の左の項を複数回簡約する補題。
+-/
+theorem Derivation.MR_PlusL
+: Derivation (e ⟶* e')
+→ Derivable (e + e₂ ⟶* e' + e₂) :=
+  Derivation.induction_mreduce
+    (motive := fun e e' => Derivable (e + _ ⟶* e' + _))
+    (⟨Derivation.MR_Zero⟩)
+    (fun d => ⟨Derivation.MR_Once (Derivation.R_PlusL d)⟩)
+    (fun _ _ ⟨d⟩ ⟨d'⟩ => ⟨Derivation.MR_Multi d d'⟩)
+
+/--
+加算の右の項を複数回簡約する補題。
+-/
+theorem Derivation.MR_PlusR
+: Derivation (e ⟶* e')
+→ Derivable (e₁ + e ⟶* e₁ + e') :=
+  Derivation.induction_mreduce
+    (motive := fun e e' => Derivable (_ + e ⟶* _ + e'))
+    (⟨Derivation.MR_Zero⟩)
+    (fun d => ⟨Derivation.MR_Once (Derivation.R_PlusR d)⟩)
+    (fun _ _ ⟨d⟩ ⟨d'⟩ => ⟨Derivation.MR_Multi d d'⟩)
+
+/--
+乗算の左の項を複数回簡約する補題。
+-/
+theorem Derivation.MR_TimesL
+: Derivation (e ⟶* e')
+→ Derivable (e * e₂ ⟶* e' * e₂) :=
+  Derivation.induction_mreduce
+    (motive := fun e e' => Derivable (e * _ ⟶* e' * _))
+    (⟨Derivation.MR_Zero⟩)
+    (fun d => ⟨Derivation.MR_Once (Derivation.R_TimesL d)⟩)
+    (fun _ _ ⟨d⟩ ⟨d'⟩ => ⟨Derivation.MR_Multi d d'⟩)
+
+/--
+乗算の右の項を複数回簡約する補題。
+-/
+theorem Derivation.MR_TimesR
+: Derivation (e ⟶* e')
+→ Derivable (e₁ * e ⟶* e₁ * e') :=
+  Derivation.induction_mreduce
+    (motive := fun e e' => Derivable (_ * e ⟶* _ * e'))
+    (⟨Derivation.MR_Zero⟩)
+    (fun d => ⟨Derivation.MR_Once (Derivation.R_TimesR d)⟩)
+    (fun _ _ ⟨d⟩ ⟨d'⟩ => ⟨Derivation.MR_Multi d d'⟩)
+
+/-!
+### 簡約の合流性：定理2.22 [基礎概念,§2.1]
+-/
+/--
+簡約の合流性
+-/
+theorem reduce_confluence : Derivation (e₁ ⟶ e₂) → Derivation (e₁ ⟶ e₃) → ∃ e₄, Derivable (e₂ ⟶* e₄) ∧ Derivable (e₃ ⟶* e₄)
+  | .R_Plus (n₃ := n₃) d1, .R_Plus (n₃ := n₃') d2 =>
+      have heq : n₃ = n₃' := PeanoNat.plus_uniq d1.toNatPlus d2.toNatPlus
+      Exists.intro n₃
+        ⟨⟨Derivation.MR_Zero⟩
+        ,heq ▸ ⟨Derivation.MR_Zero⟩
+        ⟩
+  | .R_Times (n₃ := n₃) d1, .R_Times (n₃ := n₃') d2 =>
+      have heq : n₃ = n₃' := PeanoNat.times_uniq d1.toNatTimes d2.toNatTimes
+      Exists.intro n₃
+        ⟨⟨Derivation.MR_Zero⟩
+        ,heq ▸ ⟨Derivation.MR_Zero⟩
+        ⟩
+  | .R_PlusL (e₂ := e₂) d1, .R_PlusL (e₁' := e₁'') d2 =>
+      have ⟨e, ⟨d1⟩, ⟨d2⟩⟩ := reduce_confluence d1 d2
+      Exists.intro (e + e₂) ⟨d1.MR_PlusL, d2.MR_PlusL⟩
+  | .R_PlusL (e₁' := e₁') d1, .R_PlusR (e₂' := e₂') d2 =>
+      Exists.intro (e₁' + e₂')
+        ⟨Derivation.R_PlusR (e₁ := e₁') d2 |> Derivation.MR_Once
+        ,Derivation.R_PlusL (e₂ := e₂') d1 |> Derivation.MR_Once
+        ⟩
+  | .R_PlusR (e₂' := e₂') d1, .R_PlusL (e₁' := e₁') d2 =>
+      Exists.intro (e₁' + e₂')
+        ⟨Derivation.R_PlusL (e₂ := e₂') d2 |> Derivation.MR_Once
+        ,Derivation.R_PlusR (e₁ := e₁') d1 |> Derivation.MR_Once
+        ⟩
+  | .R_PlusR (e₁ := e₁) d1, .R_PlusR (e₂' := e₂'') d2 =>
+      have ⟨e, ⟨d1⟩, ⟨d2⟩⟩ := reduce_confluence d1 d2
+      Exists.intro (e₁ + e) ⟨d1.MR_PlusR, d2.MR_PlusR⟩
+  | .R_TimesL (e₂ := e₂) d1, .R_TimesL (e₁' := e₁'') d2 =>
+      have ⟨e, ⟨d1⟩, ⟨d2⟩⟩ := reduce_confluence d1 d2
+      Exists.intro (e * e₂) ⟨d1.MR_TimesL, d2.MR_TimesL⟩
+  | .R_TimesL (e₁' := e₁') d1, .R_TimesR (e₂' := e₂') d2 =>
+      Exists.intro (e₁' * e₂')
+        ⟨Derivation.R_TimesR (e₁ := e₁') d2 |> Derivation.MR_Once
+        ,Derivation.R_TimesL (e₂ := e₂') d1 |> Derivation.MR_Once
+        ⟩
+  | .R_TimesR (e₂' := e₂') d1, .R_TimesL (e₁' := e₁') d2 =>
+      Exists.intro (e₁' * e₂')
+        ⟨Derivation.R_TimesL (e₂ := e₂') d2 |> Derivation.MR_Once
+        ,Derivation.R_TimesR (e₁ := e₁') d1 |> Derivation.MR_Once
+        ⟩
+  | .R_TimesR (e₁ := e₁) d1, .R_TimesR (e₂' := e₂'') d2 =>
+      have ⟨e, ⟨d1⟩, ⟨d2⟩⟩ := reduce_confluence d1 d2
+      Exists.intro (e₁ * e) ⟨d1.MR_TimesR, d2.MR_TimesR⟩

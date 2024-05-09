@@ -502,6 +502,22 @@ inductive Derivation : Judgement → Type where
 
 abbrev Derivable := @HelloTypeSystem.Derivable Derivation
 
+/--
+複数回簡約$\MV{e_1}\MReduces\MV{e_2}$の導出に関する帰納法
+-/
+def Derivation.induction_mreduce
+  {motive : Expr → Expr → Sort _} -- P(e₁,e₂)
+  {e₁ e₂ : Expr}
+  (hMR_Zero : ∀ {e : Expr}, motive e e)
+  (hMR_Once : ∀ {e e' : Expr}, Derivation (e ⟶ e') → motive e e')
+  (hMR_Multi
+    : ∀ {e e' e'' : Expr},
+      Derivation (e ⟶* e') → Derivation (e' ⟶* e'') → motive e e' → motive e' e'' → motive e e'')
+: Derivation (e₁ ⟶* e₂) → motive e₁ e₂
+  | .MR_Zero       => hMR_Zero
+  | .MR_Once d     => hMR_Once d
+  | .MR_Multi d d' => hMR_Multi d d' (induction_mreduce hMR_Zero hMR_Once hMR_Multi d) (induction_mreduce hMR_Zero hMR_Once hMR_Multi d')
+
 end ReduceNatExpr
 
 /-!
