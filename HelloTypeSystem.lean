@@ -35,7 +35,7 @@ Lean 4でプログラミング言語の型システムや意味論に入門す�
       - [結合律](./HelloTypeSystem/Meta/PeanoNat.html#定理2-5)
     - 乗算：$\TT{$\MV{n_1}$ times $\MV{n_2}$ is $\MV{n_3}$}$
       - 左全域性：`HelloTypeSystem.PeanoNat.derive_times`
-      - 一意性：`HelloTypeSystem.PeanoNat.derive_plus`
+      - 一意性：`HelloTypeSystem.PeanoNat.times_uniq`
       - 可換律：`HelloTypeSystem.PeanoNat.times_comm`
       - [結合律](./HelloTypeSystem/Meta/PeanoNat.html#定理2-10)
   - CompareNat1--3
