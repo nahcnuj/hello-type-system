@@ -324,3 +324,25 @@ theorem dreduce_uniq : Derivation (e ⟶' e') → Derivation (e ⟶' e'') → e'
       congrArg (· * _) (dreduce_uniq x y)
   | .DR_TimesR x, .DR_TimesR y =>
       congrArg (_ * ·) (dreduce_uniq x y)
+
+/-!
+### 定理2.24 [基礎概念,§2.1]
+-/
+/--
+決定的簡約は（普通の）簡約に含まれる
+-/
+theorem reduce_of_dreduce : Derivation (e ⟶' e') → Derivable (e ⟶ e')
+  | .DR_Plus d => ⟨.R_Plus d⟩
+  | .DR_Times d => ⟨.R_Times d⟩
+  | .DR_PlusL d =>
+      have ⟨d⟩ := reduce_of_dreduce d
+      ⟨.R_PlusL d⟩
+  | .DR_PlusR d =>
+      have ⟨d⟩ := reduce_of_dreduce d
+      ⟨.R_PlusR d⟩
+  | .DR_TimesL d =>
+      have ⟨d⟩ := reduce_of_dreduce d
+      ⟨.R_TimesL d⟩
+  | .DR_TimesR d =>
+      have ⟨d⟩ := reduce_of_dreduce d
+      ⟨.R_TimesR d⟩
