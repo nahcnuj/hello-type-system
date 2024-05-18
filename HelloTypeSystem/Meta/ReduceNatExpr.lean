@@ -329,10 +329,10 @@ theorem dreduce_uniq : Derivation (e ⟶' e') → Derivation (e ⟶' e'') → e'
 ### 定理2.24 [基礎概念,§2.1]
 -/
 /--
-決定的簡約は（普通の）簡約に含まれる
+決定的簡約は（普通の）簡約に含まれる。
 -/
 theorem reduce_of_dreduce : Derivation (e ⟶' e') → Derivable (e ⟶ e')
-  | .DR_Plus d => ⟨.R_Plus d⟩
+  | .DR_Plus  d => ⟨.R_Plus  d⟩
   | .DR_Times d => ⟨.R_Times d⟩
   | .DR_PlusL d =>
       have ⟨d⟩ := reduce_of_dreduce d
@@ -346,3 +346,28 @@ theorem reduce_of_dreduce : Derivation (e ⟶' e') → Derivable (e ⟶ e')
   | .DR_TimesR d =>
       have ⟨d⟩ := reduce_of_dreduce d
       ⟨.R_TimesR d⟩
+
+/-!
+### 弱正規化可能性：定理2.25 [基礎概念,§2.1]
+-/
+/--
+導出システムReduceNatExprは弱正規化可能である。
+-/
+theorem weak_normalization : (e : Expr) → ∃ n : PNat, Derivable (e ⟶* n)
+  | .Nat n => Exists.intro n ⟨.MR_Zero⟩
+  | .Add e₁ e₂ =>
+      have ⟨n₁, ⟨d₁⟩⟩ := weak_normalization e₁
+      have ⟨n₂, ⟨d₂⟩⟩ := weak_normalization e₂
+      have ⟨«n₁+n₂», ⟨dp⟩⟩ := PeanoNat.derive_plus n₁ n₂
+      have d := Derivation.MR_Once <| Derivation.R_Plus (Derivation.ofNatPlus dp)
+      have ⟨d'⟩ := Derivation.MR_PlusL (e₂ := e₂) d₁
+      have ⟨d''⟩ := Derivation.MR_PlusR (e₁ := n₁) d₂
+      Exists.intro «n₁+n₂» (Derivation.MR_Multi d' d'' |> (Derivation.MR_Multi · d))
+  | .Mul e₁ e₂ =>
+      have ⟨n₁, ⟨d₁⟩⟩ := weak_normalization e₁
+      have ⟨n₂, ⟨d₂⟩⟩ := weak_normalization e₂
+      have ⟨«n₁*n₂», ⟨dt⟩⟩ := PeanoNat.derive_times n₁ n₂
+      have d := Derivation.MR_Once <| Derivation.R_Times (Derivation.ofNatTimes dt)
+      have ⟨d'⟩ := Derivation.MR_TimesL (e₂ := e₂) d₁
+      have ⟨d''⟩ := Derivation.MR_TimesR (e₁ := n₁) d₂
+      Exists.intro «n₁*n₂» (Derivation.MR_Multi d' d'' |> (Derivation.MR_Multi · d))
