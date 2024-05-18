@@ -52,6 +52,7 @@ Lean 4でプログラミング言語の型システムや意味論に入門す�
       - 前進性 `HelloTypeSystem.ReduceNatExpr.reduce_progressive`
       - 合流性 `HelloTypeSystem.ReduceNatExpr.reduce_confluence`
     - 決定的簡約${}\DReduces{}$
+      - 一意性 `HelloTypeSystem.ReduceNatExpr.dreduce_uniq`
 
 ## Notation
 - $\MV{n},\MV{n_1},\dots$（太字斜体）：メタ変数。特にペアノ自然数の場合はそれに対応する普通の自然数を$n,n_1,\dots$と書く。

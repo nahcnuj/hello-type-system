@@ -304,3 +304,23 @@ theorem reduce_confluence : Derivation (e₁ ⟶ e₂) → Derivation (e₁ ⟶ 
   | .R_TimesR (e₁ := e₁) d1, .R_TimesR (e₂' := e₂'') d2 =>
       have ⟨e, ⟨d1⟩, ⟨d2⟩⟩ := reduce_confluence d1 d2
       Exists.intro (e₁ * e) ⟨d1.MR_TimesR, d2.MR_TimesR⟩
+
+/-!
+### 決定的簡約の一意性：定理2.23 [基礎概念,§2.1]
+-/
+/--
+決定的簡約の一意性
+-/
+theorem dreduce_uniq : Derivation (e ⟶' e') → Derivation (e ⟶' e'') → e' = e''
+  | .DR_Plus d', .DR_Plus d'' =>
+      congrArg Expr.Nat (PeanoNat.plus_uniq d'.toNatPlus d''.toNatPlus)
+  | .DR_Times d', .DR_Times d'' =>
+      congrArg Expr.Nat (PeanoNat.times_uniq d'.toNatTimes d''.toNatTimes)
+  | .DR_PlusL x, .DR_PlusL y =>
+      congrArg (· + _) (dreduce_uniq x y)
+  | .DR_PlusR x, .DR_PlusR y =>
+      congrArg (_ + ·) (dreduce_uniq x y)
+  | .DR_TimesL x, .DR_TimesL y =>
+      congrArg (· * _) (dreduce_uniq x y)
+  | .DR_TimesR x, .DR_TimesR y =>
+      congrArg (_ * ·) (dreduce_uniq x y)
