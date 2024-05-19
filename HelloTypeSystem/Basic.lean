@@ -17,6 +17,7 @@ $$\begin{align*}
 inductive PNat
   | Z
   | S (n : PNat)
+  deriving DecidableEq
 
 instance : OfNat PNat 0 where
   ofNat := PNat.Z
