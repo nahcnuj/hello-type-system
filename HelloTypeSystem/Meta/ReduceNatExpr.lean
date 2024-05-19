@@ -355,7 +355,7 @@ theorem reduce_of_dreduce : Derivation (e ⟶' e') → Derivable (e ⟶ e')
 ### 弱正規化可能性：定理2.25 [基礎概念,§2.1]
 -/
 /--
-導出システムReduceNatExprは弱正規化可能である。
+導出システムReduceNatExprは弱正規化可能性(weak normalization property)を持つ。
 -/
 theorem weak_normalization : (e : Expr) → ∃ n : PNat, Derivable (e ⟶* n)
   | .Nat n => Exists.intro n ⟨.MR_Zero⟩
@@ -381,3 +381,49 @@ theorem weak_normalization : (e : Expr) → ∃ n : PNat, Derivable (e ⟶* n)
           (.MR_Multi d' d'')
           (.MR_Once <| .R_Times dt)
       ⟩
+
+/-!
+### TODO 強正規化可能性：定理2.26 [基礎概念,§2.1]
+示すべきことは
+$$
+\forall\MV{e}. \bigl\[\lnot\exists(\MV{e}\_n)\_{n \in \mathbb{N}}. \MV{e}=\MV{e}\_0 \land \forall i\in\mathbb{N}. \MV{e}\_i\Reduces\MV{e}\_{i+1}\bigr\].
+$$
+角括弧内は
+$$\begin{align*}
+& \lnot\exists(\MV{e}\_n)\_{n \in \mathbb{N}}. \MV{e}=\MV{e}\_0 \land \forall i\in\mathbb{N}. \MV{e}\_i\Reduces\MV{e}\_{i+1} \\\\
+{}\overset{?}{\iff}{}& \forall(\MV{e}\_n)\_{n \in \mathbb{N}}. \MV{e}\neq\MV{e}\_0 \lor \lnot\forall i\in\mathbb{N}. \MV{e}\_i\Reduces\MV{e}\_{i+1} \\\\
+{}\overset{?}{\iff}{}& \forall(\MV{e}\_n)\_{n \in \mathbb{N}}. \MV{e}=\MV{e}\_0 \implies \exists i\in\mathbb{N}. \lnot\bigl(\MV{e}\_i\Reduces\MV{e}\_{i+1}\bigr) \\\\
+\end{align*}$$
+$\def\es{\mathit{es}}$
+とできるか？
+
+Leanでは算術式の無限列$(\MV{e}\_n)_{n \in \mathbb{N}}$は関数$\es\colon \mathbb{N}\to\Set{Expr}$で表現すると良さそう？
+これだけだと、簡約の列だから途中までは$\MV{e}\_i \Reduces \MV{e}\_{i+1}$であってほしいが、そこが抜け落ちてしまいそう。
+-/
+/-
+def es' {n : PNat} := fun _ : Nat => Expr.Nat n
+theorem strong_normalization_aux (e : Expr) : ∀ es : Nat → Expr, es 0 = e → ∃ i : Nat, ¬Derivable (es i ⟶ es i.succ) :=
+  fun es h0 =>
+    match e with
+    | .Nat n => Exists.intro 0 fun h => nomatch h0 ▸ h
+    | e₁ + e₂ =>
+        match e₁ with
+        | .Nat n =>
+            match e₂ with
+            | .Nat m =>
+                -- have ⟨«n+m», ⟨d⟩⟩ := PeanoNat.derive_plus n m
+                -- have r := h0.symm ▸ Derivation.R_Plus (Derivation.ofNatPlus d)
+                have ⟨i, ih⟩ := strong_normalization_aux n es' rfl
+                have := ih sorry
+                sorry
+            | _ => sorry
+        | _ => sorry
+    | _ => sorry
+/--
+（未証明）導出システムReduceNatExprは強正規化可能性(strong normalization property)を持つ。
+-/
+theorem strong_normalization : (e : Expr) → ¬ ∃ es : Nat → Expr, es 0 = e ∧ ∀ i : Nat, Derivable (es i ⟶ es i.succ) :=
+  fun e => not_exists.mpr
+  fun es => not_and.mpr
+  fun h0 => Classical.not_forall.mpr (strong_normalization_aux e es h0)
+-/
