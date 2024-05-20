@@ -34,17 +34,25 @@ theorem mreduce_of_eval : EvalNatExpr.Derivation (e ⇓ n) → ReduceNatExpr.Der
         (.MR_Once <| .R_Times dt)
       ⟩
 
-theorem EvalNatExpr.Derivation.prepend_reduce (d : EvalNatExpr.Derivation (e' ⇓ n)) : ReduceNatExpr.Derivation (e ⟶ e') → EvalNatExpr.Derivable (e ⇓ n)
+def EvalNatExpr.Derivation.prepend_reduce (d : EvalNatExpr.Derivation (e' ⇓ n)) : ReduceNatExpr.Derivation (e ⟶ e') → EvalNatExpr.Derivation (e ⇓ n)
   | .R_Plus (n₃ := «n₁+n₂») d' =>
       have heq : n = «n₁+n₂» := EvalNatExpr.eval_uniq d (.E_Const «n₁+n₂»)
-      heq ▸ ⟨.E_Add (.E_Const _) (.E_Const _) d'⟩
+      heq ▸ .E_Add (.E_Const _) (.E_Const _) d'
   | .R_Times (n₃ := «n₁*n₂») d' =>
       have heq : n = «n₁*n₂» := EvalNatExpr.eval_uniq d (.E_Const «n₁*n₂»)
-      heq ▸ ⟨.E_Mul (.E_Const _) (.E_Const _) d'⟩
+      heq ▸ .E_Mul (.E_Const _) (.E_Const _) d'
   | .R_PlusL d' =>
-      -- have := prepend_reduce d d'
-      sorry
-
+      match d with
+      | .E_Add d₁' d₂ dp => .E_Add (d₁'.prepend_reduce d') d₂ dp
+  | .R_PlusR d' =>
+      match d with
+      | .E_Add d₁ d₂' dp => .E_Add d₁ (d₂'.prepend_reduce d') dp
+  | .R_TimesL d' =>
+      match d with
+      | .E_Mul d₁' d₂ dt => .E_Mul (d₁'.prepend_reduce d') d₂ dt
+  | .R_TimesR d' =>
+      match d with
+      | .E_Mul d₁ d₂' dt => .E_Mul d₁ (d₂'.prepend_reduce d') dt
 
 -- theorem x : ReduceNatExpr.Derivation (e ⟶* e') → EvalNatExpr.Derivation (e' ⇓ n) → EvalNatExpr.Derivable (e ⇓ n)
 --   | .MR_Zero, d => d
