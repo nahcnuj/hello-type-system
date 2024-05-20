@@ -127,30 +127,34 @@ namespace ReduceNatExpr
 EvalNatExprと全く同様に証明できる。
 -/
 
-def Derivation.ofNatPlus : PeanoNat.Derivation (.Plus n₁ n₂ n₃) → Derivation (.Plus n₁ n₂ n₃)
-  | .P_Zero n => Derivation.P_Zero n
-  | .P_Succ d => Derivation.P_Succ (ofNatPlus d)
-instance : Coe (PeanoNat.Derivation (.Plus n₁ n₂ n₃)) (Derivation (.Plus n₁ n₂ n₃)) where
-  coe := Derivation.ofNatPlus
-
 def Derivation.toNatPlus : Derivation (.Plus n₁ n₂ n₃) → PeanoNat.Derivation (.Plus n₁ n₂ n₃)
-  | .P_Zero n => PeanoNat.Derivation.P_Zero n
-  | .P_Succ 𝒟 => PeanoNat.Derivation.P_Succ 𝒟.toNatPlus
+  | .P_Zero n => .P_Zero n
+  | .P_Succ d => .P_Succ d.toNatPlus
 instance : Coe (Derivation (.Plus n₁ n₂ n₃)) (PeanoNat.Derivation (.Plus n₁ n₂ n₃)) where
   coe := Derivation.toNatPlus
 
-def Derivation.ofNatTimes : PeanoNat.Derivation (.Times n₁ n₂ n₃) → Derivation (.Times n₁ n₂ n₃)
-  | .T_Zero n => Derivation.T_Zero n
-  | .T_Succ dt dp => Derivation.T_Succ (ofNatTimes dt) (ofNatPlus dp)
-instance : Coe (PeanoNat.Derivation (.Times n₁ n₂ n₃)) (Derivation (.Times n₁ n₂ n₃)) where
-  coe := Derivation.ofNatTimes
-
 def Derivation.toNatTimes : Derivation (.Times n₁ n₂ n₃) → PeanoNat.Derivation (.Times n₁ n₂ n₃)
-  | .T_Zero n     => PeanoNat.Derivation.T_Zero n
-  | .T_Succ dt dp => PeanoNat.Derivation.T_Succ dt.toNatTimes dp
+  | .T_Zero n     => .T_Zero n
+  | .T_Succ dt dp => .T_Succ dt.toNatTimes dp
 instance : Coe (Derivation (.Times n₁ n₂ n₃)) (PeanoNat.Derivation (.Times n₁ n₂ n₃)) where
   coe := Derivation.toNatTimes
 
+end ReduceNatExpr
+
+def PeanoNat.Derivation.toReduceNatPlus : PeanoNat.Derivation (.Plus n₁ n₂ n₃) → ReduceNatExpr.Derivation (.Plus n₁ n₂ n₃)
+  | .P_Zero n => .P_Zero n
+  | .P_Succ d => .P_Succ d.toReduceNatPlus
+instance : Coe (PeanoNat.Derivation (.Plus n₁ n₂ n₃)) (ReduceNatExpr.Derivation (.Plus n₁ n₂ n₃)) where
+  coe d := d.toReduceNatPlus
+
+def PeanoNat.Derivation.toReduceNatTimes : PeanoNat.Derivation (.Times n₁ n₂ n₃) → ReduceNatExpr.Derivation (.Times n₁ n₂ n₃)
+  | .T_Zero n     => .T_Zero n
+  | .T_Succ dt dp => .T_Succ dt.toReduceNatTimes dp
+instance : Coe (PeanoNat.Derivation (.Times n₁ n₂ n₃)) (ReduceNatExpr.Derivation (.Times n₁ n₂ n₃)) where
+  coe d := d.toReduceNatTimes
+
+
+namespace ReduceNatExpr
 /-!
 ### 簡約の前進性：定理2.21 [基礎概念,§2.1]
 -/
@@ -167,37 +171,37 @@ theorem reduce_progressive : (e : Expr) → (∀ {n}, e ≠ .Nat n) → ∃ e', 
       match e₁, e₂ with
       | .Nat n, .Nat m =>
           have ⟨k, ⟨𝒟⟩⟩ := PeanoNat.derive_plus n m
-          fun _ => ⟨k, ⟨Derivation.R_Plus 𝒟⟩⟩
+          fun _ => ⟨k, ⟨.R_Plus 𝒟⟩⟩
       | .Nat n, .Add _ _ =>
           have ⟨e₂', ⟨𝒟⟩⟩ := h2 Expr.noConfusion
-          fun _ => ⟨n + e₂', ⟨Derivation.R_PlusR 𝒟⟩⟩
+          fun _ => ⟨n + e₂', ⟨.R_PlusR 𝒟⟩⟩
       | .Nat n, .Mul _ _ =>
           have ⟨e₂', ⟨𝒟⟩⟩ := h2 Expr.noConfusion
-          fun _ => ⟨n + e₂', ⟨Derivation.R_PlusR 𝒟⟩⟩
+          fun _ => ⟨n + e₂', ⟨.R_PlusR 𝒟⟩⟩
       | .Add _ _, e₂ =>
           have ⟨e₁', ⟨𝒟⟩⟩ := h1 Expr.noConfusion
-          fun _ => ⟨e₁' + e₂, ⟨Derivation.R_PlusL 𝒟⟩⟩
+          fun _ => ⟨e₁' + e₂, ⟨.R_PlusL 𝒟⟩⟩
       | .Mul _ _, e₂ =>
           have ⟨e₁', ⟨𝒟⟩⟩ := h1 Expr.noConfusion
-          fun _ => ⟨e₁' + e₂, ⟨Derivation.R_PlusL 𝒟⟩⟩
+          fun _ => ⟨e₁' + e₂, ⟨.R_PlusL 𝒟⟩⟩
     )
     (fun e₁ e₂ h1 h2 =>
       match e₁, e₂ with
       | .Nat n, .Nat m =>
           have ⟨k, ⟨𝒟⟩⟩ := PeanoNat.derive_times n m
-          fun _ => ⟨k, ⟨Derivation.R_Times 𝒟⟩⟩
+          fun _ => ⟨k, ⟨.R_Times 𝒟⟩⟩
       | .Nat n, .Add _ _ =>
           have ⟨e₂', ⟨𝒟⟩⟩ := h2 Expr.noConfusion
-          fun _ => ⟨n * e₂', ⟨Derivation.R_TimesR 𝒟⟩⟩
+          fun _ => ⟨n * e₂', ⟨.R_TimesR 𝒟⟩⟩
       | .Nat n, .Mul _ _ =>
           have ⟨e₂', ⟨𝒟⟩⟩ := h2 Expr.noConfusion
-          fun _ => ⟨n * e₂', ⟨Derivation.R_TimesR 𝒟⟩⟩
+          fun _ => ⟨n * e₂', ⟨.R_TimesR 𝒟⟩⟩
       | .Add _ _, e₂ =>
           have ⟨e₁', ⟨𝒟⟩⟩ := h1 Expr.noConfusion
-          fun _ => ⟨e₁' * e₂, ⟨Derivation.R_TimesL 𝒟⟩⟩
+          fun _ => ⟨e₁' * e₂, ⟨.R_TimesL 𝒟⟩⟩
       | .Mul _ _, e₂ =>
           have ⟨e₁', ⟨𝒟⟩⟩ := h1 Expr.noConfusion
-          fun _ => ⟨e₁' * e₂, ⟨Derivation.R_TimesL 𝒟⟩⟩
+          fun _ => ⟨e₁' * e₂, ⟨.R_TimesL 𝒟⟩⟩
     )
 
 /-!
@@ -213,9 +217,9 @@ theorem Derivation.MR_PlusL
 → Derivable (e + e₂ ⟶* e' + e₂) :=
   Derivation.induction_mreduce
     (motive := fun e e' => Derivable (e + _ ⟶* e' + _))
-    (⟨Derivation.MR_Zero⟩)
-    (fun d => ⟨Derivation.MR_Once (Derivation.R_PlusL d)⟩)
-    (fun _ _ ⟨d⟩ ⟨d'⟩ => ⟨Derivation.MR_Multi d d'⟩)
+    (⟨.MR_Zero⟩)
+    (fun d => ⟨.MR_Once (.R_PlusL d)⟩)
+    (fun _ _ ⟨d⟩ ⟨d'⟩ => ⟨.MR_Multi d d'⟩)
 
 /--
 加算の右の項を複数回簡約する補題。
@@ -225,9 +229,9 @@ theorem Derivation.MR_PlusR
 → Derivable (e₁ + e ⟶* e₁ + e') :=
   Derivation.induction_mreduce
     (motive := fun e e' => Derivable (_ + e ⟶* _ + e'))
-    (⟨Derivation.MR_Zero⟩)
-    (fun d => ⟨Derivation.MR_Once (Derivation.R_PlusR d)⟩)
-    (fun _ _ ⟨d⟩ ⟨d'⟩ => ⟨Derivation.MR_Multi d d'⟩)
+    (⟨.MR_Zero⟩)
+    (fun d => ⟨.MR_Once <| .R_PlusR d⟩)
+    (fun _ _ ⟨d⟩ ⟨d'⟩ => ⟨.MR_Multi d d'⟩)
 
 /--
 乗算の左の項を複数回簡約する補題。
@@ -237,9 +241,9 @@ theorem Derivation.MR_TimesL
 → Derivable (e * e₂ ⟶* e' * e₂) :=
   Derivation.induction_mreduce
     (motive := fun e e' => Derivable (e * _ ⟶* e' * _))
-    (⟨Derivation.MR_Zero⟩)
-    (fun d => ⟨Derivation.MR_Once (Derivation.R_TimesL d)⟩)
-    (fun _ _ ⟨d⟩ ⟨d'⟩ => ⟨Derivation.MR_Multi d d'⟩)
+    (⟨.MR_Zero⟩)
+    (fun d => ⟨.MR_Once <| .R_TimesL d⟩)
+    (fun _ _ ⟨d⟩ ⟨d'⟩ => ⟨.MR_Multi d d'⟩)
 
 /--
 乗算の右の項を複数回簡約する補題。
@@ -249,9 +253,9 @@ theorem Derivation.MR_TimesR
 → Derivable (e₁ * e ⟶* e₁ * e') :=
   Derivation.induction_mreduce
     (motive := fun e e' => Derivable (_ * e ⟶* _ * e'))
-    (⟨Derivation.MR_Zero⟩)
-    (fun d => ⟨Derivation.MR_Once (Derivation.R_TimesR d)⟩)
-    (fun _ _ ⟨d⟩ ⟨d'⟩ => ⟨Derivation.MR_Multi d d'⟩)
+    (⟨.MR_Zero⟩)
+    (fun d => ⟨.MR_Once <| .R_TimesR d⟩)
+    (fun _ _ ⟨d⟩ ⟨d'⟩ => ⟨.MR_Multi d d'⟩)
 
 /-!
 ### 簡約の合流性：定理2.22 [基礎概念,§2.1]
@@ -263,27 +267,27 @@ theorem reduce_confluence : Derivation (e₁ ⟶ e₂) → Derivation (e₁ ⟶ 
   | .R_Plus (n₃ := n₃) d1, .R_Plus (n₃ := n₃') d2 =>
       have heq : n₃ = n₃' := PeanoNat.plus_uniq d1.toNatPlus d2.toNatPlus
       Exists.intro n₃
-        ⟨⟨Derivation.MR_Zero⟩
-        ,heq ▸ ⟨Derivation.MR_Zero⟩
+        ⟨⟨.MR_Zero⟩
+        ,heq ▸ ⟨.MR_Zero⟩
         ⟩
   | .R_Times (n₃ := n₃) d1, .R_Times (n₃ := n₃') d2 =>
       have heq : n₃ = n₃' := PeanoNat.times_uniq d1.toNatTimes d2.toNatTimes
       Exists.intro n₃
-        ⟨⟨Derivation.MR_Zero⟩
-        ,heq ▸ ⟨Derivation.MR_Zero⟩
+        ⟨⟨.MR_Zero⟩
+        ,heq ▸ ⟨.MR_Zero⟩
         ⟩
   | .R_PlusL (e₂ := e₂) d1, .R_PlusL (e₁' := e₁'') d2 =>
       have ⟨e, ⟨d1⟩, ⟨d2⟩⟩ := reduce_confluence d1 d2
       Exists.intro (e + e₂) ⟨d1.MR_PlusL, d2.MR_PlusL⟩
   | .R_PlusL (e₁' := e₁') d1, .R_PlusR (e₂' := e₂') d2 =>
       Exists.intro (e₁' + e₂')
-        ⟨Derivation.R_PlusR (e₁ := e₁') d2 |> Derivation.MR_Once
-        ,Derivation.R_PlusL (e₂ := e₂') d1 |> Derivation.MR_Once
+        ⟨⟨.MR_Once <| .R_PlusR (e₁ := e₁') d2⟩
+        ,⟨.MR_Once <| .R_PlusL (e₂ := e₂') d1⟩
         ⟩
   | .R_PlusR (e₂' := e₂') d1, .R_PlusL (e₁' := e₁') d2 =>
       Exists.intro (e₁' + e₂')
-        ⟨Derivation.R_PlusL (e₂ := e₂') d2 |> Derivation.MR_Once
-        ,Derivation.R_PlusR (e₁ := e₁') d1 |> Derivation.MR_Once
+        ⟨⟨.MR_Once <| .R_PlusL (e₂ := e₂') d2⟩
+        ,⟨.MR_Once <| .R_PlusR (e₁ := e₁') d1⟩
         ⟩
   | .R_PlusR (e₁ := e₁) d1, .R_PlusR (e₂' := e₂'') d2 =>
       have ⟨e, ⟨d1⟩, ⟨d2⟩⟩ := reduce_confluence d1 d2
@@ -293,13 +297,13 @@ theorem reduce_confluence : Derivation (e₁ ⟶ e₂) → Derivation (e₁ ⟶ 
       Exists.intro (e * e₂) ⟨d1.MR_TimesL, d2.MR_TimesL⟩
   | .R_TimesL (e₁' := e₁') d1, .R_TimesR (e₂' := e₂') d2 =>
       Exists.intro (e₁' * e₂')
-        ⟨Derivation.R_TimesR (e₁ := e₁') d2 |> Derivation.MR_Once
-        ,Derivation.R_TimesL (e₂ := e₂') d1 |> Derivation.MR_Once
+        ⟨⟨.MR_Once <| .R_TimesR (e₁ := e₁') d2⟩
+        ,⟨.MR_Once <| .R_TimesL (e₂ := e₂') d1⟩
         ⟩
   | .R_TimesR (e₂' := e₂') d1, .R_TimesL (e₁' := e₁') d2 =>
       Exists.intro (e₁' * e₂')
-        ⟨Derivation.R_TimesL (e₂ := e₂') d2 |> Derivation.MR_Once
-        ,Derivation.R_TimesR (e₁ := e₁') d1 |> Derivation.MR_Once
+        ⟨⟨.MR_Once <| .R_TimesL (e₂ := e₂') d2⟩
+        ,⟨.MR_Once <| .R_TimesR (e₁ := e₁') d1⟩
         ⟩
   | .R_TimesR (e₁ := e₁) d1, .R_TimesR (e₂' := e₂'') d2 =>
       have ⟨e, ⟨d1⟩, ⟨d2⟩⟩ := reduce_confluence d1 d2
@@ -359,15 +363,21 @@ theorem weak_normalization : (e : Expr) → ∃ n : PNat, Derivable (e ⟶* n)
       have ⟨n₁, ⟨d₁⟩⟩ := weak_normalization e₁
       have ⟨n₂, ⟨d₂⟩⟩ := weak_normalization e₂
       have ⟨«n₁+n₂», ⟨dp⟩⟩ := PeanoNat.derive_plus n₁ n₂
-      have d := Derivation.MR_Once <| Derivation.R_Plus (Derivation.ofNatPlus dp)
       have ⟨d'⟩ := Derivation.MR_PlusL (e₂ := e₂) d₁
       have ⟨d''⟩ := Derivation.MR_PlusR (e₁ := n₁) d₂
-      Exists.intro «n₁+n₂» (Derivation.MR_Multi d' d'' |> (Derivation.MR_Multi · d))
+      Exists.intro «n₁+n₂» ⟨
+        .MR_Multi
+          (.MR_Multi d' d'')
+          (.MR_Once <| .R_Plus dp)
+      ⟩
   | .Mul e₁ e₂ =>
       have ⟨n₁, ⟨d₁⟩⟩ := weak_normalization e₁
       have ⟨n₂, ⟨d₂⟩⟩ := weak_normalization e₂
       have ⟨«n₁*n₂», ⟨dt⟩⟩ := PeanoNat.derive_times n₁ n₂
-      have d := Derivation.MR_Once <| Derivation.R_Times (Derivation.ofNatTimes dt)
       have ⟨d'⟩ := Derivation.MR_TimesL (e₂ := e₂) d₁
       have ⟨d''⟩ := Derivation.MR_TimesR (e₁ := n₁) d₂
-      Exists.intro «n₁*n₂» (Derivation.MR_Multi d' d'' |> (Derivation.MR_Multi · d))
+      Exists.intro «n₁*n₂» ⟨
+        .MR_Multi
+          (.MR_Multi d' d'')
+          (.MR_Once <| .R_Times dt)
+      ⟩
