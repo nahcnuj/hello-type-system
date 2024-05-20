@@ -54,24 +54,21 @@ def EvalNatExpr.Derivation.prepend_reduce (d : EvalNatExpr.Derivation (e' ⇓ n)
       match d with
       | .E_Mul d₁ d₂' dt => .E_Mul d₁ (d₂'.prepend_reduce d') dt
 
--- theorem x : ReduceNatExpr.Derivation (e ⟶* e') → EvalNatExpr.Derivation (e' ⇓ n) → EvalNatExpr.Derivable (e ⇓ n)
---   | .MR_Zero, d => d
---   | .MR_Once d, _ =>
---       match d with
---       | .R_Plus _ => sorry
+def EvalNatExpr.Derivation.prepend_mreduce (d : EvalNatExpr.Derivation (e' ⇓ n)): ReduceNatExpr.Derivation (e ⟶* e') → EvalNatExpr.Derivation (e ⇓ n)
+  | .MR_Zero         => d
+  | .MR_Once d'      => d.prepend_reduce d'
+  | .MR_Multi d' d'' => prepend_mreduce (prepend_mreduce d d'') d'
 
 /--
 定理2.28 \[基礎概念,§2.1]
 -/
 theorem eval_of_mreduce {n : PNat} : ReduceNatExpr.Derivation (e ⟶* n) → EvalNatExpr.Derivable (e ⇓ n)
   | .MR_Zero (e := .Nat n) =>
-      @EvalNatExpr.Derivation.E_Const n
+      ⟨.E_Const n⟩
   | .MR_Once d =>
       match d with
-      | .R_Plus (n₁ := n₁) (n₂ := n₂) d =>
-          EvalNatExpr.Derivation.E_Add (.E_Const n₁) (.E_Const n₂) (EvalNatExpr.Derivation.ofNatPlus d.toNatPlus)
-      | .R_Times (n₁ := n₁) (n₂ := n₂) d =>
-          EvalNatExpr.Derivation.E_Mul (.E_Const n₁) (.E_Const n₂) (EvalNatExpr.Derivation.ofNatTimes d.toNatTimes)
+      | .R_Plus  (n₁ := n₁) (n₂ := n₂) d => ⟨.E_Add (.E_Const n₁) (.E_Const n₂) d⟩
+      | .R_Times (n₁ := n₁) (n₂ := n₂) d => ⟨.E_Mul (.E_Const n₁) (.E_Const n₂) d⟩
   | .MR_Multi (e := e) (e' := e') d₁ d₂ =>
-      have := eval_of_mreduce d₂
-      sorry
+      have ⟨d₂⟩ := eval_of_mreduce d₂
+      d₂.prepend_mreduce d₁
