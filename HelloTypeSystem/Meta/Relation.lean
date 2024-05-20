@@ -6,10 +6,8 @@ namespace HelloTypeSystem
 
 /-!
 # 導出システム同士の関係
--/
 
-/-!
-## 評価の導出システムEvalNatExprと簡約の導出システムReduceNatExprの等価性（定理2.27, 2.28 \[基礎概念, §2.1]）
+## 評価と簡約の等価性
 -/
 /--
 定理2.27 \[基礎概念,§2.1]
@@ -35,3 +33,42 @@ theorem mreduce_of_eval : EvalNatExpr.Derivation (e ⇓ n) → ReduceNatExpr.Der
         (.MR_Multi dl dr)
         (.MR_Once <| .R_Times dt)
       ⟩
+
+def EvalNatExpr.Derivation.prepend_reduce (d : EvalNatExpr.Derivation (e' ⇓ n)) : ReduceNatExpr.Derivation (e ⟶ e') → EvalNatExpr.Derivation (e ⇓ n)
+  | .R_Plus (n₃ := «n₁+n₂») d' =>
+      have heq : n = «n₁+n₂» := EvalNatExpr.eval_uniq d (.E_Const «n₁+n₂»)
+      heq ▸ .E_Add (.E_Const _) (.E_Const _) d'
+  | .R_Times (n₃ := «n₁*n₂») d' =>
+      have heq : n = «n₁*n₂» := EvalNatExpr.eval_uniq d (.E_Const «n₁*n₂»)
+      heq ▸ .E_Mul (.E_Const _) (.E_Const _) d'
+  | .R_PlusL d' =>
+      match d with
+      | .E_Add d₁' d₂ dp => .E_Add (d₁'.prepend_reduce d') d₂ dp
+  | .R_PlusR d' =>
+      match d with
+      | .E_Add d₁ d₂' dp => .E_Add d₁ (d₂'.prepend_reduce d') dp
+  | .R_TimesL d' =>
+      match d with
+      | .E_Mul d₁' d₂ dt => .E_Mul (d₁'.prepend_reduce d') d₂ dt
+  | .R_TimesR d' =>
+      match d with
+      | .E_Mul d₁ d₂' dt => .E_Mul d₁ (d₂'.prepend_reduce d') dt
+
+def EvalNatExpr.Derivation.prepend_mreduce (d : EvalNatExpr.Derivation (e' ⇓ n)): ReduceNatExpr.Derivation (e ⟶* e') → EvalNatExpr.Derivation (e ⇓ n)
+  | .MR_Zero         => d
+  | .MR_Once d'      => d.prepend_reduce d'
+  | .MR_Multi d' d'' => prepend_mreduce (prepend_mreduce d d'') d'
+
+/--
+定理2.28 \[基礎概念,§2.1]
+-/
+theorem eval_of_mreduce {n : PNat} : ReduceNatExpr.Derivation (e ⟶* n) → EvalNatExpr.Derivable (e ⇓ n)
+  | .MR_Zero (e := .Nat n) =>
+      ⟨.E_Const n⟩
+  | .MR_Once d =>
+      match d with
+      | .R_Plus  (n₁ := n₁) (n₂ := n₂) d => ⟨.E_Add (.E_Const n₁) (.E_Const n₂) d⟩
+      | .R_Times (n₁ := n₁) (n₂ := n₂) d => ⟨.E_Mul (.E_Const n₁) (.E_Const n₂) d⟩
+  | .MR_Multi (e := e) (e' := e') d₁ d₂ =>
+      have ⟨d₂⟩ := eval_of_mreduce d₂
+      d₂.prepend_mreduce d₁
