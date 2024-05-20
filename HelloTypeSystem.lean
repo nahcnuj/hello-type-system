@@ -47,10 +47,12 @@ Lean 4でプログラミング言語の型システムや意味論に入門す�
     - 評価${}\Evals{}$
       - 左全域性 `HelloTypeSystem.EvalNatExpr.eval_left_total`
       - 一意性 `HelloTypeSystem.EvalNatExpr.eval_uniq`
+      - ${\MV{e}\Evals\MV{n}} \implies {\MV{e}\MReduces\MV{n}}$ `HelloTypeSystem.mreduce_of_eval`
   - ReduceNatExpr
     - 簡約${}\Reduces{},{}\MReduces{}$
       - 前進性 `HelloTypeSystem.ReduceNatExpr.reduce_progressive`
       - 合流性 `HelloTypeSystem.ReduceNatExpr.reduce_confluence`
+      - ${\MV{e}\MReduces\MV{n}} \implies {\MV{e}\Evals\MV{n}}$ `HelloTypeSystem.eval_of_mreduce`
     - 決定的簡約${}\DReduces{}$
       - 一意性 `HelloTypeSystem.ReduceNatExpr.dreduce_uniq`
       - 弱正規化可能性 `HelloTypeSystem.ReduceNatExpr.weak_normalization`
