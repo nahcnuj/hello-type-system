@@ -153,8 +153,15 @@ def PeanoNat.Derivation.toReduceNatTimes : PeanoNat.Derivation (.Times n₁ n₂
 instance : Coe (PeanoNat.Derivation (.Times n₁ n₂ n₃)) (ReduceNatExpr.Derivation (.Times n₁ n₂ n₃)) where
   coe d := d.toReduceNatTimes
 
-
 namespace ReduceNatExpr
+/-!
+### 補題
+-/
+theorem add_nat_nat_uniq : Derivation (.Add (.Nat n) (.Nat m) ⟶ x) → Derivation (.Add (.Nat n) (.Nat m) ⟶ y) → x = y
+  | .R_Plus d1, .R_Plus d2 => PeanoNat.plus_uniq d1.toNatPlus d2.toNatPlus |> congrArg Expr.Nat
+theorem mul_nat_nat_uniq : Derivation (.Mul (.Nat n) (.Nat m) ⟶ x) → Derivation (.Mul (.Nat n) (.Nat m) ⟶ y) → x = y
+  | .R_Times d1, .R_Times d2 => PeanoNat.times_uniq d1.toNatTimes d2.toNatTimes |> congrArg Expr.Nat
+
 /-!
 ### 簡約の前進性：定理2.21 [基礎概念,§2.1]
 -/
@@ -395,35 +402,45 @@ $$\begin{align*}
 {}\overset{?}{\iff}{}& \forall(\MV{e}\_n)\_{n \in \mathbb{N}}. \MV{e}=\MV{e}\_0 \implies \exists i\in\mathbb{N}. \lnot\bigl(\MV{e}\_i\Reduces\MV{e}\_{i+1}\bigr) \\\\
 \end{align*}$$
 $\def\es{\mathit{es}}$
-とできるか？
+とできる。
 
-Leanでは算術式の無限列$(\MV{e}\_n)_{n \in \mathbb{N}}$は関数$\es\colon \mathbb{N}\to\Set{Expr}$で表現すると良さそう？
-これだけだと、簡約の列だから途中までは$\MV{e}\_i \Reduces \MV{e}\_{i+1}$であってほしいが、そこが抜け落ちてしまいそう。
+Leanでは算術式の無限列$(\MV{e}\_n)_{n \in \mathbb{N}}$は関数$\es\colon \mathbb{N}\to\Set{Expr}$で表現すると良さそう。
 -/
-/-
-def es' {n : PNat} := fun _ : Nat => Expr.Nat n
-theorem strong_normalization_aux (e : Expr) : ∀ es : Nat → Expr, es 0 = e → ∃ i : Nat, ¬Derivable (es i ⟶ es i.succ) :=
-  fun es h0 =>
-    match e with
-    | .Nat n => Exists.intro 0 fun h => nomatch h0 ▸ h
-    | e₁ + e₂ =>
-        match e₁ with
-        | .Nat n =>
-            match e₂ with
-            | .Nat m =>
-                -- have ⟨«n+m», ⟨d⟩⟩ := PeanoNat.derive_plus n m
-                -- have r := h0.symm ▸ Derivation.R_Plus (Derivation.ofNatPlus d)
-                have ⟨i, ih⟩ := strong_normalization_aux n es' rfl
-                have := ih sorry
-                sorry
-            | _ => sorry
-        | _ => sorry
-    | _ => sorry
 /--
 （未証明）導出システムReduceNatExprは強正規化可能性(strong normalization property)を持つ。
 -/
 theorem strong_normalization : (e : Expr) → ¬ ∃ es : Nat → Expr, es 0 = e ∧ ∀ i : Nat, Derivable (es i ⟶ es i.succ) :=
-  fun e => not_exists.mpr
-  fun es => not_and.mpr
-  fun h0 => Classical.not_forall.mpr (strong_normalization_aux e es h0)
--/
+  fun e ⟨es, h0, h⟩ =>
+    have ⟨d0⟩ := h0 ▸ h 0
+    match e with
+    | .Nat n => nomatch d0
+    | .Add (.Nat n) (.Nat m) =>
+        have ⟨k, ⟨d⟩⟩ := PeanoNat.derive_plus n m
+        have h1 := add_nat_nat_uniq d0 (Derivation.R_Plus d.toReduceNatPlus)
+        match h1 ▸ d0 with
+        | .R_Plus d => nomatch h1 ▸ h 1
+    | .Mul (.Nat n) (.Nat m) =>
+        have ⟨k, ⟨d⟩⟩ := PeanoNat.derive_times n m
+        have h1 := mul_nat_nat_uniq d0 (Derivation.R_Times d.toReduceNatTimes)
+        match h1 ▸ d0 with
+        | .R_Times d => nomatch h1 ▸ h 1
+    | .Add (.Nat n) e₂ =>
+        have := strong_normalization e₂
+        sorry
+    | .Add e₁ (.Nat m) =>
+        have := strong_normalization e₁
+        sorry
+    | .Mul (.Nat n) e₂ =>
+        have := strong_normalization e₂
+        sorry
+    | .Mul e₁ (.Nat m) =>
+        have := strong_normalization e₁
+        sorry
+    | .Add e₁ e₂ =>
+        have := strong_normalization e₁
+        have := strong_normalization e₂
+        sorry
+    | .Mul e₁ e₂ =>
+        have := strong_normalization e₁
+        have := strong_normalization e₂
+        sorry
