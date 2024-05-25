@@ -425,7 +425,18 @@ theorem strong_normalization : (e : Expr) → ¬ ∃ es : Nat → Expr, es 0 = e
         match h1 ▸ d0 with
         | .R_Times d => nomatch h1 ▸ h 1
     | .Add (.Nat n) e₂ =>
-        have := strong_normalization e₂
+        let es' := fun n : Nat =>
+          match n with
+          | .zero => e₂
+          | .succ n =>
+              have := Or.elim (Classical.em (∀ {m : PNat}, es n ≠ m)) -- Decidable?
+                (reduce_progressive (es n))
+                (fun hf =>
+                  have ⟨_, heq⟩ := Classical.not_forall_not.mp hf -- Decidable?
+                  nomatch heq ▸ h n)
+              Exists.choose this
+        have := strong_normalization e₂ |> not_exists.mp <| es'
+        have ⟨k, h'⟩ := not_and.mp this rfl |> Classical.not_forall.mp
         sorry
     | .Add e₁ (.Nat m) =>
         have := strong_normalization e₁
