@@ -2,6 +2,7 @@
 -- Import modules here that should be built as part of the library.
 import «HelloTypeSystem».Basic
 import «HelloTypeSystem».Meta
+import «HelloTypeSystem».ML1
 /-!
 $\newcommand\Set[1]{\mathbf{#1}}$
 $\newcommand\MV[1]{\boldsymbol{#1}}$
@@ -26,6 +27,8 @@ Lean 4でプログラミング言語の型システムや意味論に入門す�
     - CompareNat1--3：ペアノ自然数の比較 \[基礎概念,§1.3]
     - EvalNatExpr：算術式の評価 \[基礎概念,§1.4]
     - ReduceNatExpr：算術式の簡約 \[基礎概念,§1.4]
+- ML言語の評価
+  - [ML1](./HelloTypeSystem/ML1.html)：整数・真偽値式の評価 \[基礎概念,§3.1]
 - 導出システムに関する主なメタ定理
   - PeanoNat
     - 加算：$\TT{$\MV{n_1}$ plus $\MV{n_2}$ is $\MV{n_3}$}$
@@ -56,6 +59,7 @@ Lean 4でプログラミング言語の型システムや意味論に入門す�
     - 決定的簡約${}\DReduces{}$
       - 一意性 `HelloTypeSystem.ReduceNatExpr.dreduce_uniq`
       - 弱正規化可能性 `HelloTypeSystem.ReduceNatExpr.weak_normalization`
+  - EvalML1
 
 ## Notation
 - $\MV{n},\MV{n_1},\dots$（太字斜体）：メタ変数。特にペアノ自然数の場合はそれに対応する普通の自然数を$n,n_1,\dots$と書く。
@@ -64,5 +68,5 @@ Lean 4でプログラミング言語の型システムや意味論に入門す�
 ## References
 - `[基礎概念]`: 五十嵐淳 著. プログラミング言語の基礎概念, サイエンス社, 2011.7, (ライブラリ情報学コア・テキスト ; 24). 978-4-7819-1285-1. [https://ndlsearch.ndl.go.jp/books/R100000002-I000011238587](https://ndlsearch.ndl.go.jp/books/R100000002-I000011238587)
 - `[基礎理論]`: 大堀淳 著. プログラミング言語の基礎理論. 新装版, 共立出版, 2019.8. 978-4-320-12450-9. [https://ndlsearch.ndl.go.jp/books/R100000002-I029842615](https://ndlsearch.ndl.go.jp/books/R100000002-I029842615)
-- `[入門]`: G.ウィンスケル 著ほか. プログラミング言語の形式的意味論入門, 丸善出版, 2023.1. 978-4-621-30763-2. [https://ndlsearch.ndl.go.jp/books/R100000002-I032600297](https://ndlsearch.ndl.go.jp/books/R100000002-I032600297)
+- `[意味論入門]`: G.ウィンスケル 著ほか. プログラミング言語の形式的意味論入門, 丸善出版, 2023.1. 978-4-621-30763-2. [https://ndlsearch.ndl.go.jp/books/R100000002-I032600297](https://ndlsearch.ndl.go.jp/books/R100000002-I032600297)
 -/
