@@ -88,7 +88,7 @@ theorem «if 3 < 4 then 1 < true else 3 - false ⇓ error_<» : Derivable (.If (
   ⟩
 
 /-!
-## 導出システムEvalML1(Err)のメタ定理
+## 導出システムEvalML1のメタ定理
 
 ### 評価の一意性：定理3.2 \[基礎概念,§3.1]
 -/
@@ -147,3 +147,20 @@ theorem eval_value_uniq {v₁ v₂ : Value} : {e : Expr} → Derivation (e ⇓ v
   | .If .., .E_IfF d₁c _, .E_IfT d₂c _ =>
       have := eval_value_uniq d₁c d₂c
       by contradiction
+
+/-!
+## 導出システムEvalML1Errのメタ定理
+
+### 評価の（左）全域性：定理3.4 \[基礎概念,§3.2]
+-/
+
+/--
+EvalML1Errの評価の（左）全域性（定理3.4・練習問題3.4 \[基礎概念,§3.2]）
+
+\[基礎概念,小節3.2.2]で説明されているエラーの種類の識別を先取ったので、(2) $\MV{e}\Evals\TT{error}$を(2′) $\exists \MV{\varepsilon} \in \Set{Error}. \MV{e}\Evals\MV{\varepsilon}$と読み替えている。
+-/
+theorem eval_left_total (e : Expr) : (∃ v : Value, Derivable (e ⇓ v)) ∨ (∃ ε : Error, Derivable (e ⇓ ε)) :=
+  let ⟨r, d⟩ := e.eval
+  match r with
+  | .inr v => .inl ⟨v, d⟩
+  | .inl ε => .inr ⟨ε, d⟩

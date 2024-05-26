@@ -70,6 +70,9 @@ inductive Error where
   | IfCond
   | IfValue
 
+/--
+$\Set{Result} := \Set{Error} \uplus \Set{Value}$
+-/
 abbrev Result := Error ⊕ Value
 instance : Coe Value Result where
   coe := .inr
@@ -256,6 +259,66 @@ inductive Derivable (𝒥 : Judgement) : Prop where
 -/
 instance {𝒥 : Judgement} : Coe (Derivation 𝒥) (Derivable 𝒥) where
   coe := Derivable.intro
+
+/--
+`Expr.eval`はML1式$\MV{e}$を評価し、評価結果$\MV{r} \in \Set{Error} \uplus \Set{Value}$とその導出$\mathcal{D} \in (\MV{e}\Evals\MV{r})$を返します。
+-/
+def Expr.eval : (e : Expr) → (r : Result) × Derivation (e ⇓ r)
+  | .C (.Z i) => ⟨i, .E_Int⟩
+  | .C (.B b) => ⟨b, .E_Bool⟩
+  | .Add e₁ e₂ =>
+      let ⟨r₁, d₁⟩ := eval e₁
+      let ⟨r₂, d₂⟩ := eval e₂
+      match r₁, r₂ with
+      | .inr (.Z i₁), .inr (.Z i₂) => ⟨i₁ + i₂, .E_Plus d₁ d₂ (.B_Plus rfl)⟩
+      | .inr (.Z _),  .inr (.B _)  => ⟨Error.Plus, .E_PlusIntBool d₁ d₂⟩
+      | .inr (.Z _),  .inl ε₂      => ⟨ε₂, .E_PlusIntErr d₁ d₂⟩
+      | .inr (.B _),  _            => ⟨Error.Plus, .E_PlusBool d₁⟩
+      | .inl ε₁,      _            => ⟨ε₁, .E_PlusErr d₁⟩
+  | .Sub e₁ e₂ =>
+      let ⟨r₁, d₁⟩ := eval e₁
+      let ⟨r₂, d₂⟩ := eval e₂
+      match r₁, r₂ with
+      | .inr (.Z i₁), .inr (.Z i₂) => ⟨i₁ - i₂, .E_Minus d₁ d₂ (.B_Minus rfl)⟩
+      | .inr (.Z _),  .inr (.B _)  => ⟨Error.Minus, .E_MinusIntBool d₁ d₂⟩
+      | .inr (.Z _),  .inl ε₂      => ⟨ε₂, .E_MinusIntErr d₁ d₂⟩
+      | .inr (.B _),  _            => ⟨Error.Minus, .E_MinusBool d₁⟩
+      | .inl ε₁,      _            => ⟨ε₁, .E_MinusErr d₁⟩
+  | .Mul e₁ e₂ =>
+      let ⟨r₁, d₁⟩ := eval e₁
+      let ⟨r₂, d₂⟩ := eval e₂
+      match r₁, r₂ with
+      | .inr (.Z i₁), .inr (.Z i₂) => ⟨i₁ * i₂, .E_Times d₁ d₂ (.B_Times rfl)⟩
+      | .inr (.Z _),  .inr (.B _)  => ⟨Error.Times, .E_TimesIntBool d₁ d₂⟩
+      | .inr (.Z _),  .inl ε₂      => ⟨ε₂, .E_TimesIntErr d₁ d₂⟩
+      | .inr (.B _),  _            => ⟨Error.Times, .E_TimesBool d₁⟩
+      | .inl ε₁,      _            => ⟨ε₁, .E_TimesErr d₁⟩
+  | .LT e₁ e₂ =>
+      let ⟨r₁, d₁⟩ := eval e₁
+      let ⟨r₂, d₂⟩ := eval e₂
+      match r₁, r₂ with
+      | .inr (.Z i₁), .inr (.Z i₂) => Or.by_cases (Decidable.em (i₁ < i₂))
+          (fun h :   i₁ < i₂ => ⟨true,  .E_LT d₁ d₂ (.B_LTT h)⟩)
+          (fun h : ¬ i₁ < i₂ => ⟨false, .E_LT d₁ d₂ (.B_LTF h)⟩)
+      | .inr (.Z _),  .inr (.B _)  => ⟨Error.LT, .E_LTIntBool d₁ d₂⟩
+      | .inr (.Z _),  .inl ε₂      => ⟨ε₂, .E_LTIntErr d₁ d₂⟩
+      | .inr (.B _),  _            => ⟨Error.LT, .E_LTBool d₁⟩
+      | .inl ε₁,      _            => ⟨ε₁, .E_LTErr d₁⟩
+  | .If e₁ e₂ e₃ =>
+      let ⟨r₁, d₁⟩ := eval e₁
+      match r₁ with
+      | .inr (.B true) =>
+          let ⟨r₂, d₂⟩ := eval e₂
+          match r₂ with
+          | .inr v₂ => ⟨v₂, .E_IfT d₁ d₂⟩
+          | .inl ε₂ => ⟨ε₂, .E_IfTErr d₁ d₂⟩
+      | .inr (.B false) =>
+          let ⟨r₃, d₃⟩ := eval e₃
+          match r₃ with
+          | .inr v₃ => ⟨v₃, .E_IfF d₁ d₃⟩
+          | .inl ε₃ => ⟨ε₃, .E_IfFErr d₁ d₃⟩
+      | .inr (.Z _) => ⟨Error.IfCond, .E_IfCondInt d₁⟩
+      | .inl ε₁     => ⟨ε₁, .E_IfCondErr d₁⟩
 
 end ML1
 
