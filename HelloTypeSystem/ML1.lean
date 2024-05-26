@@ -4,7 +4,7 @@ namespace HelloTypeSystem
 
 /-!
 # 整数・真偽値式の評価 ML1
-\[基礎概念,§3.1]
+\[基礎概念,3章]
 -/
 namespace ML1
 
@@ -57,7 +57,30 @@ instance : Mul Expr where
   mul := .Mul
 
 /--
-導出システムEvalML1における判断
+EvalML1Errで発生する実行時エラーの種類
+$$\begin{align*}
+\Set{Error} \ni \MV{\varepsilon} &{}::= \TT{error}\_{\TT{+}} \mid \TT{error}\_{\TT{-}} \mid \TT{error}\_{\TT{\*}} \mid \TT{error}\_{\TT{<}} \mid \TT{error}\_{\TT{if}\_{\mathrm{cond}}} \mid \TT{error}\_{\TT{if}\_{\mathrm{value}}} \\\\
+\end{align*}$$
+-/
+inductive Error where
+  | Plus
+  | Minus
+  | Times
+  | LT
+  | IfCond
+  | IfValue
+
+abbrev Result := Error ⊕ Value
+instance : Coe Value Result where
+  coe := .inr
+instance : Coe Error Result where
+  coe := .inl
+
+instance : OfNat Result n where
+  ofNat := .inr (.Z n)
+
+/--
+導出システムEvalML1Errにおける判断
 -/
 inductive Judgement where
   /--
@@ -77,14 +100,14 @@ inductive Judgement where
   -/
   | LT (i₁ i₂ : Int) (b : Bool)
   /--
-  "$\MV{e} \Evals \MV{v}$" means that the value of an expression $\MV{e}$ is $\MV{v}$.
+  "$\MV{e} \Evals \MV{r}$" means that the result of an expression $\MV{e}$ is $\MV{r}$.
   -/
-  | Eval (e : Expr) (v : Value)
+  | Eval (e : Expr) (r : Result)
 
 notation:50 e:51 " ⇓ " n:51  => Judgement.Eval e n
 
 /--
-導出システムEvalML1の導出規則
+導出システムEvalML1Errの導出規則
 
 付帯条件はLeanのPropで表現している。
 -/
@@ -99,6 +122,7 @@ inductive Derivation : Judgement → Type where
     : Derivation (.LT i₁ i₂ true)
   | B_LTF {i₁ i₂ : Int} (h : ¬ i₁ < i₂)
     : Derivation (.LT i₁ i₂ false)
+
   | E_Int {i : Int}
     : Derivation (i ⇓ i)
   | E_Bool {b : Bool}
@@ -115,6 +139,111 @@ inductive Derivation : Judgement → Type where
     : Derivation (e₁ * e₂ ⇓ i₃)
   | E_LT {e₁ e₂ : Expr} {i₁ i₂ : Int} {b : Bool} (l : Derivation (e₁ ⇓ i₁)) (r : Derivation (e₂ ⇓ i₂)) (lt : Derivation (.LT i₁ i₂ b))
     : Derivation (.LT e₁ e₂ ⇓ b)
+
+  /--
+  加算において、左辺は整数だが右辺が真偽値の場合は実行時エラー
+  -/
+  | E_PlusIntBool (l : Derivation (e₁ ⇓ .inr (.Z i₁))) (r : Derivation (e₂ ⇓ .inr (.B b₂)))
+    : Derivation (e₁ + e₂ ⇓ Error.Plus)
+  /--
+  加算において、左辺は整数だが右辺が実行時エラーの場合は右辺の実行時エラー
+  -/
+  | E_PlusIntErr (l : Derivation (e₁ ⇓ .inr (.Z i₁))) (r : Derivation (e₂ ⇓ .inl ε₂))
+    : Derivation (e₁ + e₂ ⇓ ε₂)
+  /--
+  加算において、左辺が真偽値の場合は右辺によらず実行時エラー
+  -/
+  | E_PlusBool (l : Derivation (e₁ ⇓ .inr (.B b₂)))
+    : Derivation (e₁ + e₂ ⇓ Error.Plus)
+  /--
+  加算において、左辺が実行時エラーの場合は右辺によらず左辺の実行時エラー（練習問題3.6 \[基礎概念,§3.2]）
+  -/
+  | E_PlusErr (l : Derivation (e₁ ⇓ .inl ε₁))
+    : Derivation (e₁ + e₂ ⇓ ε₁)
+
+  /--
+  減算において、左辺は整数だが右辺が真偽値の場合は実行時エラー
+  -/
+  | E_MinusIntBool (l : Derivation (e₁ ⇓ .inr (.Z i₁))) (r : Derivation (e₂ ⇓ .inr (.B b₂)))
+    : Derivation (e₁ - e₂ ⇓ Error.Minus)
+  /--
+  減算において、左辺は整数だが右辺が実行時エラーの場合は右辺の実行時エラー
+  -/
+  | E_MinusIntErr (l : Derivation (e₁ ⇓ .inr (.Z i₁))) (r : Derivation (e₂ ⇓ .inl ε₂))
+    : Derivation (e₁ - e₂ ⇓ ε₂)
+  /--
+  減算において、左辺が真偽値の場合は右辺によらず実行時エラー
+  -/
+  | E_MinusBool (l : Derivation (e₁ ⇓ .inr (.B b₂)))
+    : Derivation (e₁ - e₂ ⇓ Error.Minus)
+  /--
+  減算において、左辺が実行時エラーの場合は右辺によらず左辺の実行時エラー
+  -/
+  | E_MinusErr (l : Derivation (e₁ ⇓ .inl ε₁))
+    : Derivation (e₁ - e₂ ⇓ ε₁)
+
+  /--
+  乗算において、左辺は整数だが右辺が真偽値の場合は実行時エラー
+  -/
+  | E_TimesIntBool (l : Derivation (e₁ ⇓ .inr (.Z i₁))) (r : Derivation (e₂ ⇓ .inr (.B b₂)))
+    : Derivation (e₁ * e₂ ⇓ Error.Times)
+  /--
+  乗算において、左辺は整数だが右辺が実行時エラーの場合は右辺の実行時エラー
+  -/
+  | E_TimesIntErr (l : Derivation (e₁ ⇓ .inr (.Z i₁))) (r : Derivation (e₂ ⇓ .inl ε₂))
+    : Derivation (e₁ * e₂ ⇓ ε₂)
+  /--
+  乗算において、左辺が真偽値の場合は右辺によらず実行時エラー
+  -/
+  | E_TimesBool (l : Derivation (e₁ ⇓ .inr (.B b₂)))
+    : Derivation (e₁ * e₂ ⇓ Error.Times)
+  /--
+  乗算において、左辺が実行時エラーの場合は右辺によらず左辺の実行時エラー
+  -/
+  | E_TimesErr (l : Derivation (e₁ ⇓ .inl ε₁))
+    : Derivation (e₁ * e₂ ⇓ ε₁)
+
+  /--
+  小なりの比較において、左辺は整数だが右辺が真偽値の場合は実行時エラー
+  -/
+  | E_LTIntBool (l : Derivation (e₁ ⇓ .inr (.Z i₁))) (r : Derivation (e₂ ⇓ .inr (.B b₂)))
+    : Derivation (.LT e₁ e₂ ⇓ Error.LT)
+  /--
+  小なりの比較において、左辺は整数だが右辺が実行時エラーの場合は右辺の実行時エラー
+  -/
+  | E_LTIntErr (l : Derivation (e₁ ⇓ .inr (.Z i₁))) (r : Derivation (e₂ ⇓ .inl ε₂))
+    : Derivation (.LT e₁ e₂ ⇓ ε₂)
+  /--
+  小なりの比較において、左辺が真偽値の場合は右辺によらず実行時エラー
+  -/
+  | E_LTBool (l : Derivation (e₁ ⇓ .inr (.B b₁)))
+    : Derivation (.LT e₁ e₂ ⇓ Error.LT)
+  /--
+  小なりの比較において、左辺が実行時エラーの場合は右辺によらず左辺の実行時エラー
+  -/
+  | E_LTErr (l : Derivation (e₁ ⇓ .inl ε₁))
+    : Derivation (.LT e₁ e₂ ⇓ ε₁)
+
+  /--
+  条件分岐において、条件式が整数の場合は実行時エラー
+  -/
+  | E_IfCondInt (c : Derivation (e₁ ⇓ .inr (.Z i₁)))
+    : Derivation (.If e₁ e₂ e₃ ⇓ Error.IfCond)
+  /--
+  条件分岐において、条件式が実行時エラーの場合はそのエラー
+  -/
+  | E_IfCondErr (c : Derivation (e₁ ⇓ .inl ε₁))
+    : Derivation (.If e₁ e₂ e₃ ⇓ ε₁)
+  /--
+  条件分岐において、条件式は真だがthen節が実行時エラーの場合はそのエラー
+  -/
+  | E_IfTErr (c : Derivation (e₁ ⇓ .inr (.B true))) (t : Derivation (e₂ ⇓ .inl ε₂))
+    : Derivation (.If e₁ e₂ e₃ ⇓ ε₂)
+  /--
+  条件分岐において、条件式は偽だがelse節が実行時エラーの場合はそのエラー
+  -/
+  | E_IfFErr (c : Derivation (e₁ ⇓ .inr (.B false))) (t : Derivation (e₃ ⇓ .inl ε₃))
+    : Derivation (.If e₁ e₂ e₃ ⇓ ε₃)
 
 /--
 与えられた判断が導出できるという命題

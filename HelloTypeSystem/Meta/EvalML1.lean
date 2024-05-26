@@ -7,9 +7,9 @@ namespace HelloTypeSystem.ML1
 -/
 
 /-!
-## 導出システムEvalML1の評価の例
+## 導出システムEvalML1(Err)の評価の例
 
-練習問題3.1 \[基礎概念,§3.1]
+### 練習問題3.1 \[基礎概念,§3.1]
 -/
 
 theorem «3 + 5 ⇓ 8» : Derivable (3 + 5 ⇓ 8) :=
@@ -68,13 +68,33 @@ theorem «3 + (if -23 < -2 * 8 then 8 else 2) + 4 ⇓ 15» : Derivable (3 + (.If
   ⟩
 
 /-!
-## 導出システムEvalML1のメタ定理
+### 練習問題3.3 \[基礎概念,§3.2]
+-/
+
+theorem «1 + true ⇓ error_+» : Derivable (1 + true ⇓ Error.Plus) :=
+  ⟨.E_PlusIntBool .E_Int .E_Bool⟩
+
+theorem «1 + true + 2 ⇓ error_+» : Derivable (1 + true + 2 ⇓ Error.Plus) :=
+  have ⟨𝒟⟩ := «1 + true ⇓ error_+»
+  ⟨.E_PlusErr 𝒟⟩
+
+theorem «if 2 + 3 then 1 else 3 ⇓ error_if_cond» : Derivable (.If (2 + 3) 1 3 ⇓ Error.IfCond) :=
+  ⟨.E_IfCondInt (.E_Plus .E_Int .E_Int (.B_Plus rfl))⟩
+
+theorem «if 3 < 4 then 1 < true else 3 - false ⇓ error_<» : Derivable (.If (.LT 3 4) (.LT 1 true) (3 - false) ⇓ Error.LT) :=
+  ⟨.E_IfTErr
+    (.E_LT .E_Int .E_Int (.B_LTT (by simp)))
+    (.E_LTIntBool .E_Int .E_Bool)
+  ⟩
+
+/-!
+## 導出システムEvalML1(Err)のメタ定理
 
 ### 評価の一意性：定理3.2 \[基礎概念,§3.1]
 -/
 
 /--
-評価の一意性（練習問題3.2 \[基礎概念,§3.1]）
+評価の一意性（定理3.2・練習問題3.2 \[基礎概念,§3.1]）
 
 付帯条件の一意性はLeanのEqによって自然に示せる。
 例えば加算について、
