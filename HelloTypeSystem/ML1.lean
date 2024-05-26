@@ -19,6 +19,7 @@ $$\begin{align*}
 inductive Value
   | Z (i : Int)
   | B (b : Bool)
+  deriving DecidableEq
 
 instance : OfNat Value n where
   ofNat := .Z n
@@ -62,15 +63,15 @@ inductive Judgement where
   /--
   "$\TT{$\MV{i_1}$ plus $\MV{i_2}$ is $\MV{i_3}$}$"
   -/
-  | Plus (i₁ i₂ i₃ : Int)
+  | Plus (i₁ i₂ : Int) {i₃ : Int} (h : i₁ + i₂ = i₃)
   /--
   "$\TT{$\MV{n_1}$ minus $\MV{n_2}$ is $\MV{n_3}$}$"
   -/
-  | Minus (i₁ i₂ i₃ : Int)
+  | Minus (i₁ i₂ : Int) {i₃ : Int} (h : i₁ - i₂ = i₃)
   /--
   "$\TT{$\MV{n_1}$ times $\MV{n_2}$ is $\MV{n_3}$}$"
   -/
-  | Times (i₁ i₂ i₃ : Int)
+  | Times (i₁ i₂ : Int) {i₃ : Int} (h : i₁ * i₂ = i₃)
   /--
   "$\TT{$\MV{i_1}$ less than $\MV{i_2}$ is $\MV{b}$}$"
   -/
@@ -84,14 +85,16 @@ notation:50 e:51 " ⇓ " n:51  => Judgement.Eval e n
 
 /--
 導出システムEvalML1の導出規則
+
+付帯条件はLeanのPropで表現している。
 -/
 inductive Derivation : Judgement → Type where
   | B_Plus {i₁ i₂ i₃ : Int} (h : i₁ + i₂ = i₃)
-    : Derivation (.Plus i₁ i₂ i₃)
+    : Derivation (.Plus i₁ i₂ h)
   | B_Minus {i₁ i₂ i₃ : Int} (h : i₁ - i₂ = i₃)
-    : Derivation (.Minus i₁ i₂ i₃)
+    : Derivation (.Minus i₁ i₂ h)
   | B_Times {i₁ i₂ i₃ : Int} (h : i₁ * i₂ = i₃)
-    : Derivation (.Times i₁ i₂ i₃)
+    : Derivation (.Times i₁ i₂ h)
   | B_LTT {i₁ i₂ : Int} (h : i₁ < i₂)
     : Derivation (.LT i₁ i₂ true)
   | B_LTF {i₁ i₂ : Int} (h : ¬ i₁ < i₂)
@@ -104,11 +107,11 @@ inductive Derivation : Judgement → Type where
     : Derivation (.If e₁ e₂ e₃ ⇓ v)
   | E_IfF {e₁ e₂ e₃: Expr} {v : Value} (c : Derivation (e₁ ⇓ false)) (f : Derivation (e₃ ⇓ v))
     : Derivation (.If e₁ e₂ e₃ ⇓ v)
-  | E_Plus {e₁ e₂ : Expr} {i₁ i₂ i₃ : Int} (l : Derivation (e₁ ⇓ i₁)) (r : Derivation (e₂ ⇓ i₂)) (p : Derivation (.Plus i₁ i₂ i₃))
+  | E_Plus {e₁ e₂ : Expr} {i₁ i₂ i₃ : Int} {h : i₁ + i₂ = i₃} (l : Derivation (e₁ ⇓ i₁)) (r : Derivation (e₂ ⇓ i₂)) (p : Derivation (.Plus i₁ i₂ h))
     : Derivation (e₁ + e₂ ⇓ i₃)
-  | E_Minus {e₁ e₂ : Expr} {i₁ i₂ i₃ : Int} (l : Derivation (e₁ ⇓ i₁)) (r : Derivation (e₂ ⇓ i₂)) (m : Derivation (.Minus i₁ i₂ i₃))
+  | E_Minus {e₁ e₂ : Expr} {i₁ i₂ i₃ : Int} {h : i₁ - i₂ = i₃} (l : Derivation (e₁ ⇓ i₁)) (r : Derivation (e₂ ⇓ i₂)) (m : Derivation (.Minus i₁ i₂ h))
     : Derivation (e₁ - e₂ ⇓ i₃)
-  | E_Times  {e₁ e₂ : Expr} {i₁ i₂ i₃ : Int} (l : Derivation (e₁ ⇓ i₁)) (r : Derivation (e₂ ⇓ i₂)) (t : Derivation (.Times i₁ i₂ i₃))
+  | E_Times {e₁ e₂ : Expr} {i₁ i₂ i₃ : Int} {h : i₁ * i₂ = i₃} (l : Derivation (e₁ ⇓ i₁)) (r : Derivation (e₂ ⇓ i₂)) (t : Derivation (.Times i₁ i₂ h))
     : Derivation (e₁ * e₂ ⇓ i₃)
   | E_LT {e₁ e₂ : Expr} {i₁ i₂ : Int} {b : Bool} (l : Derivation (e₁ ⇓ i₁)) (r : Derivation (e₂ ⇓ i₂)) (lt : Derivation (.LT i₁ i₂ b))
     : Derivation (.LT e₁ e₂ ⇓ b)
