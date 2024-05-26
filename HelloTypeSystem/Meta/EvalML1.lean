@@ -94,7 +94,7 @@ theorem «if 3 < 4 then 1 < true else 3 - false ⇓ error_<» : Derivable (.If (
 -/
 
 /--
-評価の一意性（定理3.2・練習問題3.2 \[基礎概念,§3.1]）
+EvalML1の評価の一意性（定理3.2・練習問題3.2 \[基礎概念,§3.1]）
 
 付帯条件の一意性はLeanのEqによって自然に示せる。
 例えば加算について、
@@ -112,38 +112,38 @@ i₃ = i₁  + i₂  -- h₁.symm
 ```
 したがって`h₂ ▸ hr ▸ hl ▸ h₁.symm : i₃ = i₃'`が証明になる。
 -/
-theorem eval_uniq {v₁ v₂ : Value} : {e : Expr} → Derivation (e ⇓ v₁) → Derivation (e ⇓ v₂) → v₁ = v₂
+theorem eval_value_uniq {v₁ v₂ : Value} : {e : Expr} → Derivation (e ⇓ v₁) → Derivation (e ⇓ v₂) → v₁ = v₂
   | .C (.Z _), .E_Int,  .E_Int  => rfl
   | .C (.B _), .E_Bool, .E_Bool => rfl
   | .Add .., .E_Plus d₁l d₁r (.B_Plus h₁), .E_Plus d₂l d₂r (.B_Plus h₂) =>
-      have hl := eval_uniq d₁l d₂l |> Value.Z.inj
-      have hr := eval_uniq d₁r d₂r |> Value.Z.inj
+      have hl := eval_value_uniq d₁l d₂l |> Value.Z.inj
+      have hr := eval_value_uniq d₁r d₂r |> Value.Z.inj
       congrArg Value.Z (h₂ ▸ hr ▸ hl ▸ h₁.symm)
   | .Sub .., .E_Minus d₁l d₁r (.B_Minus h₁), .E_Minus d₂l d₂r (.B_Minus h₂) =>
-      have hl := eval_uniq d₁l d₂l |> Value.Z.inj
-      have hr := eval_uniq d₁r d₂r |> Value.Z.inj
+      have hl := eval_value_uniq d₁l d₂l |> Value.Z.inj
+      have hr := eval_value_uniq d₁r d₂r |> Value.Z.inj
       congrArg Value.Z (h₂ ▸ hr ▸ hl ▸ h₁.symm)
   | .Mul .., .E_Times d₁l d₁r (.B_Times h₁), .E_Times d₂l d₂r (.B_Times h₂) =>
-      have hl := eval_uniq d₁l d₂l |> Value.Z.inj
-      have hr := eval_uniq d₁r d₂r |> Value.Z.inj
+      have hl := eval_value_uniq d₁l d₂l |> Value.Z.inj
+      have hr := eval_value_uniq d₁r d₂r |> Value.Z.inj
       congrArg Value.Z (h₂ ▸ hr ▸ hl ▸ h₁.symm)
   | .LT .., .E_LT _ _ (.B_LTT _), .E_LT _ _ (.B_LTT _) => rfl
   | .LT .., .E_LT _ _ (.B_LTF _), .E_LT _ _ (.B_LTF _) => rfl
   | .LT .., .E_LT d₁l d₁r (.B_LTT h₁), .E_LT d₂l d₂r (.B_LTF h₂) =>
-      have hl := eval_uniq d₁l d₂l |> Value.Z.inj
-      have hr := eval_uniq d₁r d₂r |> Value.Z.inj
+      have hl := eval_value_uniq d₁l d₂l |> Value.Z.inj
+      have hr := eval_value_uniq d₁r d₂r |> Value.Z.inj
       congrArg Value.B <| False.elim <| absurd (hr ▸ hl ▸ h₁) h₂
   | .LT .., .E_LT d₁l d₁r (.B_LTF h₁), .E_LT d₂l d₂r (.B_LTT h₂) =>
-      have hl := eval_uniq d₁l d₂l |> Value.Z.inj
-      have hr := eval_uniq d₁r d₂r |> Value.Z.inj
+      have hl := eval_value_uniq d₁l d₂l |> Value.Z.inj
+      have hr := eval_value_uniq d₁r d₂r |> Value.Z.inj
       congrArg Value.B <| False.elim <| absurd (hr ▸ hl ▸ h₂) h₁
   | .If .., .E_IfT _ d₁v, .E_IfT _ d₂v =>
-      eval_uniq d₁v d₂v
+      eval_value_uniq d₁v d₂v
   | .If .., .E_IfF _ d₁v, .E_IfF _ d₂v =>
-      eval_uniq d₁v d₂v
+      eval_value_uniq d₁v d₂v
   | .If .., .E_IfT d₁c _, .E_IfF d₂c _ =>
-      have := eval_uniq d₁c d₂c
+      have := eval_value_uniq d₁c d₂c
       by contradiction
   | .If .., .E_IfF d₁c _, .E_IfT d₂c _ =>
-      have := eval_uniq d₁c d₂c
+      have := eval_value_uniq d₁c d₂c
       by contradiction

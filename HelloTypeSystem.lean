@@ -18,19 +18,17 @@ $\newcommand\DReduces{\mathrel{\longrightarrow_{\\!d}}}$
 Lean 4でプログラミング言語の型システムや意味論に入門するリポジトリです。
 
 ## Index
-- [諸定義](./HelloTypeSystem/Basic.html)
-  - ペアノ自然数
-  - 算術式
-  - 判断（judgement）
-  - 導出システム（derivation systems）
-    - PeanoNat：ペアノ自然数の加算・乗算 \[基礎概念,§1.1]
-    - CompareNat1--3：ペアノ自然数の比較 \[基礎概念,§1.3]
-    - EvalNatExpr：算術式の評価 \[基礎概念,§1.4]
-    - ReduceNatExpr：算術式の簡約 \[基礎概念,§1.4]
-- ML言語の評価
-  - [ML1](./HelloTypeSystem/ML1.html)：整数・真偽値式の評価 \[基礎概念,§3.1]
-- 導出システムに関する主なメタ定理
-  - PeanoNat
+- 自然数の加算・乗算・比較（\[基礎概念,1章]）とメタ定理（\[基礎概念,2章]）
+  - [諸定義](./HelloTypeSystem/Basic.html)
+    - ペアノ自然数
+    - 算術式
+    - 判断（judgement）
+    - 導出システム（derivation systems）
+      - PeanoNat：ペアノ自然数の加算・乗算 \[基礎概念,§1.1]
+      - CompareNat1--3：ペアノ自然数の比較 \[基礎概念,§1.3]
+      - EvalNatExpr：算術式の評価 \[基礎概念,§1.4]
+      - ReduceNatExpr：算術式の簡約 \[基礎概念,§1.4]
+  - 導出システムに関する主なメタ定理
     - 加算：$\TT{$\MV{n_1}$ plus $\MV{n_2}$ is $\MV{n_3}$}$
       - 左全域性：`HelloTypeSystem.PeanoNat.derive_plus`
       - 一意性：`HelloTypeSystem.PeanoNat.plus_uniq`
@@ -41,17 +39,14 @@ Lean 4でプログラミング言語の型システムや意味論に入門す�
       - 一意性：`HelloTypeSystem.PeanoNat.times_uniq`
       - 可換律：`HelloTypeSystem.PeanoNat.times_comm`
       - [結合律](./HelloTypeSystem/Meta/PeanoNat.html#定理2-10)
-  - CompareNat1--3
     - 比較${}<{}$
       - [推移律](./HelloTypeSystem/Meta/CompareNat.html#定理2-13-推移律-基礎概念-2-1)
-    - 3つの導出システムの[同値性](./HelloTypeSystem/Meta/CompareNat.html#定理2-14-基礎概念-2-1)
-  - EvalNatExpr
-    - [PeanoNatの判断を含むこと](./HelloTypeSystem/Meta/EvalNatExpr.html#EvalNatExprがNatの導出を含むこと)
+    - CompareNat1--3の導出システムの[同値性](./HelloTypeSystem/Meta/CompareNat.html#定理2-14-基礎概念-2-1)
+    - [EvalNatExprがPeanoNatの判断を含むこと](./HelloTypeSystem/Meta/EvalNatExpr.html#EvalNatExprがPeanoNatの導出を含むこと)
     - 評価${}\Evals{}$
       - 左全域性 `HelloTypeSystem.EvalNatExpr.eval_left_total`
       - 一意性 `HelloTypeSystem.EvalNatExpr.eval_uniq`
       - ${\MV{e}\Evals\MV{n}} \implies {\MV{e}\MReduces\MV{n}}$ `HelloTypeSystem.mreduce_of_eval`
-  - ReduceNatExpr
     - 簡約${}\Reduces{},{}\MReduces{}$
       - 前進性 `HelloTypeSystem.ReduceNatExpr.reduce_progressive`
       - 合流性 `HelloTypeSystem.ReduceNatExpr.reduce_confluence`
@@ -59,8 +54,9 @@ Lean 4でプログラミング言語の型システムや意味論に入門す�
       - 弱正規化可能性 `HelloTypeSystem.ReduceNatExpr.weak_normalization`
     - 決定的簡約${}\DReduces{}$
       - 一意性 `HelloTypeSystem.ReduceNatExpr.dreduce_uniq`
-  - EvalML1
-    - 評価の一意性 `HelloTypeSystem.ML1.eval_uniq`
+- ML言語の評価
+  - [ML1](./HelloTypeSystem/ML1.html)：整数・真偽値式の評価 \[基礎概念,3章]
+    - EvalML1の評価の一意性 `HelloTypeSystem.ML1.eval_value_uniq`
 
 ## Notation
 - $\MV{n},\MV{n_1},\dots$（太字斜体）：メタ変数。特にペアノ自然数の場合はそれに対応する普通の自然数を$n,n_1,\dots$と書く。
