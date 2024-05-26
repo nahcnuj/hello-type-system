@@ -164,3 +164,126 @@ theorem eval_left_total (e : Expr) : (∃ v : Value, Derivable (e ⇓ v)) ∨ (�
   match r with
   | .inr v => .inl ⟨v, d⟩
   | .inl ε => .inr ⟨ε, d⟩
+
+/-!
+## 導出システムEvalML1Errのメタ定理
+
+### 評価の（左）全域性：練習問題3.5 \[基礎概念,§3.2]
+以下の3パターンに分けて、それぞれを補題として証明する：
+- ${\MV{e}\Evals\MV{v\_1}} \land {\MV{e}\Evals\MV{v\_2}}$ ⟹ 定理3.2 `eval_value_uniq`
+- ${\MV{e}\Evals\MV{v}} \land {\MV{e}\Evals\MV{\varepsilon}}$ ⟹ 補題`contra_eval_value_error_uniq`
+- ${\MV{e}\Evals\MV{\varepsilon\_1}} \land {\MV{e}\Evals\MV{\varepsilon\_2}}$ ⟹ 補題`eval_error_uniq`
+-/
+
+/--
+式$\MV{e}$を評価した結果が値にも実行時エラーにもなるということはない。
+-/
+theorem contra_eval_value_error_uniq : Derivation (e ⇓ .inr v₁) → Derivation (e ⇓ .inl ε₂) → False
+  | .E_Plus  _   d₁r _, .E_PlusIntBool  _   d₂r => eval_value_uniq d₁r d₂r |> Value.noConfusion
+  | .E_Plus  _   d₁r _, .E_PlusIntErr   _   d₂r => contra_eval_value_error_uniq d₁r d₂r
+  | .E_Plus  d₁l _   _, .E_PlusBool     d₂l     => eval_value_uniq d₁l d₂l |> Value.noConfusion
+  | .E_Plus  d₁l _   _, .E_PlusErr      d₂l     => contra_eval_value_error_uniq d₁l d₂l
+  | .E_Minus _   d₁r _, .E_MinusIntBool _   d₂r => eval_value_uniq d₁r d₂r |> Value.noConfusion
+  | .E_Minus _   d₁r _, .E_MinusIntErr  _   d₂r => contra_eval_value_error_uniq d₁r d₂r
+  | .E_Minus d₁l _   _, .E_MinusBool    d₂l     => eval_value_uniq d₁l d₂l |> Value.noConfusion
+  | .E_Minus d₁l _   _, .E_MinusErr     d₂l     => contra_eval_value_error_uniq d₁l d₂l
+  | .E_Times _   d₁r _, .E_TimesIntBool _   d₂r => eval_value_uniq d₁r d₂r |> Value.noConfusion
+  | .E_Times _   d₁r _, .E_TimesIntErr  _   d₂r => contra_eval_value_error_uniq d₁r d₂r
+  | .E_Times d₁l _   _, .E_TimesBool    d₂l     => eval_value_uniq d₁l d₂l |> Value.noConfusion
+  | .E_Times d₁l _   _, .E_TimesErr     d₂l     => contra_eval_value_error_uniq d₁l d₂l
+  | .E_LT    _   d₁r _, .E_LTIntBool    _   d₂r => eval_value_uniq d₁r d₂r |> Value.noConfusion
+  | .E_LT    _   d₁r _, .E_LTIntErr     _   d₂r => contra_eval_value_error_uniq d₁r d₂r
+  | .E_LT    d₁l _   _, .E_LTBool       d₂l     => eval_value_uniq d₁l d₂l |> Value.noConfusion
+  | .E_LT    d₁l _   _, .E_LTErr        d₂l     => contra_eval_value_error_uniq d₁l d₂l
+  | .E_IfT   d₁c _    , .E_IfCondInt    d₂c     => eval_value_uniq d₁c d₂c |> Value.noConfusion
+  | .E_IfT   d₁c _    , .E_IfCondErr    d₂c     => contra_eval_value_error_uniq d₁c d₂c
+  | .E_IfT   _   d₁t  , .E_IfTErr       _   d₂t => contra_eval_value_error_uniq d₁t d₂t
+  | .E_IfT   d₁c _    , .E_IfFErr       d₂c _   => eval_value_uniq d₁c d₂c |> Value.B.inj |> Bool.noConfusion
+  | .E_IfF   d₁c _    , .E_IfCondInt    d₂c     => eval_value_uniq d₁c d₂c |> Value.noConfusion
+  | .E_IfF   d₁c _    , .E_IfCondErr    d₂c     => contra_eval_value_error_uniq d₁c d₂c
+  | .E_IfF   _   d₁f  , .E_IfFErr       _   d₂t => contra_eval_value_error_uniq d₁f d₂t
+  | .E_IfF   d₁c _    , .E_IfTErr       d₂c _   => eval_value_uniq d₁c d₂c |> Value.B.inj |> Bool.noConfusion
+
+/-!
+補題`eval_error_uniq`はパターンが多いので実行時エラーの種類毎に補題として証明する。
+-/
+
+/--
+加算の実行時エラーについての評価の一意性
+-/
+theorem eval_plus_error_uniq : Derivation (e ⇓ .inl Error.Plus) → Derivation (e ⇓ .inl ε) → Error.Plus = ε
+  | .E_PlusIntBool  _   _  , .E_PlusIntBool   _   _   => rfl
+  | .E_PlusIntBool  _   d₁r, .E_PlusIntErr    _   d₂r => contra_eval_value_error_uniq d₁r d₂r |> False.elim
+  | .E_PlusIntBool  _   _  , .E_PlusBool      _       => rfl
+  | .E_PlusIntBool  d₁l _  , .E_PlusErr       d₂l     => contra_eval_value_error_uniq d₁l d₂l |> False.elim
+  | .E_PlusIntErr   _   _  , .E_PlusIntBool   _   _   => rfl
+  | .E_PlusIntErr   _   d₁r, .E_PlusIntErr    _   d₂r => eval_plus_error_uniq d₁r d₂r
+  | .E_PlusIntErr   _   _  , .E_PlusBool      _       => rfl
+  | .E_PlusIntErr   d₁l _  , .E_PlusErr       d₂l     => contra_eval_value_error_uniq d₁l d₂l |> False.elim
+  | .E_PlusBool     _      , .E_PlusIntBool   _   _   => rfl
+  | .E_PlusBool     d₁l    , .E_PlusIntErr    d₂l _   => eval_value_uniq d₁l d₂l |> Value.noConfusion
+  | .E_PlusBool     _      , .E_PlusBool      _       => rfl
+  | .E_PlusBool     d₁l    , .E_PlusErr       d₂l     => contra_eval_value_error_uniq d₁l d₂l |> False.elim
+  | .E_PlusErr      _      , .E_PlusIntBool   _   _   => rfl
+  | .E_PlusErr      d₁l    , .E_PlusIntErr    d₂l _   => contra_eval_value_error_uniq d₂l d₁l |> False.elim
+  | .E_PlusErr      _      , .E_PlusBool      _       => rfl
+  | .E_PlusErr      d₁l    , .E_PlusErr       d₂l     => eval_plus_error_uniq d₁l d₂l
+  | .E_MinusIntErr  _   d₁r, .E_MinusIntBool  _   d₂r => contra_eval_value_error_uniq d₂r d₁r |> False.elim
+  | .E_MinusIntErr  _   d₁r, .E_MinusIntErr   _   d₂r => eval_plus_error_uniq d₁r d₂r
+  | .E_MinusIntErr  d₁l _  , .E_MinusBool     d₂l     => eval_value_uniq d₁l d₂l |> Value.noConfusion
+  | .E_MinusIntErr  d₁l _  , .E_MinusErr      d₂l     => contra_eval_value_error_uniq d₁l d₂l |> False.elim
+  | .E_MinusErr     d₁l    , .E_MinusIntBool  d₂l _   => contra_eval_value_error_uniq d₂l d₁l |> False.elim
+  | .E_MinusErr     d₁l    , .E_MinusIntErr   d₂l _   => contra_eval_value_error_uniq d₂l d₁l |> False.elim
+  | .E_MinusErr     d₁l    , .E_MinusBool     d₂l     => contra_eval_value_error_uniq d₂l d₁l |> False.elim
+  | .E_MinusErr     d₁l    , .E_MinusErr      d₂l     => eval_plus_error_uniq d₁l d₂l
+  | .E_TimesIntErr  _   d₁r, .E_TimesIntBool  _   d₂r => contra_eval_value_error_uniq d₂r d₁r |> False.elim
+  | .E_TimesIntErr  _   d₁r, .E_TimesIntErr   _   d₂r => eval_plus_error_uniq d₁r d₂r
+  | .E_TimesIntErr  d₁l _  , .E_TimesBool     d₂l     => eval_value_uniq d₁l d₂l |> Value.noConfusion
+  | .E_TimesIntErr  d₁l _  , .E_TimesErr      d₂l     => contra_eval_value_error_uniq d₁l d₂l |> False.elim
+  | .E_TimesErr     d₁l    , .E_TimesIntBool  d₂l _   => contra_eval_value_error_uniq d₂l d₁l |> False.elim
+  | .E_TimesErr     d₁l    , .E_TimesIntErr   d₂l _   => contra_eval_value_error_uniq d₂l d₁l |> False.elim
+  | .E_TimesErr     d₁l    , .E_TimesBool     d₂l     => contra_eval_value_error_uniq d₂l d₁l |> False.elim
+  | .E_TimesErr     d₁l    , .E_TimesErr      d₂l     => eval_plus_error_uniq d₁l d₂l
+  | .E_LTIntErr     _   d₁r, .E_LTIntBool     _   d₂r => contra_eval_value_error_uniq d₂r d₁r |> False.elim
+  | .E_LTIntErr     _   d₁r, .E_LTIntErr      _   d₂r => eval_plus_error_uniq d₁r d₂r
+  | .E_LTIntErr     d₁l _  , .E_LTBool        d₂l     => eval_value_uniq d₁l d₂l |> Value.noConfusion
+  | .E_LTIntErr     d₁l _  , .E_LTErr         d₂l     => contra_eval_value_error_uniq d₁l d₂l |> False.elim
+  | .E_LTErr        d₁l    , .E_LTIntBool     d₂l _   => contra_eval_value_error_uniq d₂l d₁l |> False.elim
+  | .E_LTErr        d₁l    , .E_LTIntErr      d₂l _   => contra_eval_value_error_uniq d₂l d₁l |> False.elim
+  | .E_LTErr        d₁l    , .E_LTBool        d₂l     => contra_eval_value_error_uniq d₂l d₁l |> False.elim
+  | .E_LTErr        d₁l    , .E_LTErr         d₂l     => eval_plus_error_uniq d₁l d₂l
+  | .E_IfCondErr    d₁c    , .E_IfCondInt     d₂c     => contra_eval_value_error_uniq d₂c d₁c |> False.elim
+  | .E_IfCondErr    d₁c    , .E_IfCondErr     d₂c     => eval_plus_error_uniq d₁c d₂c
+  | .E_IfCondErr    d₁c    , .E_IfTErr        d₂c _   => contra_eval_value_error_uniq d₂c d₁c |> False.elim
+  | .E_IfCondErr    d₁c    , .E_IfFErr        d₂c _   => contra_eval_value_error_uniq d₂c d₁c |> False.elim
+  | .E_IfTErr       d₁c _  , .E_IfCondInt     d₂c     => eval_value_uniq d₁c d₂c |> Value.noConfusion
+  | .E_IfTErr       d₁c _  , .E_IfCondErr     d₂c     => contra_eval_value_error_uniq d₁c d₂c |> False.elim
+  | .E_IfTErr       _   d₁t, .E_IfTErr        _   d₂t => eval_plus_error_uniq d₁t d₂t
+  | .E_IfTErr       d₁c _  , .E_IfFErr        d₂c _   => eval_value_uniq d₁c d₂c |> Value.B.inj |> Bool.noConfusion
+  | .E_IfFErr       d₁c _  , .E_IfCondInt     d₂c     => eval_value_uniq d₁c d₂c |> Value.noConfusion
+  | .E_IfFErr       d₁c _  , .E_IfCondErr     d₂c     => contra_eval_value_error_uniq d₁c d₂c |> False.elim
+  | .E_IfFErr       d₁c _  , .E_IfTErr        d₂c _   => eval_value_uniq d₁c d₂c |> Value.B.inj |> Bool.noConfusion
+  | .E_IfFErr       _   d₁t, .E_IfFErr        _   d₂t => eval_plus_error_uniq d₁t d₂t
+
+/--
+実行時エラーに関する評価の一意性
+-/
+theorem eval_error_uniq : {ε₁ : Error} → Derivation (e ⇓ .inl ε₁) → Derivation (e ⇓ .inl ε₂) → ε₁ = ε₂
+  | .Plus,   d₁, d₂ => eval_plus_error_uniq d₁ d₂
+  | .Minus,  d₁, d₂ => sorry
+  | .Times,  d₁, d₂ => sorry
+  | .LT,     d₁, d₂ => sorry
+  | .IfCond, d₁, d₂ => sorry
+
+/-!
+以上の補題をまとめ上げる。
+-/
+
+/--
+EvalML1Errの評価の一意性（練習問題3.5 \[基礎概念,§3.2]）
+-/
+theorem eval_uniq {e : Expr} : {r₁ r₂ : Result} → Derivation (e ⇓ r₁) → Derivation (e ⇓ r₂) → r₁ = r₂
+  | .inr _, .inr _ => fun d₁ d₂ => congrArg Sum.inr <| eval_value_uniq d₁ d₂
+  | .inr _, .inl _ => fun d₁ d₂ => False.elim <| contra_eval_value_error_uniq d₁ d₂
+  | .inl _, .inr _ => fun d₁ d₂ => False.elim <| contra_eval_value_error_uniq d₂ d₁
+  | .inl _, .inl _ => fun d₁ d₂ => congrArg Sum.inl <| eval_error_uniq d₁ d₂
