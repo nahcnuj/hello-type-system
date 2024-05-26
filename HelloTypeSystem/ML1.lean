@@ -68,7 +68,6 @@ inductive Error where
   | Times
   | LT
   | IfCond
-  | IfValue
 
 /--
 $\Set{Result} := \Set{Error} \uplus \Set{Value}$
