@@ -58,6 +58,7 @@ Lean 4でプログラミング言語の型システムや意味論に入門す�
   - [ML1](./HelloTypeSystem/ML1.html)：整数・真偽値式の評価 \[基礎概念,3章]
     - EvalML1の評価の一意性 `HelloTypeSystem.ML1.eval_value_uniq`
     - EvalML1Errの評価の左全域性 `HelloTypeSystem.ML1.eval_left_total`
+    - EvalML1Errの評価の一意性 `HelloTypeSystem.ML1.eval_uniq`
 
 ## Notation
 - $\MV{n},\MV{n_1},\dots$（太字斜体）：メタ変数。特にペアノ自然数の場合はそれに対応する普通の自然数を$n,n_1,\dots$と書く。
