@@ -210,6 +210,7 @@ theorem contra_eval_value_error : Derivation (e ⇓ .inr v₁) → Derivation (e
 各構文要素について
 - その構文要素で発生する実行時エラーの導出
 - 他の各構文要素から実行時エラーが伝播する導出
+
 に対して一意性を示す。
 導出の組み合わせによっては矛盾から示す場合もある。
 -/
