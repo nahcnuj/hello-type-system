@@ -54,11 +54,12 @@ Lean 4でプログラミング言語の型システムや意味論に入門す�
       - 弱正規化可能性 `HelloTypeSystem.ReduceNatExpr.weak_normalization`
     - 決定的簡約${}\DReduces{}$
       - 一意性 `HelloTypeSystem.ReduceNatExpr.dreduce_uniq`
-- ML言語の評価
-  - [ML1](./HelloTypeSystem/ML1.html)：整数・真偽値式の評価 \[基礎概念,3章]
+- ML言語の評価導出システムと型システム
+  - [ML1](./HelloTypeSystem/ML1.html)：整数・真偽値式 \[基礎概念,3章]
     - EvalML1の評価の一意性 `HelloTypeSystem.ML1.eval_value_uniq`
     - EvalML1Errの評価の左全域性 `HelloTypeSystem.ML1.eval_left_total`
     - EvalML1Errの評価の一意性 `HelloTypeSystem.ML1.eval_uniq`
+    - TypingML1による型安全性 `HelloTypeSystem.ML1.type_safety`
 
 ## Notation
 - $\MV{n},\MV{n_1},\dots$（太字斜体）：メタ変数。特にペアノ自然数の場合はそれに対応する普通の自然数を$n,n_1,\dots$と書く。

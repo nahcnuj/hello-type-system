@@ -87,6 +87,14 @@ instance : OfNat Result n where
 -/
 
 /--
+TypingML1が扱う型
+$$\Set{Types} \ni \MV{\tau} ::= \TT{int} \mid \TT{bool}$$
+-/
+inductive Types where
+  | Int
+  | Bool
+
+/--
 導出システムEvalML1Err、TypingML1における判断
 -/
 inductive Judgement where
@@ -111,9 +119,9 @@ inductive Judgement where
   -/
   | Eval (e : Expr) (r : Result)
   /--
-  "$\vdash\MV{e}\colon\MV{\tau}$" means that the type of an expression $\MV{e}$ is $\MV{tau}$.
+  "$\vdash\MV{e}\colon\MV{\tau}$" means that the type of an expression $\MV{e}$ is $\MV{\tau}$.
   -/
-  | Typable (e : Expr) (τ : Type)
+  | Typable (e : Expr) (τ : Types)
 
 notation:50 e:51 " ⇓ " n:51 => Judgement.Eval e n
 notation:50 "⊢ " e:51 " : " τ:51 => Judgement.Typable e τ
@@ -156,18 +164,18 @@ inductive Derivation : Judgement → Type 1 where
 
   -- 型付け規則
   | T_Int {i : Int}
-    : Derivation (⊢ i : Int)
+    : Derivation (⊢ i : .Int)
   | T_Bool {b : Bool}
-    : Derivation (⊢ b : Bool)
-  | T_Plus {e₁ e₂ : Expr} (d₁ : Derivation (⊢ e₁ : Int)) (d₂ : Derivation (⊢ e₂ : Int))
-    : Derivation (⊢ e₁ + e₂ : Int)
-  | T_Minus {e₁ e₂ : Expr} (d₁ : Derivation (⊢ e₁ : Int)) (d₂ : Derivation (⊢ e₂ : Int))
-    : Derivation (⊢ e₁ - e₂ : Int)
-  | T_Times {e₁ e₂ : Expr} (d₁ : Derivation (⊢ e₁ : Int)) (d₂ : Derivation (⊢ e₂ : Int))
-    : Derivation (⊢ e₁ * e₂ : Int)
-  | T_LT {e₁ e₂ : Expr} (d₁ : Derivation (⊢ e₁ : Int)) (d₂ : Derivation (⊢ e₂ : Int))
-    : Derivation (⊢ .LT e₁ e₂ : Bool)
-  | T_If {e₁ e₂ e₃ : Expr} {τ : Type} (d₁ : Derivation (⊢ e₁ : Bool)) (d₂ : Derivation (⊢ e₂ : τ)) (d₃ : Derivation (⊢ e₃ : τ))
+    : Derivation (⊢ b : .Bool)
+  | T_Plus {e₁ e₂ : Expr} (d₁ : Derivation (⊢ e₁ : .Int)) (d₂ : Derivation (⊢ e₂ : .Int))
+    : Derivation (⊢ e₁ + e₂ : .Int)
+  | T_Minus {e₁ e₂ : Expr} (d₁ : Derivation (⊢ e₁ : .Int)) (d₂ : Derivation (⊢ e₂ : .Int))
+    : Derivation (⊢ e₁ - e₂ : .Int)
+  | T_Times {e₁ e₂ : Expr} (d₁ : Derivation (⊢ e₁ : .Int)) (d₂ : Derivation (⊢ e₂ : .Int))
+    : Derivation (⊢ e₁ * e₂ : .Int)
+  | T_LT {e₁ e₂ : Expr} (d₁ : Derivation (⊢ e₁ : .Int)) (d₂ : Derivation (⊢ e₂ : .Int))
+    : Derivation (⊢ .LT e₁ e₂ : .Bool)
+  | T_If {e₁ e₂ e₃ : Expr} {τ : Types} (d₁ : Derivation (⊢ e₁ : .Bool)) (d₂ : Derivation (⊢ e₂ : τ)) (d₃ : Derivation (⊢ e₃ : τ))
     : Derivation (⊢ .If e₁ e₂ e₃ : τ)
 
   -- 実行時エラーについての導出規則
@@ -348,6 +356,41 @@ def Expr.eval : (e : Expr) → (r : Result) × Derivation (e ⇓ r)
           | .inl ε₃ => ⟨ε₃, .E_IfFErr d₁ d₃⟩
       | .inr (.Z _) => ⟨Error.IfCond, .E_IfCondInt d₁⟩
       | .inl ε₁     => ⟨ε₁, .E_IfCondErr d₁⟩
+
+/--
+型付けの結果
+-/
+inductive TypingResult (e : Expr) where
+  | Ok    : (τ : Types) → Derivation (⊢ e : τ) → TypingResult e
+  | Error : TypingResult e
+
+/--
+与えられた式の型検査を行う。
+-/
+def Expr.check : (e : Expr) → TypingResult e
+  | .C (.Z _) => .Ok .Int  .T_Int
+  | .C (.B _) => .Ok .Bool .T_Bool
+  | .Add e₁ e₂ =>
+      match e₁.check, e₂.check with
+      | .Ok .Int d₁, .Ok .Int d₂ => .Ok .Int (.T_Plus d₁ d₂)
+      | _          , _           => .Error
+  | .Sub e₁ e₂ =>
+      match e₁.check, e₂.check with
+      | .Ok .Int d₁, .Ok .Int d₂ => .Ok .Int (.T_Minus d₁ d₂)
+      | _          , _           => .Error
+  | .Mul e₁ e₂ =>
+      match e₁.check, e₂.check with
+      | .Ok .Int d₁, .Ok .Int d₂ => .Ok .Int (.T_Times d₁ d₂)
+      | _          , _           => .Error
+  | .LT e₁ e₂ =>
+      match e₁.check, e₂.check with
+      | .Ok .Int d₁, .Ok .Int d₂ => .Ok .Bool (.T_LT d₁ d₂)
+      | _          , _           => .Error
+  | .If e₁ e₂ e₃ =>
+      match e₁.check, e₂.check, e₃.check with
+      | .Ok .Bool d₁, .Ok .Int  d₂, .Ok .Int  d₃ => .Ok .Int (.T_If d₁ d₂ d₃)
+      | .Ok .Bool d₁, .Ok .Bool d₂, .Ok .Bool d₃ => .Ok .Bool (.T_If d₁ d₂ d₃)
+      | _           , _           , _            => .Error
 
 end ML1
 
