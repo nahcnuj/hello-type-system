@@ -73,6 +73,7 @@ inductive Expr where
   | Nat (n : PNat)
   | Add (e₁ e₂ : Expr)
   | Mul (e₁ e₂ : Expr)
+  deriving DecidableEq
 
 instance : Coe PNat Expr where
   coe := .Nat
