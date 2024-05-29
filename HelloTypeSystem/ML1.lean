@@ -131,7 +131,7 @@ notation:50 "⊢ " e:51 " : " τ:51 => Judgement.Typable e τ
 
 付帯条件はLeanのPropで表現している。
 -/
-inductive Derivation : Judgement → Type 1 where
+inductive Derivation : Judgement → Type where
   -- 判断の導出規則
   | B_Plus {i₁ i₂ i₃ : Int} (h : i₁ + i₂ = i₃)
     : Derivation (.Plus i₁ i₂ h)
