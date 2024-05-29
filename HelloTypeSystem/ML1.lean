@@ -81,8 +81,21 @@ instance : Coe Error Result where
 instance : OfNat Result n where
   ofNat := .inr (.Z n)
 
+/-!
+\[基礎概念]では型システムは8章に登場するが、後ろの章で定義されるML4がベースとなっている。
+先取りしてML1に型判断とその導出規則を導入し（TypingML1と呼ぶ）、その型安全性を証明してみたい。
+-/
+
 /--
-導出システムEvalML1Errにおける判断
+TypingML1が扱う型
+$$\Set{Types} \ni \MV{\tau} ::= \TT{int} \mid \TT{bool}$$
+-/
+inductive Types where
+  | Int
+  | Bool
+
+/--
+導出システムEvalML1Err、TypingML1における判断
 -/
 inductive Judgement where
   /--
@@ -105,15 +118,21 @@ inductive Judgement where
   "$\MV{e} \Evals \MV{r}$" means that the result of an expression $\MV{e}$ is $\MV{r}$.
   -/
   | Eval (e : Expr) (r : Result)
+  /--
+  "$\vdash\MV{e}\colon\MV{\tau}$" means that the type of an expression $\MV{e}$ is $\MV{\tau}$.
+  -/
+  | Typable (e : Expr) (τ : Types)
 
-notation:50 e:51 " ⇓ " n:51  => Judgement.Eval e n
+notation:50 e:51 " ⇓ " n:51 => Judgement.Eval e n
+notation:50 "⊢ " e:51 " : " τ:51 => Judgement.Typable e τ
 
 /--
-導出システムEvalML1Errの導出規則
+導出システムEvalML1Err、TypingML1の導出規則
 
 付帯条件はLeanのPropで表現している。
 -/
-inductive Derivation : Judgement → Type where
+inductive Derivation : Judgement → Type 1 where
+  -- 判断の導出規則
   | B_Plus {i₁ i₂ i₃ : Int} (h : i₁ + i₂ = i₃)
     : Derivation (.Plus i₁ i₂ h)
   | B_Minus {i₁ i₂ i₃ : Int} (h : i₁ - i₂ = i₃)
@@ -125,14 +144,11 @@ inductive Derivation : Judgement → Type where
   | B_LTF {i₁ i₂ : Int} (h : ¬ i₁ < i₂)
     : Derivation (.LT i₁ i₂ false)
 
+  -- 評価についての導出規則
   | E_Int {i : Int}
     : Derivation (i ⇓ i)
   | E_Bool {b : Bool}
     : Derivation (b ⇓ b)
-  | E_IfT {e₁ e₂ e₃: Expr} {v : Value} (c : Derivation (e₁ ⇓ true)) (t : Derivation (e₂ ⇓ v))
-    : Derivation (.If e₁ e₂ e₃ ⇓ v)
-  | E_IfF {e₁ e₂ e₃: Expr} {v : Value} (c : Derivation (e₁ ⇓ false)) (f : Derivation (e₃ ⇓ v))
-    : Derivation (.If e₁ e₂ e₃ ⇓ v)
   | E_Plus {e₁ e₂ : Expr} {i₁ i₂ i₃ : Int} {h : i₁ + i₂ = i₃} (l : Derivation (e₁ ⇓ i₁)) (r : Derivation (e₂ ⇓ i₂)) (p : Derivation (.Plus i₁ i₂ h))
     : Derivation (e₁ + e₂ ⇓ i₃)
   | E_Minus {e₁ e₂ : Expr} {i₁ i₂ i₃ : Int} {h : i₁ - i₂ = i₃} (l : Derivation (e₁ ⇓ i₁)) (r : Derivation (e₂ ⇓ i₂)) (m : Derivation (.Minus i₁ i₂ h))
@@ -141,6 +157,28 @@ inductive Derivation : Judgement → Type where
     : Derivation (e₁ * e₂ ⇓ i₃)
   | E_LT {e₁ e₂ : Expr} {i₁ i₂ : Int} {b : Bool} (l : Derivation (e₁ ⇓ i₁)) (r : Derivation (e₂ ⇓ i₂)) (lt : Derivation (.LT i₁ i₂ b))
     : Derivation (.LT e₁ e₂ ⇓ b)
+  | E_IfT {e₁ e₂ e₃: Expr} {v : Value} (c : Derivation (e₁ ⇓ true)) (t : Derivation (e₂ ⇓ v))
+    : Derivation (.If e₁ e₂ e₃ ⇓ v)
+  | E_IfF {e₁ e₂ e₃: Expr} {v : Value} (c : Derivation (e₁ ⇓ false)) (f : Derivation (e₃ ⇓ v))
+    : Derivation (.If e₁ e₂ e₃ ⇓ v)
+
+  -- 型付け規則
+  | T_Int {i : Int}
+    : Derivation (⊢ i : .Int)
+  | T_Bool {b : Bool}
+    : Derivation (⊢ b : .Bool)
+  | T_Plus {e₁ e₂ : Expr} (d₁ : Derivation (⊢ e₁ : .Int)) (d₂ : Derivation (⊢ e₂ : .Int))
+    : Derivation (⊢ e₁ + e₂ : .Int)
+  | T_Minus {e₁ e₂ : Expr} (d₁ : Derivation (⊢ e₁ : .Int)) (d₂ : Derivation (⊢ e₂ : .Int))
+    : Derivation (⊢ e₁ - e₂ : .Int)
+  | T_Times {e₁ e₂ : Expr} (d₁ : Derivation (⊢ e₁ : .Int)) (d₂ : Derivation (⊢ e₂ : .Int))
+    : Derivation (⊢ e₁ * e₂ : .Int)
+  | T_LT {e₁ e₂ : Expr} (d₁ : Derivation (⊢ e₁ : .Int)) (d₂ : Derivation (⊢ e₂ : .Int))
+    : Derivation (⊢ .LT e₁ e₂ : .Bool)
+  | T_If {e₁ e₂ e₃ : Expr} {τ : Types} (d₁ : Derivation (⊢ e₁ : .Bool)) (d₂ : Derivation (⊢ e₂ : τ)) (d₃ : Derivation (⊢ e₃ : τ))
+    : Derivation (⊢ .If e₁ e₂ e₃ : τ)
+
+  -- 実行時エラーについての導出規則
 
   /--
   加算において、左辺は整数だが右辺が真偽値の場合は実行時エラー
@@ -318,6 +356,41 @@ def Expr.eval : (e : Expr) → (r : Result) × Derivation (e ⇓ r)
           | .inl ε₃ => ⟨ε₃, .E_IfFErr d₁ d₃⟩
       | .inr (.Z _) => ⟨Error.IfCond, .E_IfCondInt d₁⟩
       | .inl ε₁     => ⟨ε₁, .E_IfCondErr d₁⟩
+
+/--
+型付けの結果
+-/
+inductive TypingResult (e : Expr) where
+  | Ok    : (τ : Types) → Derivation (⊢ e : τ) → TypingResult e
+  | Error : TypingResult e
+
+/--
+与えられた式の型検査を行う。
+-/
+def Expr.check : (e : Expr) → TypingResult e
+  | .C (.Z _) => .Ok .Int  .T_Int
+  | .C (.B _) => .Ok .Bool .T_Bool
+  | .Add e₁ e₂ =>
+      match e₁.check, e₂.check with
+      | .Ok .Int d₁, .Ok .Int d₂ => .Ok .Int (.T_Plus d₁ d₂)
+      | _          , _           => .Error
+  | .Sub e₁ e₂ =>
+      match e₁.check, e₂.check with
+      | .Ok .Int d₁, .Ok .Int d₂ => .Ok .Int (.T_Minus d₁ d₂)
+      | _          , _           => .Error
+  | .Mul e₁ e₂ =>
+      match e₁.check, e₂.check with
+      | .Ok .Int d₁, .Ok .Int d₂ => .Ok .Int (.T_Times d₁ d₂)
+      | _          , _           => .Error
+  | .LT e₁ e₂ =>
+      match e₁.check, e₂.check with
+      | .Ok .Int d₁, .Ok .Int d₂ => .Ok .Bool (.T_LT d₁ d₂)
+      | _          , _           => .Error
+  | .If e₁ e₂ e₃ =>
+      match e₁.check, e₂.check, e₃.check with
+      | .Ok .Bool d₁, .Ok .Int  d₂, .Ok .Int  d₃ => .Ok .Int (.T_If d₁ d₂ d₃)
+      | .Ok .Bool d₁, .Ok .Bool d₂, .Ok .Bool d₃ => .Ok .Bool (.T_If d₁ d₂ d₃)
+      | _           , _           , _            => .Error
 
 end ML1
 
