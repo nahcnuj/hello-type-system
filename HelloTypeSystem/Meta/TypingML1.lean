@@ -125,3 +125,11 @@ theorem type_safety : (dt : Derivation (⊢ e : τ)) → (de : Derivation (e ⇓
   | .T_If _ _ dt₃, .E_IfFErr _ de₃ =>
       have ⟨_, heq, _, _⟩ := type_safety dt₃ de₃
       Sum.noConfusion heq
+
+/--
+型付け可能な式は評価したとき必ず成功し値を返す。
+-/
+theorem eval_of_typable_expr {e : Expr} {τ : Types} {𝒟τ : Derivation (⊢ e : τ)} (_ : e.check = .Ok τ 𝒟τ) : ∃ (v : Value), e.eval.fst = .inr v :=
+  have ⟨_, 𝒟r⟩ := e.eval
+  have ⟨v, h, _⟩ := type_safety 𝒟τ 𝒟r
+  ⟨v, h⟩
