@@ -433,4 +433,19 @@ inductive Expr
   | B (b : BExpr)
   | If (cond : BExpr) (t : Expr) (f : Expr)
 
-namespace ML1'
+def AExpr.toML1 : AExpr → ML1.Expr
+  | .C i         => .C i
+  | .Add lhs rhs => .Add lhs.toML1 rhs.toML1
+  | .Sub lhs rhs => .Sub lhs.toML1 rhs.toML1
+  | .Mul lhs rhs => .Mul lhs.toML1 rhs.toML1
+
+def BExpr.toML1 : BExpr → ML1.Expr
+  | .C b        => .C b
+  | .LT lhs rhs => .LT lhs.toML1 rhs.toML1
+
+def Expr.toML1 : Expr → ML1.Expr
+  | .A a         => a.toML1
+  | .B b         => b.toML1
+  | .If cond t f => .If cond.toML1 t.toML1 f.toML1
+
+end ML1'
