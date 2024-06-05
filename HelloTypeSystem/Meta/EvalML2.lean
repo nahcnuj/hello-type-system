@@ -2,9 +2,7 @@ import HelloTypeSystem.ML2
 
 namespace HelloTypeSystem.ML2
 
-notation e₁ " ? " e₂ " : " e₃ => Expr.If e₁ e₂ e₃
-notation "LET " x:max " = " e₁ " IN " e₂ => Expr.Let x e₁ e₂
-notation E " ⊢ " e " ⇓ " v => Evaluation E e v
+notation E " ⊢ " e " ⇓ " r => Evaluation E e r
 
 /-!
 # 定義、変数束縛と環境
@@ -13,7 +11,7 @@ notation E " ⊢ " e " ⇓ " v => Evaluation E e v
 /-
 ## 導出システムEvalML2の評価の例
 
-### 練習問題4.1 \[基礎概念,§4.1]
+### 練習問題4.1 \[基礎概念,§4.4]
 -/
 example : [("y", 2), ("x", 3)] ⊢ "x" ⇓ 3 :=
   .VarIr .Var

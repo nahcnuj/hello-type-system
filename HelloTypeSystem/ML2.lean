@@ -45,6 +45,8 @@ instance : Sub Expr where
 instance : Mul Expr where
   mul := Expr.Mul
 notation e₁ " < " e₂ => Expr.LT e₁ e₂
+notation e₁ " ? " e₂ " : " e₃ => Expr.If e₁ e₂ e₃
+notation "LET " x:max " = " e₁ " IN " e₂ => Expr.Let x e₁ e₂
 
 /--
 環境
@@ -77,8 +79,8 @@ inductive Evaluation : Env → Expr → Result → Type
   | LTF {i₁ i₂ i₃: Int} (d₁ : Evaluation E e₁ i₁) (d₂ : Evaluation E e₂ i₂) (h : ¬ i₁ < i₂ := by trivial)
     : Evaluation E (e₁ < e₂) false
   | IfT {v₂ : Value} (dc : Evaluation E e₁ true) (dt : Evaluation E e₂ v₂)
-    : Evaluation E (.If e₁ e₂ e₃) v₂
+    : Evaluation E (e₁ ? e₂ : e₃) v₂
   | IfF {v₃ : Value} (dc : Evaluation E e₁ false) (df : Evaluation E e₃ v₃)
-    : Evaluation E (.If e₁ e₂ e₃) v₃
+    : Evaluation E (e₁ ? e₂ : e₃) v₃
   | Let {v₁ v₂ : Value} (d₁ : Evaluation E e₁ v₁) (d₂ : Evaluation ((x, v₁) :: E) e₂ v₂)
-    : Evaluation E (.Let x e₁ e₂) v₂
+    : Evaluation E (LET x = e₁ IN e₂) v₂

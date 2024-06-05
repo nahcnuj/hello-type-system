@@ -168,9 +168,7 @@ theorem eval_left_total (e : Expr) : (∃ v : Value, Derivable (e ⇓ v)) ∨ (�
   | .inl ε => .inr ⟨ε, d⟩
 
 /-!
-## 導出システムEvalML1Errのメタ定理
-
-### 評価の（左）全域性：練習問題3.5 \[基礎概念,§3.2]
+### 評価の一意性：練習問題3.5 \[基礎概念,§3.2]
 以下の3パターンに分けて、それぞれを補題として証明する：
 - ${\MV{e}\Evals\MV{v\_1}} \land {\MV{e}\Evals\MV{v\_2}}$ ⟹ 定理3.2 `eval_value_uniq`
 - ${\MV{e}\Evals\MV{v}} \land {\MV{e}\Evals\MV{\varepsilon}}$ ⟹ 補題`contra_eval_value_error`
