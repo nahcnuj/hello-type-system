@@ -3,6 +3,7 @@
 import «HelloTypeSystem».Basic
 import «HelloTypeSystem».Meta
 import «HelloTypeSystem».ML1
+import «HelloTypeSystem».ML2
 /-!
 $\newcommand\Set[1]{\mathbf{#1}}$
 $\newcommand\MV[1]{\boldsymbol{#1}}$
@@ -60,6 +61,7 @@ Lean 4でプログラミング言語の型システムや意味論に入門す�
     - EvalML1Errの評価の左全域性 `HelloTypeSystem.ML1.eval_left_total`
     - EvalML1Errの評価の一意性 `HelloTypeSystem.ML1.eval_uniq`
     - TypingML1による型安全性 `HelloTypeSystem.ML1.type_safety`
+  - [ML2](./HelloTypeSystem/ML2.html)：定義、変数束縛と環境 \[基礎概念,4章]
 
 ## Notation
 - $\MV{n},\MV{n_1},\dots$（太字斜体）：メタ変数。特にペアノ自然数の場合はそれに対応する普通の自然数を$n,n_1,\dots$と書く。

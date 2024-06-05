@@ -6,3 +6,5 @@ import «HelloTypeSystem».Meta.Relation
 
 import «HelloTypeSystem».Meta.EvalML1
 import «HelloTypeSystem».Meta.TypingML1
+
+import «HelloTypeSystem».Meta.EvalML2

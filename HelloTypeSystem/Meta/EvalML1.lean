@@ -2,6 +2,8 @@ import HelloTypeSystem.ML1
 
 namespace HelloTypeSystem.ML1
 
+notation:50 e:51 " ⇓ " n:51 => Judgement.Eval e n
+
 /-!
 # 整数・真偽値式の評価
 -/

@@ -121,7 +121,7 @@ inductive Judgement where
   -/
   | Typable (e : Expr) (τ : Types)
 
-notation:50 e:51 " ⇓ " n:51 => Judgement.Eval e n
+local notation:50 e:51 " ⇓ " n:51 => Judgement.Eval e n
 notation:50 "⊢ " e:51 " : " τ:51 => Judgement.Typable e τ
 
 /--
