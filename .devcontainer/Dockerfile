@@ -2,6 +2,8 @@ ARG VARIANT="11"
 FROM mcr.microsoft.com/vscode/devcontainers/base:debian-${VARIANT}
 
 RUN apt-get -y update \
+ && apt-get install -y \
+      gnupg2 \
  && apt-get clean \
  && rm -rf /var/lib/apt/lists/*
 
