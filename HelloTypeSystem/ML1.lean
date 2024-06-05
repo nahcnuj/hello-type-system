@@ -1,5 +1,3 @@
-import HelloTypeSystem.Basic
-
 namespace HelloTypeSystem
 
 /-!
