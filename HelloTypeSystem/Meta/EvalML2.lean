@@ -49,7 +49,7 @@ example : [("x", 3)] ⊢ LET "x" = "x" * 2 IN "x" + "x" ⇓ 12 :=
 EvalML2の変数参照の評価の一意性
 -/
 theorem eval_var_uniq {x : Var} {v v' : ML1.Value} : (E : Env) → (E ⊢ x ⇓ v) → (E ⊢ x ⇓ v') → v = v'
-  | (x, v) :: nil, .Var,       .Var        => rfl
+  | (x, v) :: _, .Var,       .Var        => rfl
   | (_, _) :: E,   .VarIr d _, .VarIr d' _ => eval_var_uniq E d d'
 
 /-!
