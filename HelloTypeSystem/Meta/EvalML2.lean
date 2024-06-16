@@ -92,7 +92,6 @@ theorem eval_value_uniq {E : Env} {v v' : ML1.Value} : ∀ {e : Expr}, (E ⊢ e 
   | .If .., .IfF d _, .IfT d' _ => eval_value_uniq d d' |> ML1.Value.B.inj |> Bool.noConfusion
 
 /-!
-### EvalML2Errの評価の（左）全域性
-Leanでは関数定義に全域性が要請されるので、規則(E-VarErr)を追加してEvalML2Errの評価`HelloTypeSystem.ML2.eval`を定義したことにより、
-\[基礎概念,§4.4]の定理4.3から$\mathit{FV}(\MV{e}) \subseteq \mathrm{dom}(\MV{\mathcal{E}})$の仮定を外したものが保証されている。
+### EvalML2Errの評価の（左）全域性：定理4.3 \[基礎概念,§4.4]
+Leanでは関数定義に全域性が要請されるので、EvalML2Errの評価`HelloTypeSystem.ML2.eval`の定義より明らかである。
 -/

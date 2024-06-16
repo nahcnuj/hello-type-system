@@ -1,3 +1,4 @@
+import HelloTypeSystem.Util
 import HelloTypeSystem.ML1
 
 namespace HelloTypeSystem
@@ -60,11 +61,31 @@ notation e₁ " ? " e₂ " : " e₃ => Expr.If e₁ e₂ e₃
 notation "LET " x:max " = " e₁ " IN " e₂ => Expr.Let x e₁ e₂
 
 /--
+式に含まれる自由変数の集合
+-/
+def Expr.fv : Expr → Set ML2.Var
+  | .Lit _        => ∅
+  | .Var x        => { x }
+  | .Add e₁ e₂    => e₁.fv ∪ e₂.fv
+  | .Sub e₁ e₂    => e₁.fv ∪ e₂.fv
+  | .Mul e₁ e₂    => e₁.fv ∪ e₂.fv
+  | .LT  e₁ e₂    => e₁.fv ∪ e₂.fv
+  | .If  e₁ e₂ e₃ => e₁.fv ∪ e₂.fv ∪ e₃.fv
+  | .Let x e₁ e₂  => e₁.fv ∪ (e₂.fv \ { x })
+
+/--
 環境
 $$\Set{Env} \ni \MV{\mathcal{E}} ::= \varnothing \mid {\MV{\mathcal{E}},\\,\TT{$\MV{x}$=$\MV{v}$}}$$
 $\MV{\mathcal{E}},\\,\TT{$\MV{x}$=$\MV{v}$}$はLeanの`List (Var × Value)`で`(x, v) :: E`とする（consの都合で逆向きになっている）。
 -/
 abbrev Env := List (Var × Value)
+
+/--
+環境中で束縛されている変数の集合
+-/
+def Env.dom : Env → Set ML2.Var
+  | []            => ∅
+  | (x, _) :: env => Env.dom env ∪ { x }
 
 /--
 ML2式の評価規則
@@ -96,8 +117,6 @@ inductive Evaluation : Env → Expr → Result → Type
   | Let {v₁ v₂ : Value} (d₁ : Evaluation E e₁ v₁) (d₂ : Evaluation ((x, v₁) :: E) e₂ v₂)
     : Evaluation E (LET x = e₁ IN e₂) v₂
 
-  | VarUnbound {x : Var}
-    : Evaluation [] x error
   | VarErr {x : Var}
     : Evaluation E x (.inl ε)
 
@@ -151,7 +170,7 @@ inductive Evaluation : Env → Expr → Result → Type
   | LetExprErr {v₁ : Value} {ε₂ : Error} (d₁ : Evaluation E e₁ v₁) (d₂ : Evaluation ((x, v₁) :: E) e₂ ε₂)
     : Evaluation E (LET x = e₁ IN e₂) ε₂
 
-private def Expr.eval_aux (expr : Expr) (env : Env) : (r : Result) × (Evaluation env expr r) :=
+private def Expr.eval_aux (expr : Expr) (env : Env) (bounded : expr.fv ⊆ env.dom) : (r : Result) × (Evaluation env expr r) :=
   match expr with
   | Lit v =>
       match v with
@@ -159,18 +178,22 @@ private def Expr.eval_aux (expr : Expr) (env : Env) : (r : Result) × (Evaluatio
       | .B b => ⟨b, .Bool⟩
   | Var x =>
       match env with
-      | [] => ⟨error, .VarUnbound⟩
-      | ⟨y, v⟩ :: env' =>
+      | [] => absurd (bounded x rfl) id
+      | ⟨y, v⟩ :: (env' : Env) =>
           if h : y = x then
             ⟨v, h ▸ .Var⟩
           else
-            let ⟨r, d⟩ := Expr.eval_aux (Var x) env'
+            let bounded' : (Var x).fv ⊆ env'.dom :=
+              fun a h' => Or.resolve_right (bounded a h') (
+                fun h'' : a ∈ { y } => absurd (singleton_mem_uniq <| h' ▸ h'') h
+              )
+            let ⟨r, d⟩ := Expr.eval_aux (Var x) env' bounded'
             match r with
-            | .inr v => ⟨v, .VarIr d h⟩
+            | .inr v => ⟨v, .VarIr d⟩
             | .inl ε => ⟨ε, .VarErr⟩
   | Add e₁ e₂ =>
-      let ⟨r₁, d₁⟩ := e₁.eval_aux env
-      let ⟨r₂, d₂⟩ := e₂.eval_aux env
+      let ⟨r₁, d₁⟩ := e₁.eval_aux env (fun x h => bounded x (Or.inl h))
+      let ⟨r₂, d₂⟩ := e₂.eval_aux env (fun x h => bounded x (Or.inr h))
       match r₁, r₂ with
       | .inr (.Z i₁), .inr (.Z i₂) => ⟨i₁ + i₂, .Add d₁ d₂⟩
       | .inr (.B b₁), _            => ⟨error,   .AddBoolL d₁⟩
@@ -178,8 +201,8 @@ private def Expr.eval_aux (expr : Expr) (env : Env) : (r : Result) × (Evaluatio
       | _,            .inr (.B b₂) => ⟨error,   .AddBoolR d₂⟩
       | _,            .inl ε₂      => ⟨ε₂,      .AddErrR d₂⟩
   | Sub e₁ e₂ =>
-      let ⟨r₁, d₁⟩ := e₁.eval_aux env
-      let ⟨r₂, d₂⟩ := e₂.eval_aux env
+      let ⟨r₁, d₁⟩ := e₁.eval_aux env (fun x h => bounded x (Or.inl h))
+      let ⟨r₂, d₂⟩ := e₂.eval_aux env (fun x h => bounded x (Or.inr h))
       match r₁, r₂ with
       | .inr (.Z i₁), .inr (.Z i₂) => ⟨i₁ - i₂, .Sub d₁ d₂⟩
       | .inr (.B b₁), _            => ⟨error,   .SubBoolL d₁⟩
@@ -187,8 +210,8 @@ private def Expr.eval_aux (expr : Expr) (env : Env) : (r : Result) × (Evaluatio
       | _,            .inr (.B b₂) => ⟨error,   .SubBoolR d₂⟩
       | _,            .inl ε₂      => ⟨ε₂,      .SubErrR d₂⟩
   | Mul e₁ e₂ =>
-      let ⟨r₁, d₁⟩ := e₁.eval_aux env
-      let ⟨r₂, d₂⟩ := e₂.eval_aux env
+      let ⟨r₁, d₁⟩ := e₁.eval_aux env (fun x h => bounded x (Or.inl h))
+      let ⟨r₂, d₂⟩ := e₂.eval_aux env (fun x h => bounded x (Or.inr h))
       match r₁, r₂ with
       | .inr (.Z i₁), .inr (.Z i₂) => ⟨i₁ * i₂, .Mul d₁ d₂⟩
       | .inr (.B b₁), _            => ⟨error,   .MulBoolL d₁⟩
@@ -196,8 +219,8 @@ private def Expr.eval_aux (expr : Expr) (env : Env) : (r : Result) × (Evaluatio
       | _,            .inr (.B b₂) => ⟨error,   .MulBoolR d₂⟩
       | _,            .inl ε₂      => ⟨ε₂,      .MulErrR d₂⟩
   | LT e₁ e₂ =>
-      let ⟨r₁, d₁⟩ := e₁.eval_aux env
-      let ⟨r₂, d₂⟩ := e₂.eval_aux env
+      let ⟨r₁, d₁⟩ := e₁.eval_aux env (fun x h => bounded x (Or.inl h))
+      let ⟨r₂, d₂⟩ := e₂.eval_aux env (fun x h => bounded x (Or.inr h))
       match r₁, r₂ with
       | .inr (.Z i₁), .inr (.Z i₂) =>
           if h : i₁ < i₂ then
@@ -209,25 +232,32 @@ private def Expr.eval_aux (expr : Expr) (env : Env) : (r : Result) × (Evaluatio
       | _,            .inr (.B b₂) => ⟨error, .LTBoolR d₂⟩
       | _,            .inl ε₂      => ⟨ε₂,    .LTErrR d₂⟩
   | If e₁ e₂ e₃ =>
-      let ⟨r₁, d₁⟩ := e₁.eval_aux env
+      let ⟨r₁, d₁⟩ := e₁.eval_aux env (fun x h => bounded x (Or.inl (Or.inl h)))
       match r₁ with
       | .inr (.B true) =>
-          let ⟨r₂, d₂⟩ := e₂.eval_aux env
+          let ⟨r₂, d₂⟩ := e₂.eval_aux env (fun x h => bounded x (Or.inl (Or.inr h)))
           match r₂ with
           | .inr v => ⟨v, .IfT d₁ d₂⟩
           | .inl ε => ⟨ε, .IfTErr d₁ d₂⟩
       | .inr (.B false) =>
-          let ⟨r₃, d₃⟩ := e₃.eval_aux env
+          let ⟨r₃, d₃⟩ := e₃.eval_aux env (fun x h => bounded x (Or.inr h))
           match r₃ with
           | .inr v => ⟨v, .IfF d₁ d₃⟩
           | .inl ε => ⟨ε, .IfFErr d₁ d₃⟩
       | .inr (.Z _) => ⟨error, .IfInt d₁⟩
       | .inl ε => ⟨ε, .IfErr d₁⟩
   | Let x e₁ e₂ =>
-      let ⟨r₁, d₁⟩ := e₁.eval_aux env
+      let ⟨r₁, d₁⟩ := e₁.eval_aux env (fun x h₁ => bounded x (Or.inl h₁))
       match r₁ with
       | .inr v =>
-          let ⟨r₂, d₂⟩ := e₂.eval_aux ((x, v) :: env)
+          have : e₂.fv ⊆ Env.dom ((x, v) :: env) :=
+            fun y h₂ =>
+              if _ : x = y then
+                Or.inr (by trivial)
+              else
+                have : y ∈ e₂.fv \ {x} := And.intro h₂ (fun _ => by contradiction)
+                Or.inl (bounded y (Or.inr this))
+          let ⟨r₂, d₂⟩ := e₂.eval_aux ((x, v) :: env) this
           match r₂ with
           | .inr v => ⟨v, .Let d₁ d₂⟩
           | .inl ε => ⟨ε, .LetExprErr d₁ d₂⟩
@@ -236,4 +266,4 @@ private def Expr.eval_aux (expr : Expr) (env : Env) : (r : Result) × (Evaluatio
 /--
 `eval`はML2式`e`を評価してその結果を返します。
 -/
-def Expr.eval (e : Expr) : Result := (e.eval_aux []).fst
+def Expr.eval (e : Expr) (empty : e.fv = ∅) : Result := (e.eval_aux [] fun _ h => (empty ▸ h : _ ∈ ∅)).fst
