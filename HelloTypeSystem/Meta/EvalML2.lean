@@ -93,5 +93,5 @@ theorem eval_value_uniq {E : Env} {v v' : ML1.Value} : ∀ {e : Expr}, (E ⊢ e 
 
 /-!
 ### EvalML2Errの評価の（左）全域性：定理4.3 \[基礎概念,§4.4]
-Leanでは関数定義に全域性が要請されるので、EvalML2Errの評価`HelloTypeSystem.ML2.eval`の定義より明らかである。
+Leanでは関数定義に全域性が要請されるので、EvalML2Errの評価`HelloTypeSystem.ML2.Expr.eval`の定義より明らかである。
 -/
