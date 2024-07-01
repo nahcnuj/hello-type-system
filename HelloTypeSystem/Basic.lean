@@ -89,6 +89,7 @@ namespace Expr
 /--
 `size`は算術式の大きさを与える。$\newcommand\Size{\mathord{\mathit{size}}}$
 -/
+@[semireducible]
 def size : Expr → _root_.Nat
   | .Nat .Z     => 1
   | .Nat (.S n) => size n + 1
@@ -99,7 +100,7 @@ def size : Expr → _root_.Nat
 `size`の左全域性
 -/
 theorem size_left_total : ∀ {e : Expr}, ∃ n, e.size = n
-  | .Nat .Z     => ⟨1, rfl⟩
+  | .Nat .Z     => ⟨1, by simp [size]⟩
   | .Nat (.S n) => ⟨size n + 1, by simp [size]⟩
   | .Add e₁ e₂  => ⟨e₁.size + e₂.size + 1, by simp [size]⟩
   | .Mul e₁ e₂  => ⟨e₁.size + e₂.size + 1, by simp [size]⟩
@@ -113,6 +114,7 @@ theorem size_uniq {e : Expr} : e.size = n → e.size = n' → n = n'
 /--
 `height`は算術式の高さを与える。$\newcommand\Height{\mathord{\mathit{height}}}$
 -/
+@[semireducible]
 def height : Expr → _root_.Nat
   | .Nat .Z     => 1
   | .Nat (.S n) => height n + 1
@@ -123,7 +125,7 @@ def height : Expr → _root_.Nat
 `height`の左全域性
 -/
 theorem height_left_total : ∀ {e : Expr}, ∃ n, e.height = n
-  | .Nat .Z     => ⟨1, rfl⟩
+  | .Nat .Z     => ⟨1, by simp [height]⟩
   | .Nat (.S n) => ⟨height n + 1, by simp [height]⟩
   | .Add e₁ e₂  => ⟨max e₁.height e₂.height + 1, by simp [height]⟩
   | .Mul e₁ e₂  => ⟨max e₁.height e₂.height + 1, by simp [height]⟩
