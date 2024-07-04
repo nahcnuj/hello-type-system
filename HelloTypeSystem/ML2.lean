@@ -117,9 +117,6 @@ inductive Evaluation : Env → Expr → Result → Type
   | Let {v₁ v₂ : Value} (d₁ : Evaluation E e₁ v₁) (d₂ : Evaluation ((x, v₁) :: E) e₂ v₂)
     : Evaluation E (LET x = e₁ IN e₂) v₂
 
-  | VarErr {x : Var}
-    : Evaluation E x (.inl ε)
-
   | AddBoolL (d : Evaluation E e (.inr (.B b)))
     : Evaluation E (e + _) error
   | AddBoolR (d : Evaluation E e (.inr (.B b)))
@@ -187,10 +184,8 @@ private def Expr.eval_aux (expr : Expr) (env : Env) (bounded : expr.fv ⊆ env.d
               fun a h' => Or.resolve_right (bounded a h') (
                 fun h'' : a ∈ { y } => absurd (singleton_mem_uniq <| h' ▸ h'') h
               )
-            let ⟨r, d⟩ := Expr.eval_aux (Var x) env' bounded'
-            match r with
-            | .inr v => ⟨v, .VarIr d⟩
-            | .inl ε => ⟨ε, .VarErr⟩
+            let ⟨.inr v, d⟩ := Expr.eval_aux (Var x) env' bounded'
+            ⟨v, .VarIr d⟩
   | Add e₁ e₂ =>
       let ⟨r₁, d₁⟩ := e₁.eval_aux env (fun x h => bounded x (Or.inl h))
       let ⟨r₂, d₂⟩ := e₂.eval_aux env (fun x h => bounded x (Or.inr h))
