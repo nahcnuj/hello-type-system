@@ -50,7 +50,7 @@ EvalML2の変数参照の評価の一意性
 -/
 theorem eval_var_uniq {x : Var} {v v' : ML1.Value} : (E : Env) → (E ⊢ x ⇓ v) → (E ⊢ x ⇓ v') → v = v'
   | (x, v) :: _, .Var,       .Var        => rfl
-  | (_, _) :: E,   .VarIr d _, .VarIr d' _ => eval_var_uniq E d d'
+  | (_, _) :: E, .VarIr d _, .VarIr d' _ => eval_var_uniq E d d'
 
 /-!
 ### 評価の一意性（決定性）：定理4.1 \[基礎概念,§4.4]

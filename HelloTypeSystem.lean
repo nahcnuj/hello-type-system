@@ -10,8 +10,8 @@ $\newcommand\MV[1]{\boldsymbol{#1}}$
 $\newcommand\TT[1]{\texttt{#1}}$
 $\newcommand\Evals{\mathrel{\Downarrow}}$
 $\newcommand\Reduces{\mathrel{\longrightarrow}}$
-$\newcommand\MReduces{\mathrel{\longrightarrow^{\\!*}}}$
-$\newcommand\DReduces{\mathrel{\longrightarrow_{\\!d}}}$
+$\newcommand\MReduces{\mathrel{\longrightarrow^{\!*}}}$
+$\newcommand\DReduces{\mathrel{\longrightarrow_{\!d}}}$
 -/
 
 /-!
@@ -65,6 +65,7 @@ Lean 4でプログラミング言語の型システムや意味論に入門す�
     - EvalML2の評価の一意性 `HelloTypeSystem.ML2.eval_value_uniq`
     - EvalML2の変数参照の評価の一意性 `HelloTypeSystem.ML2.eval_var_uniq`
     - EvalML2Errの評価の左全域性 `HelloTypeSystem.ML2.Expr.eval`（Leanの`def`の要請から明らか）
+    - TypingML1による型安全性 `HelloTypeSystem.ML1.type_safety`
 
 ## Notation
 - $\MV{n},\MV{n_1},\dots$（太字斜体）：メタ変数。特にペアノ自然数の場合はそれに対応する普通の自然数を$n,n_1,\dots$と書く。

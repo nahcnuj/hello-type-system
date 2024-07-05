@@ -28,6 +28,8 @@ instance : Coe Error Result where
 $$\Set{Var} \ni \MV{x}$$
 -/
 abbrev Var := String
+instance : Coe String Var where
+  coe := id
 
 /--
 ML2における式
@@ -98,8 +100,8 @@ inductive Evaluation : Env → Expr → Result → Type
     : Evaluation E b b
   | Var {x : Var} {v : Value}
     : Evaluation ((x, v) :: E) x v
-  | VarIr {x y : Var} {w : Value} {v : Value} (d : Evaluation E x v) (hne : y ≠ x := by trivial)
-    : Evaluation ((y, w) :: E) x v
+  | VarIr {x y : Var} {v : Value} (d : Evaluation E x v) (hne : y ≠ x := by trivial)
+    : Evaluation ((y, _) :: E) x v
   | Add {i₁ i₂ i₃: Int} (d₁ : Evaluation E e₁ i₁) (d₂ : Evaluation E e₂ i₂) (h : i₁ + i₂ = i₃ := by trivial)
     : Evaluation E (e₁ + e₂) i₃
   | Sub {i₁ i₂ i₃: Int} (d₁ : Evaluation E e₁ i₁) (d₂ : Evaluation E e₂ i₂) (h : i₁ - i₂ = i₃ := by trivial)
@@ -262,3 +264,66 @@ private def Expr.eval_aux (expr : Expr) (env : Env) (bounded : expr.fv ⊆ env.d
 `eval`はML2式`e`を評価してその結果を返します。
 -/
 def Expr.eval (e : Expr) (empty : e.fv = ∅) : Result := (e.eval_aux [] fun _ h => (empty ▸ h : _ ∈ ∅)).fst
+
+/--
+TypingML2が扱う型
+$$\Set{Types} \ni \MV{\tau} ::= \TT{int} \mid \TT{bool}$$
+-/
+inductive Types where
+  | Int
+  | Bool
+
+/--
+型環境
+-/
+abbrev TypeEnv := List (ML2.Var × Types)
+
+/--
+型環境において型宣言されている変数の集合
+-/
+def TypeEnv.dom : TypeEnv → Set ML2.Var
+  | [] => ∅
+  | (x, _) :: Γ => TypeEnv.dom Γ ∪ { x }
+
+/--
+ML2式の型付け規則
+
+"$\MV{\Gamma}\vdash\MV{e}\colon\MV{\tau}$" means that the type of the expression $\MV{e}$ is $\MV{\tau}$ in the type environment $\MV{\Gamma}$.
+-/
+inductive Typed : TypeEnv → Expr → Types → Type
+  | Int {i : Int}
+    : Typed Γ i .Int
+  | Bool {b : Bool}
+    : Typed Γ b .Bool
+  | Var {x : Var} {τ : Types}
+    : Typed ((x, τ) :: Γ) x τ
+  | VarIr {x y : Var} {τ : Types} (d : Typed Γ x τ) (hne : y ≠ x := by trivial)
+    : Typed ((y, _) :: Γ) x τ
+  | Add {e₁ e₂ : Expr} (d₁ : Typed Γ e₁ .Int) (d₂ : Typed Γ e₂ .Int)
+    : Typed Γ (e₁ + e₂) .Int
+  | Sub {e₁ e₂ : Expr} (d₁ : Typed Γ e₁ .Int) (d₂ : Typed Γ e₂ .Int)
+    : Typed Γ (e₁ - e₂) .Int
+  | Mul {e₁ e₂ : Expr} (d₁ : Typed Γ e₁ .Int) (d₂ : Typed Γ e₂ .Int)
+    : Typed Γ (e₁ * e₂) .Int
+  | LT {e₁ e₂ : Expr} (d₁ : Typed Γ e₁ .Int) (d₂ : Typed Γ e₂ .Int)
+    : Typed Γ (.LT e₁ e₂) .Bool
+  | If {e₁ e₂ e₃ : Expr} (d₁ : Typed Γ e₁ .Bool) (d₂ : Typed Γ e₂ τ) (d₃ : Typed Γ e₃ τ)
+    : Typed Γ (.If e₁ e₂ e₃) τ
+  | Let {τ₁ τ₂ : Types} (d₁ : Typed Γ e₁ τ₁) (d₂ : Typed ((x, τ₁) :: Γ) e₂ τ₂)
+    : Typed Γ (LET x = e₁ IN e₂) τ₂
+
+/--
+値$\MV{v}$が型$\MV{\tau}$に適合していること
+$\models \MV{v} : \MV{\tau}$
+-/
+def ValueCompat (v : Expr) : Types → Prop
+  | .Int  => ∃ i : Int,  v = Value.Z i
+  | .Bool => ∃ b : Bool, v = Value.B b
+
+/--
+環境$\MV{\mathcal{E}}$が型環境$\MV{\Gamma}$に適合していること
+$\models \MV{\mathcal{E}} : \MV{\Gamma}$
+-/
+def EnvCompat (E : Env) : TypeEnv → Prop
+  | [] => E = []
+  | (x, τ) :: Γ' => ∃ E' v, E = (x, v) :: E' ∧ EnvCompat E' Γ' ∧ ValueCompat v τ
