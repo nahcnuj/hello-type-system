@@ -4,6 +4,7 @@ import «HelloTypeSystem».Basic
 import «HelloTypeSystem».Meta
 import «HelloTypeSystem».ML1
 import «HelloTypeSystem».ML2
+import «HelloTypeSystem».ML3
 /-!
 $\newcommand\Set[1]{\mathbf{#1}}$
 $\newcommand\MV[1]{\boldsymbol{#1}}$
@@ -12,6 +13,8 @@ $\newcommand\Evals{\mathrel{\Downarrow}}$
 $\newcommand\Reduces{\mathrel{\longrightarrow}}$
 $\newcommand\MReduces{\mathrel{\longrightarrow^{\!*}}}$
 $\newcommand\DReduces{\mathrel{\longrightarrow_{\!d}}}$
+$\newcommand\Cls{\mathop{\mathrm{cls}}}$
+$\newcommand\Fix{\mathop{\mathrm{fix}}}$
 -/
 
 /-!

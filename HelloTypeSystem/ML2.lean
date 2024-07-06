@@ -184,7 +184,7 @@ private def Expr.eval_aux (expr : Expr) (env : Env) (bounded : expr.fv ⊆ env.d
           else
             let bounded' : (Var x).fv ⊆ env'.dom :=
               fun a h' => Or.resolve_right (bounded a h') (
-                fun h'' : a ∈ { y } => absurd (singleton_mem_uniq <| h' ▸ h'') h
+                fun h'' : a ∈ { y } => absurd (Singleton.mem_iff_eq_elem.mp <| h' ▸ h'') h
               )
             let ⟨.inr v, d⟩ := Expr.eval_aux (Var x) env' bounded'
             ⟨v, .VarIr d⟩
