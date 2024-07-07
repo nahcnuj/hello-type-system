@@ -69,6 +69,8 @@ Lean 4でプログラミング言語の型システムや意味論に入門す�
     - EvalML2の変数参照の評価の一意性 `HelloTypeSystem.ML2.eval_var_uniq`
     - EvalML2Errの評価の左全域性 `HelloTypeSystem.ML2.Expr.eval`（Leanの`def`の要請から明らか）
     - TypingML1による型安全性 `HelloTypeSystem.ML1.type_safety`
+  - [ML3](./HelloTypeSystem/ML3.html)：関数と再帰 \[基礎概念,5章]
+    - EvalML3の評価の一意性 `HelloTypeSystem.ML3.eval_value_uniq`
 
 ## Notation
 - $\MV{n},\MV{n_1},\dots$（太字斜体）：メタ変数。特にペアノ自然数の場合はそれに対応する普通の自然数を$n,n_1,\dots$と書く。
