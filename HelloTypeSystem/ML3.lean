@@ -154,6 +154,8 @@ private def error : Error := ()
 
 abbrev Result := Error ⊕ Value
 
+instance : OfNat Result n where
+  ofNat := .inr (.Z n)
 instance : Coe Value Result where
   coe := .inr
 instance : Coe Error Result where
@@ -488,10 +490,10 @@ EvalML3における判断$\MV{\mathcal{E}} \vdash \MV{e} \Evals \MV{v}$の導出
 -/
 def Evaluation.induction
   {motive : Env → Expr → Value → Sort _} -- P(E,e,v)
-  (HInt   : ∀ {E : Env} (i : ℤ), motive E i i)
-  (HBool  : ∀ {E : Env} (b : 𝔹), motive E b b)
+  (HInt   : ∀ {E : Env} {i : ℤ}, motive E i i)
+  (HBool  : ∀ {E : Env} {b : 𝔹}, motive E b b)
   (HVar   : ∀ {E : Env} {x : VarName} {v : Value}, motive (E.cons (x, v)) x v)
-  (HVarIr : ∀ (E : Env) (x y : VarName) (v₁ : Value) {v₂ : Value}, y ≠ x → motive E x v₂ → motive (E.cons (y, v₁)) x v₂)
+  (HVarIr : ∀ {E : Env} {x y : VarName} {v₁ v₂ : Value}, y ≠ x → motive E x v₂ → motive (E.cons (y, v₁)) x v₂)
   (HAdd   : ∀ {E : Env} {e₁ e₂ : Expr} {i₁ i₂ i₃ : ℤ}, motive E e₁ i₁ → motive E e₂ i₂ → i₁ + i₂ = i₃ → motive E (e₁ + e₂) i₃)
   (HSub   : ∀ {E : Env} {e₁ e₂ : Expr} {i₁ i₂ i₃ : ℤ}, motive E e₁ i₁ → motive E e₂ i₂ → i₁ - i₂ = i₃ → motive E (e₁ - e₂) i₃)
   (HMul   : ∀ {E : Env} {e₁ e₂ : Expr} {i₁ i₂ i₃ : ℤ}, motive E e₁ i₁ → motive E e₂ i₂ → i₁ * i₂ = i₃ → motive E (e₁ * e₂) i₃)
@@ -505,12 +507,12 @@ def Evaluation.induction
   {E : Env} {e : Expr} {v : Value}
 : Evaluation E e v → motive E e v := fun d =>
   match d with
-  | .Int  (i := i) => HInt i
-  | .Bool (b := b) => HBool b
+  | .Int  => HInt
+  | .Bool => HBool
   | .Var  => HVar
-  | .VarIr (E := E) (x := x) (y := y) (w := w) d hne =>
+  | .VarIr d hne =>
       have d := induction HInt HBool HVar HVarIr HAdd HSub HMul HLTT HLTF HIfT HIfF HLet HFun HApp d
-      HVarIr E x y w hne d
+      HVarIr hne d
   | .Add d₁ d₂ h =>
       have d₁ := induction HInt HBool HVar HVarIr HAdd HSub HMul HLTT HLTF HIfT HIfF HLet HFun HApp d₁
       have d₂ := induction HInt HBool HVar HVarIr HAdd HSub HMul HLTT HLTF HIfT HIfF HLet HFun HApp d₂
