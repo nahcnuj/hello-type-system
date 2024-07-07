@@ -552,6 +552,51 @@ def Evaluation.induction
       have d  := induction HInt HBool HVar HVarIr HAdd HSub HMul HLTT HLTF HIfT HIfF HLet HFun HApp d
       HApp d₁ d₂ d
 
+/--
+TypingML3が扱う型
+$$\Set{Types} \ni \MV{\tau} ::= \TT{int} \mid \TT{bool} \mid \TT{$\MV{\tau}$ → $\MV{\tau}$}$$
+-/
+inductive Types where
+  | Int
+  | Bool
+  | Fn (τ₁ τ₂ : Types)
+
+/--
+型環境
+-/
+abbrev TypeEnv := List (VarName × Types)
+
+/--
+ML3式の型付け規則
+
+"$\MV{\Gamma}\vdash\MV{e}\colon\MV{\tau}$" means that the type of the expression $\MV{e}$ is $\MV{\tau}$ in the type environment $\MV{\Gamma}$.
+-/
+inductive Typed : TypeEnv → Expr → Types → Type
+  | Int {i : Int}
+    : Typed Γ i .Int
+  | Bool {b : Bool}
+    : Typed Γ b .Bool
+  | Var {x : VarName} {τ : Types}
+    : Typed ((x, τ) :: Γ) x τ
+  | VarIr {x y : VarName} {τ : Types} (d : Typed Γ x τ) (hne : y ≠ x := by trivial)
+    : Typed ((y, _) :: Γ) x τ
+  | Add {e₁ e₂ : Expr} (d₁ : Typed Γ e₁ .Int) (d₂ : Typed Γ e₂ .Int)
+    : Typed Γ (e₁ + e₂) .Int
+  | Sub {e₁ e₂ : Expr} (d₁ : Typed Γ e₁ .Int) (d₂ : Typed Γ e₂ .Int)
+    : Typed Γ (e₁ - e₂) .Int
+  | Mul {e₁ e₂ : Expr} (d₁ : Typed Γ e₁ .Int) (d₂ : Typed Γ e₂ .Int)
+    : Typed Γ (e₁ * e₂) .Int
+  | LT {e₁ e₂ : Expr} (d₁ : Typed Γ e₁ .Int) (d₂ : Typed Γ e₂ .Int)
+    : Typed Γ (.LT e₁ e₂) .Bool
+  | If {e₁ e₂ e₃ : Expr} (d₁ : Typed Γ e₁ .Bool) (d₂ : Typed Γ e₂ τ) (d₃ : Typed Γ e₃ τ)
+    : Typed Γ (.If e₁ e₂ e₃) τ
+  | Let {τ₁ τ₂ : Types} (d₁ : Typed Γ e₁ τ₁) (d₂ : Typed ((x, τ₁) :: Γ) e₂ τ₂)
+    : Typed Γ (.Let x e₁ e₂) τ₂
+  | Fn {Γ : TypeEnv} (d : Typed (Γ.cons (x, τ₁)) e τ₂)
+    : Typed Γ (.Fn x e) (.Fn τ₁ τ₂)
+  | App (d₁ : Typed Γ e₁ (.Fn τ₁ τ₂)) (d₂ : Typed Γ e₂ τ₁)
+    : Typed Γ (.App e₁ e₂) τ₂
+
 /-
 /--
 `eval`はML3式を評価してその結果を返します。
