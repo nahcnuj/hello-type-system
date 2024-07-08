@@ -316,7 +316,7 @@ inductive Typed : TypeEnv → Expr → Types → Type
 値$\MV{v}$が型$\MV{\tau}$に適合していること
 $\models \MV{v} : \MV{\tau}$
 -/
-def ValueCompat (v : Expr) : Types → Prop
+def ValueCompat (v : Value) : Types → Prop
   | .Int  => ∃ i : Int,  v = Value.Z i
   | .Bool => ∃ b : Bool, v = Value.B b
 

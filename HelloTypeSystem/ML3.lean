@@ -571,7 +571,7 @@ ML3式の型付け規則
 
 "$\MV{\Gamma}\vdash\MV{e}\colon\MV{\tau}$" means that the type of the expression $\MV{e}$ is $\MV{\tau}$ in the type environment $\MV{\Gamma}$.
 -/
-inductive Typed : TypeEnv → Expr → Types → Type
+inductive Typed : TypeEnv → Expr → Types → Prop
   | Int {i : Int}
     : Typed Γ i .Int
   | Bool {b : Bool}
@@ -596,6 +596,67 @@ inductive Typed : TypeEnv → Expr → Types → Type
     : Typed Γ (.Fn x e) (.Fn τ₁ τ₂)
   | App (d₁ : Typed Γ e₁ (.Fn τ₁ τ₂)) (d₂ : Typed Γ e₂ τ₁)
     : Typed Γ (.App e₁ e₂) τ₂
+
+mutual
+  /--
+  値$\MV{v}$が型$\MV{\tau}$に適合していること
+  $\models \MV{v} : \MV{\tau}$
+  -/
+  def ValueCompat : Value → Types → Prop
+    | .Z _,       .Int      => True
+    | .B _,       .Bool     => True
+    | .Cls E x e, .Fn τ₁ τ₂ => ∃ Γ, EnvCompat E Γ ∧ Typed (Γ.cons (x, τ₁)) e τ₂
+    | _,          _         => False
+
+  /--
+  環境$\MV{\mathcal{E}}$が型環境$\MV{\Gamma}$に適合していること
+  $\models \MV{\mathcal{E}} : \MV{\Gamma}$
+  -/
+  def EnvCompat : Env → TypeEnv → Prop
+    | Env.nil,            List.nil            => True
+    | Env.cons (x, v) E', List.cons (y, τ) Γ' => x = y ∧ EnvCompat E' Γ' ∧ ValueCompat v τ
+    | _,                  _                   => False
+end
+
+theorem ValueCompat.Z_Int {i : ℤ} :
+  ValueCompat (.Z i) .Int = True
+:= by simp [ValueCompat]
+
+theorem ValueCompat.Z_Bool {i : ℤ} :
+  ValueCompat (.Z i) .Bool = False
+:= by simp [ValueCompat]
+
+theorem ValueCompat.Z_Cls {i : ℤ} :
+  ValueCompat (.Z i) (.Fn τ₁ τ₂) = False
+:= by simp [ValueCompat]
+
+theorem ValueCompat.B_Bool {b : 𝔹} :
+  ValueCompat (.B b) .Bool = True
+:= by simp [ValueCompat]
+
+theorem ValueCompat.B_Int {b : 𝔹}:
+  ValueCompat (.B b) .Int = False
+:= by simp [ValueCompat]
+
+theorem ValueCompat.B_Cls {b : 𝔹} :
+  ValueCompat (.B b) (.Fn τ₁ τ₂) = False
+:= by simp [ValueCompat]
+
+theorem ValueCompat.Cls_Int {E : Env} {x : VarName} {e : Expr} :
+  ValueCompat (.Cls E x e) .Int = False
+:= by simp [ValueCompat]
+
+theorem ValueCompat.Cls_Bool {E : Env} {x : VarName} {e : Expr} :
+  ValueCompat (.Cls E x e) .Bool = False
+:= by simp [ValueCompat]
+
+theorem ValueCompat.Cls_Fn {E : Env} {x : VarName} {e : Expr} :
+  ValueCompat (.Cls E x e) (.Fn τ₁ τ₂) = ∃ Γ, EnvCompat E Γ ∧ Typed (Γ.cons (x, τ₁)) e τ₂
+:= by simp [ValueCompat]
+
+theorem EnvCompat.cons_cons :
+  EnvCompat (Env.cons (x, v) E') (List.cons (y, τ) Γ') = (x = y ∧ EnvCompat E' Γ' ∧ ValueCompat v τ)
+:= by simp [EnvCompat]
 
 /-
 /--

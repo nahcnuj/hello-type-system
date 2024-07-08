@@ -45,7 +45,7 @@ theorem type_safety (compat : (⊨ E : Γ)) : (Γ ⊢ e : τ) → (E ⊢ e ⇓ r
   | .Var, .Var =>
       have  ⟨_, v, hE, _, hvc⟩ := compat
       have heq := List.head_eq_of_cons_eq hE |> congrArg Prod.snd |> congrArg Sum.inr
-      ⟨v, heq, fun h => have ⟨v, hv⟩ := h ▸ hvc ; ⟨v, hv |> Expr.Lit.inj⟩, fun h => have ⟨v, hv⟩ := h ▸ hvc ; ⟨v, hv |> Expr.Lit.inj⟩⟩
+      ⟨v, heq, fun h => have ⟨v, hv⟩ := h ▸ hvc ; ⟨v, hv⟩, fun h => have ⟨v, hv⟩ := h ▸ hvc ; ⟨v, hv⟩⟩
   | .VarIr dt _, .VarIr dv _ =>
       have ⟨_, _, hE, compat', _⟩ := compat
       have dv := List.tail_eq_of_cons_eq hE ▸ dv
@@ -66,8 +66,8 @@ theorem type_safety (compat : (⊨ E : Γ)) : (Γ ⊢ e : τ) → (E ⊢ e ⇓ r
       have : ValueCompat v₁ τ₁ :=
         have heq := Sum.inr.inj heq
         match τ₁ with
-        | .Int  => have ⟨v, h⟩ := hi rfl ; heq ▸ ⟨v, congrArg Expr.Lit h⟩
-        | .Bool => have ⟨v, h⟩ := hb rfl ; heq ▸ ⟨v, congrArg Expr.Lit h⟩
+        | .Int  => have ⟨v, h⟩ := hi rfl ; heq ▸ ⟨v, h⟩
+        | .Bool => have ⟨v, h⟩ := hb rfl ; heq ▸ ⟨v, h⟩
       have compat' := ⟨E, v₁, rfl, compat, this⟩
       type_safety compat' dte dve
 
@@ -149,8 +149,8 @@ theorem type_safety (compat : (⊨ E : Γ)) : (Γ ⊢ e : τ) → (E ⊢ e ⇓ r
       have : ValueCompat v₁ τ₁ :=
         have heq := Sum.inr.inj heq
         match τ₁ with
-        | .Int  => have ⟨v, h⟩ := hi rfl ; heq ▸ ⟨v, congrArg Expr.Lit h⟩
-        | .Bool => have ⟨v, h⟩ := hb rfl ; heq ▸ ⟨v, congrArg Expr.Lit h⟩
+        | .Int  => have ⟨v, h⟩ := hi rfl ; heq ▸ ⟨v, h⟩
+        | .Bool => have ⟨v, h⟩ := hb rfl ; heq ▸ ⟨v, h⟩
       have compat' := ⟨E, v₁, rfl, compat, this⟩
       have ⟨_, h, _⟩ := type_safety compat' dte dve
       Sum.noConfusion h
