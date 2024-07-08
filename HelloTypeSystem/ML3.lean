@@ -1,5 +1,4 @@
 import HelloTypeSystem.Util
-import HelloTypeSystem.ML1
 import HelloTypeSystem.ML2
 
 namespace HelloTypeSystem
@@ -560,6 +559,7 @@ inductive Types where
   | Int
   | Bool
   | Fn (τ₁ τ₂ : Types)
+  deriving DecidableEq
 
 /--
 型環境
@@ -657,6 +657,70 @@ theorem ValueCompat.Cls_Fn {E : Env} {x : VarName} {e : Expr} :
 theorem EnvCompat.cons_cons :
   EnvCompat (Env.cons (x, v) E') (List.cons (y, τ) Γ') = (x = y ∧ EnvCompat E' Γ' ∧ ValueCompat v τ)
 := by simp [EnvCompat]
+
+/--
+型付けの結果
+-/
+inductive TypingResult (Γ : TypeEnv) (e : Expr) where
+  | Ok    : (τ : Types) → Typed Γ e τ → TypingResult Γ e
+  | Error : TypingResult Γ e
+
+/--
+与えられた式の型検査を行う。
+-/
+def Expr.check : (e : Expr) → (Γ : TypeEnv) → TypingResult Γ e
+  | .Z _, _ => .Ok .Int  .Int
+  | .B _, _ => .Ok .Bool .Bool
+  | .Var _, [] => .Error
+  | .Var x, (y, τ) :: _ =>
+      if h : x = y
+      then .Ok τ (h ▸ .Var)
+      else .Error
+  | .Add e₁ e₂, _ =>
+      match e₁.check _, e₂.check _ with
+      | .Ok .Int d₁, .Ok .Int d₂ => .Ok .Int (.Add d₁ d₂)
+      | _          , _           => .Error
+  | .Sub e₁ e₂, _ =>
+      match e₁.check _, e₂.check _ with
+      | .Ok .Int d₁, .Ok .Int d₂ => .Ok .Int (.Sub d₁ d₂)
+      | _          , _           => .Error
+  | .Mul e₁ e₂, _ =>
+      match e₁.check _, e₂.check _ with
+      | .Ok .Int d₁, .Ok .Int d₂ => .Ok .Int (.Mul d₁ d₂)
+      | _          , _           => .Error
+  | .LT e₁ e₂, _ =>
+      match e₁.check _, e₂.check _ with
+      | .Ok .Int d₁, .Ok .Int d₂ => .Ok .Bool (.LT d₁ d₂)
+      | _          , _           => .Error
+  | .If e₁ e₂ e₃, _ =>
+      match e₁.check _, e₂.check _, e₃.check _ with
+      | .Ok .Bool d₁, .Ok .Int  d₂, .Ok .Int  d₃ => .Ok .Int  (.If d₁ d₂ d₃)
+      | .Ok .Bool d₁, .Ok .Bool d₂, .Ok .Bool d₃ => .Ok .Bool (.If d₁ d₂ d₃)
+      | _           , _           , _            => .Error
+  | .Let x e₁ e₂, Γ =>
+      match e₁.check Γ with
+      | .Ok τ₁ d₁ =>
+          match e₂.check (Γ.cons (x, τ₁)) with
+          | .Ok τ₂ d₂ => .Ok τ₂ (.Let d₁ d₂)
+          | _         => .Error
+      | _ => .Error
+  | .Fn x e, Γ =>
+      match (Expr.Var x).check Γ with
+      | .Ok τ₁ d₁ =>
+          match e.check (Γ.cons (x, τ₁)) with -- TODO
+          | .Ok _ d₂ => .Ok _ (.Fn d₂)
+          | _        => .Error
+      | _ => .Error
+  | .App e₁ e₂, _ =>
+      match e₁.check _ with
+      | .Ok (.Fn τ₁ τ₂) d₁ =>
+          match e₂.check _ with
+          | .Ok τ₁' d₂ =>
+              if h : τ₁ = τ₁'
+              then .Ok τ₂ (.App d₁ (h ▸ d₂))
+              else .Error
+          | _ => .Error
+      | _ => .Error
 
 /-
 /--
