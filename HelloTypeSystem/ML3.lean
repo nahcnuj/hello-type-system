@@ -689,6 +689,45 @@ def Types.subst (S : TypeSubst) : Types → Types
       | none   => .Var α
 
 /--
+型に関する連立方程式
+-/
+abbrev SimultaneousEquation := List (Types × Types)
+
+/--
+$$
+\text{
+型代入$S$が連立方程式
+$\{
+  {\MV{\tau_{11}} = \MV{\tau_{12}}},\,
+  \dots,\,
+  {\MV{\tau_{n1}} = \MV{\tau_{n2}}}
+\}$
+の解である}
+\mathrel{\overset{\text{def}}{\iff}}
+\forall i \in \\{1,\dots,n\\}. S\MV{\tau_{i1}} \equiv S\MV{\tau_{i2}}
+$$
+-/
+def TypeSubst.solved (S : TypeSubst) : SimultaneousEquation → Prop
+  | []            => True
+  | (τ₁, τ₂) :: E => τ₁.subst S = τ₂.subst S ∧ S.solved E
+
+example : TypeSubst.solved [] [] := True.intro
+example : TypeSubst.solved [("'b", .Int)] [] := True.intro
+
+example : TypeSubst.solved [] [(.Int, .Int)] := ⟨rfl, True.intro⟩
+example : TypeSubst.solved [("'b", .Int)] [(.Var "'b", .Int)] := -- by simp [TypeSubst.solved, Types.subst, List.findSome?]
+  ⟨rfl, True.intro⟩
+example : TypeSubst.solved [("'b", .Int), ("'a", .Fn .Int .Int)] [(.Var "'b", .Int), (.Var "'a", .Fn .Int (.Var "'b"))] := -- by simp [TypeSubst.solved, Types.subst, List.findSome?]
+  ⟨rfl, rfl, True.intro⟩
+
+example : TypeSubst.solved [("'c", .Int), ("'b", .Fn .Int .Int), ("'a", .Fn .Int (.Fn .Int .Int))] [(.Var "'b", .Fn .Int (.Var "'c")), (.Var "'a", .Fn .Int (.Var "'b"))] :=
+  ⟨rfl, rfl, True.intro⟩
+example : TypeSubst.solved [("'c", .Bool), ("'b", .Fn .Int .Bool), ("'a", .Fn .Int (.Fn .Int .Bool))] [(.Var "'b", .Fn .Int (.Var "'c")), (.Var "'a", .Fn .Int (.Var "'b"))] :=
+  ⟨rfl, rfl, True.intro⟩
+example : TypeSubst.solved [("'c", .Fn .Int .Int), ("'b", .Fn .Int (.Fn .Int .Int)), ("'a", .Fn .Int (.Fn .Int (.Fn .Int .Int)))] [(.Var "'b", .Fn .Int (.Var "'c")), (.Var "'a", .Fn .Int (.Var "'b"))] :=
+  ⟨rfl, rfl, True.intro⟩
+
+/--
 型環境$\MV{\Gamma}$に型代入$S$を適用（$S\MV{\Gamma}$）する。
 -/
 def TypeEnv.subst (S : TypeSubst) : TypeEnv → TypeEnv :=
@@ -703,11 +742,6 @@ structure PrincipalType (Γ : TypeEnv) (e : Expr) where
   h : Typed (Γ.subst S) e τ
   /-- 主要型にさらに代入を施すことで、具体的な任意の型を得られる。 -/
   instantiate : Typed (Γ.subst S') e τ' → ∃ S'', (Γ.subst S).subst S'' = Γ.subst S' ∧ τ.subst S'' = τ'
-
-/--
-型に関する連立方程式
--/
-abbrev SimultaneousEquation := List (Types × Types)
 
 /--
 式$\MV{e}$に対して与えられた型環境$\MV{\Gamma}$のもとで、型変数に関する連立方程式$E$と式$\MV{e}$の型$\MV{\tau}$の組$(E,\MV{\tau})$を返す。
