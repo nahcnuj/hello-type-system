@@ -560,11 +560,21 @@ inductive Types where
   | Int
   | Bool
   | Fn (τ₁ τ₂ : Types)
+  /-- 型変数$\MV{\alpha}$-/
+  | Var (α : VarName)
 
 /--
 型環境
 -/
 abbrev TypeEnv := List (VarName × Types)
+
+/--
+型環境において型宣言されている変数の集合
+-/
+def TypeEnv.dom : TypeEnv → Set VarName
+  | []          => ∅
+  | (x, _) :: Γ => TypeEnv.dom Γ ∪ { x }
+theorem TypeEnv.dom.cons : TypeEnv.dom ((x, τ) :: (Γ' : TypeEnv)) = Γ'.dom ∪ { x } := by simp [TypeEnv.dom]
 
 /--
 ML3式の型付け規則
@@ -658,6 +668,150 @@ theorem EnvCompat.cons_cons :
   EnvCompat (Env.cons (x, v) E') (List.cons (y, τ) Γ') = (x = y ∧ EnvCompat E' Γ' ∧ ValueCompat v τ)
 := by simp [EnvCompat]
 
+/--
+型代入
+
+型変数$\MV{\alpha}$を型$\MV{\tau}$で置き換える型代入を$\MV{\alpha} := \MV{\tau}$の気持ちで`(α, τ)`と書く。
+数式的には$[\MV{\tau}/\MV{\alpha}]$。
+-/
+abbrev TypeSubst := List (VarName × Types)
+
+/--
+型$\MV{\tau}$に型代入$S$を適用（$S\MV{\tau}$）する。
+-/
+def Types.subst (S : TypeSubst) : Types → Types
+  | .Int => .Int
+  | .Bool => .Bool
+  | .Fn τ₁ τ₂ => .Fn (τ₁.subst S) (τ₂.subst S)
+  | .Var α =>
+      match S.findSome? (fun ⟨β, τ⟩ => if β = α then some τ else none) with
+      | some τ => τ
+      | none   => .Var α
+
+/--
+型環境$\MV{\Gamma}$に型代入$S$を適用（$S\MV{\Gamma}$）する。
+-/
+def TypeEnv.subst (S : TypeSubst) : TypeEnv → TypeEnv :=
+  List.map (fun ⟨x, τ⟩ => (x, τ.subst S))
+
+/--
+主要型
+-/
+structure PrincipalType (Γ : TypeEnv) (e : Expr) where
+  S : TypeSubst
+  τ : Types
+  h : Typed (Γ.subst S) e τ
+  /-- 主要型にさらに代入を施すことで、具体的な任意の型を得られる。 -/
+  instantiate : Typed (Γ.subst S') e τ' → ∃ S'', (Γ.subst S).subst S'' = Γ.subst S' ∧ τ.subst S'' = τ'
+
+/--
+型に関する連立方程式
+-/
+abbrev SimultaneousEquation := List (Types × Types)
+
+/--
+式$\MV{e}$に対して与えられた型環境$\MV{\Gamma}$のもとで、型変数に関する連立方程式$E$と式$\MV{e}$の型$\MV{\tau}$の組$(E,\MV{\tau})$を返す。
+
+`parital`ではないのでLeanの仕様上この関数は全域で停止する（練習問題10.1 \[基礎概念,10章]）。
+-/
+def Expr.extract (e : Expr) (Γ : TypeEnv) (bounded : e.fv ⊆ Γ.dom) (Λ : List VarName := []) : SimultaneousEquation × Types :=
+  match e with
+  | .Z _   => ([], .Int)
+  | .B _   => ([], .Bool)
+  | .Var x =>
+      match Γ with
+      | [] => absurd (bounded x (Expr.fv.Var ▸ rfl)) id
+      | (y, τ) :: (Γ' : TypeEnv) =>
+          if h : x = y
+          then ([], τ)
+          else
+            have bounded' : (Var x).fv ⊆ Γ'.dom :=
+              fun a h' =>
+                have : a ∈ Γ'.dom ∨ a ∈ {y} := (TypeEnv.dom.cons ▸ bounded) a h'
+                Or.elim this
+                  id
+                  (fun h'' : a ∈ {y} =>
+                    have hx := Singleton.mem_iff_eq_elem.mp (Expr.fv.Var ▸ h')
+                    have hy := Singleton.mem_iff_eq_elem.mp h''
+                    absurd (hy ▸ hx) h
+                  )
+            (Var x).extract Γ' bounded' Λ
+  | .Add e₁ e₂ =>
+      let ⟨E₁, τ₁⟩ :=
+        have : e₁.fv ⊆ (e₁.Add e₂).fv := Expr.fv.Add ▸ Union.subset_intro_left
+        e₁.extract Γ (Subset.trans this bounded) Λ
+      let ⟨E₂, τ₂⟩ :=
+        have : e₂.fv ⊆ (e₁.Add e₂).fv := Expr.fv.Add ▸ Union.subset_intro_right
+        e₂.extract Γ (Subset.trans this bounded) Λ
+      ((τ₂, .Int) :: (τ₁, .Int) :: E₂ ++ E₁, .Int)
+  | .Sub e₁ e₂ =>
+      let ⟨E₁, τ₁⟩ :=
+        have : e₁.fv ⊆ (e₁.Sub e₂).fv := Expr.fv.Sub ▸ Union.subset_intro_left
+        e₁.extract Γ (Subset.trans this bounded) Λ
+      let ⟨E₂, τ₂⟩ :=
+        have : e₂.fv ⊆ (e₁.Sub e₂).fv := Expr.fv.Sub ▸ Union.subset_intro_right
+        e₂.extract Γ (Subset.trans this bounded) Λ
+      ((τ₂, .Int) :: (τ₁, .Int) :: E₂ ++ E₁, .Int)
+  | .Mul e₁ e₂ =>
+      let ⟨E₁, τ₁⟩ :=
+        have : e₁.fv ⊆ (e₁.Mul e₂).fv := Expr.fv.Mul ▸ Union.subset_intro_left
+        e₁.extract Γ (Subset.trans this bounded) Λ
+      let ⟨E₂, τ₂⟩ :=
+        have : e₂.fv ⊆ (e₁.Mul e₂).fv := Expr.fv.Mul ▸ Union.subset_intro_right
+        e₂.extract Γ (Subset.trans this bounded) Λ
+      ((τ₂, .Int) :: (τ₁, .Int) :: E₂ ++ E₁, .Int)
+  | .LT e₁ e₂ =>
+      let ⟨E₁, τ₁⟩ :=
+        have : e₁.fv ⊆ (e₁.LT e₂).fv := Expr.fv.LT ▸ Union.subset_intro_left
+        e₁.extract Γ (Subset.trans this bounded) Λ
+      let ⟨E₂, τ₂⟩ :=
+        have : e₂.fv ⊆ (e₁.LT e₂).fv := Expr.fv.LT ▸ Union.subset_intro_right
+        e₂.extract Γ (Subset.trans this bounded) Λ
+      ((τ₂, .Int) :: (τ₁, .Int) :: E₂ ++ E₁, .Bool)
+  | .If e₁ e₂ e₃ =>
+      let ⟨E₁, τ₁⟩ :=
+        have : e₁.fv ⊆ (Expr.If e₁ e₂ e₃).fv := Expr.fv.If ▸ Set.union_assoc ▸ Union.subset_intro_left
+        e₁.extract Γ (Subset.trans this bounded) Λ
+      let ⟨E₂, τ₂⟩ :=
+        have : e₂.fv ⊆ (Expr.If e₁ e₂ e₃).fv := Expr.fv.If ▸ Set.union_assoc ▸ (Subset.trans Union.subset_intro_left Union.subset_intro_right)
+        e₂.extract Γ (Subset.trans this bounded) Λ
+      let ⟨E₃, τ₃⟩ :=
+        have : e₃.fv ⊆ (Expr.If e₁ e₂ e₃).fv := Expr.fv.If ▸ Set.union_assoc ▸ (Subset.trans Union.subset_intro_right Union.subset_intro_right)
+        e₃.extract Γ (Subset.trans this bounded) Λ
+      ((τ₂, τ₃) :: (τ₁, .Bool) :: E₃ ++ E₂ ++ E₁, τ₂)
+  | .Let x e₁ e₂ =>
+      let ⟨E₁, τ₁⟩ :=
+        have : e₁.fv ⊆ (Expr.Let x e₁ e₂).fv := Expr.fv.Let ▸ Union.subset_intro_left
+        e₁.extract Γ (Subset.trans this bounded) Λ
+      let ⟨E₂, τ₂⟩ :=
+        let Γ' : TypeEnv := (x, τ₁) :: Γ
+        have bounded' : e₂.fv ⊆ Γ'.dom :=
+          TypeEnv.dom.cons ▸ fun y h =>
+            if heq : x = y
+            then Or.inr (heq ▸ rfl)
+            else Or.inl (bounded y (Expr.fv.Let ▸ Or.inr ⟨h, fun h => absurd h heq⟩))
+        e₂.extract Γ' bounded' Λ
+      (E₂ ++ E₁, τ₂)
+  | .Fn x e =>
+      let α : VarName := Λ.toString
+      let Γ' : TypeEnv := (x, .Var α) :: Γ
+      let ⟨E, τ⟩ :=
+        have bounded' : e.fv ⊆ Γ'.dom :=
+          TypeEnv.dom.cons ▸ fun y h =>
+            if heq : x = y
+            then Or.inr (heq ▸ rfl)
+            else Or.inl (bounded y (Expr.fv.Fn ▸ ⟨h, fun h => absurd (Singleton.mem_iff_eq_elem.mp h) heq⟩))
+        e.extract Γ' bounded' (Λ.cons α)
+      (E, .Fn (.Var α) τ)
+  | .App e₁ e₂ =>
+      let ⟨E₁, τ₁⟩ :=
+        have : e₁.fv ⊆ (Expr.App e₁ e₂).fv := Expr.fv.App ▸ Union.subset_intro_left
+        e₁.extract Γ (Subset.trans this bounded) Λ
+      let ⟨E₂, τ₂⟩ :=
+        have : e₂.fv ⊆ (Expr.App e₁ e₂).fv := Expr.fv.App ▸ Union.subset_intro_right
+        e₂.extract Γ (Subset.trans this bounded) Λ
+      let α : VarName := Λ.toString
+      ((τ₁, .Fn τ₂ (.Var α)) :: E₂ ++ E₁, .Var α)
 /-
 /--
 `eval`はML3式を評価してその結果を返します。
