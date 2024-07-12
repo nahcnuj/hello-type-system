@@ -269,3 +269,91 @@ theorem type_safety (compat : (EnvCompat E Γ)) : Typed Γ e τ → Evaluation E
       have ⟨_, heq₂, hvc⟩ := type_safety compat dt₂ dr₂
       have compat' := EnvCompat.cons_cons ▸ ⟨rfl, compat₀, Sum.inr.inj heq₂ ▸ hvc⟩
       type_safety compat' dt₃ dr₃
+
+/-!
+## 方程式の抽出
+
+$\MV{e} := \TT{fun x → x 3 4}$（`e4`）に対して
+$$
+\mathop{\mathit{Extract}}(\varnothing, \MV{e})
+= (
+  \{
+    \MV{\alpha_0} = \TT{int}\to\MV{\alpha_1},\,
+    \MV{\alpha_1} = \TT{int}\to\MV{\alpha_2}
+  \},\,
+  \MV{\alpha_0} \to \MV{\alpha_2}
+)
+$$
+となることを確認する。
+-/
+
+theorem «Extract(∅, x 3)» (h : ((Expr.Var "x").App 3).fv ⊆ TypeEnv.dom [("x", Types.Var "α0")])
+: (Expr.App "x" 3).extract [("x", .Var "α0")] h ["α0"]
+  = (
+      [(.Var "α0", .Fn .Int (.Var "α1"))],
+      .Var "α1",
+      ["α1", "α0"]
+    )
+:=
+  Expr.extract.App
+    (Expr.extract.Var (fun _ h => TypeEnv.dom.cons ▸ Expr.fv.Var ▸ Or.inr h))
+    (Expr.extract.Z (Expr.fv.Int ▸ TypeEnv.dom.cons ▸ fun _ => Or.inl))
+
+theorem «Extract(∅, x 3 4)» (h : (((Expr.Var "x").App 3).App 4).fv ⊆ TypeEnv.dom [("x", Types.Var "α0")])
+: (Expr.App (.App (.Var "x") 3) 4).extract [("x", .Var "α0")] h ["α0"]
+  = (
+      [(.Var "α1", .Fn .Int (.Var "α2"))] ++ [(.Var "α0", .Fn .Int (.Var "α1"))],
+      .Var "α2",
+      ["α2", "α1", "α0"]
+    )
+:=
+  Expr.extract.App
+    («Extract(∅, x 3)»
+      (Expr.fv.App ▸ Expr.fv.Var ▸ Expr.fv.Int ▸ TypeEnv.dom.cons ▸ TypeEnv.dom.nil ▸ fun _ h => h.elim Or.inr Or.inl)
+    )
+    (Expr.extract.Z
+      (Expr.fv.Int ▸ TypeEnv.dom.cons ▸ fun _ => Or.inl)
+    )
+
+theorem «Extract(∅, fun x → x 3 4)» (h : (Expr.Fn "x" (((Expr.Var "x").App 3).App 4)).fv ⊆ TypeEnv.dom [])
+: (Expr.Fn "x" (.App (.App "x" 3) 4)).extract [] h []
+  = (
+      [
+        -- α1 = int → α2
+        (.Var "α1", .Fn .Int (.Var "α2")),
+        -- α0 = int → α1
+        (.Var "α0", .Fn .Int (.Var "α1"))
+      ],
+      -- α0 → α2
+      .Fn (.Var "α0") (.Var "α2"),
+      ["α2", "α1", "α0"]
+    )
+:=
+  Expr.extract.Fn
+    («Extract(∅, x 3 4)»
+      (Expr.fv.App ▸ TypeEnv.dom.cons ▸ TypeEnv.dom.nil ▸ fun _ h =>
+        h.elim
+          (Expr.fv.App ▸ fun h => h.elim
+            (Expr.fv.Var ▸ Or.inr)
+            (Expr.fv.Int ▸ Or.inl)
+          )
+          (Expr.fv.Int ▸ Or.inl)
+      )
+    )
+
+/-!
+この方程式
+$E := \{ \MV{\alpha_0} = \TT{int}\to\MV{\alpha_1},\, \MV{\alpha_1} = \TT{int}\to\MV{\alpha_2} \}$
+の解（型代入）が任意の型$\MV{\tau}$に対して
+$S_{\MV{\tau}} := [{\TT{int}\to\TT{int}\to\MV{\tau}}/{\MV{\alpha_0}},\,{\TT{int}\to\MV{\tau}}/{\MV{\alpha_1}},\,{\MV{\tau}}/{\MV{\alpha_2}}]$
+となることを確認する。
+-/
+example : TypeSubst.solved [("α2", .Int), ("α1", .Fn .Int .Int), ("α0", .Fn .Int (.Fn .Int .Int))] [(.Var "α1", .Fn .Int (.Var "α2")), (.Var "α0", .Fn .Int (.Var "α1"))] :=
+  ⟨rfl, rfl, True.intro⟩
+example : TypeSubst.solved [("α2", .Bool), ("α1", .Fn .Int .Bool), ("α0", .Fn .Int (.Fn .Int .Bool))] [(.Var "α1", .Fn .Int (.Var "α2")), (.Var "α0", .Fn .Int (.Var "α1"))] :=
+  ⟨rfl, rfl, True.intro⟩
+example : TypeSubst.solved [("α2", .Fn .Int .Int), ("α1", .Fn .Int (.Fn .Int .Int)), ("α0", .Fn .Int (.Fn .Int (.Fn .Int .Int)))] [(.Var "α1", .Fn .Int (.Var "α2")), (.Var "α0", .Fn .Int (.Var "α1"))] :=
+  ⟨rfl, rfl, True.intro⟩
+
+theorem «[α0 = int → α1, α1 = int → α2]».solution (τ : Types) : TypeSubst.solved [("α2", τ), ("α1", .Fn .Int τ), ("α0", .Fn .Int (.Fn .Int τ))] [(.Var "α1", .Fn .Int (.Var "α2")), (.Var "α0", .Fn .Int (.Var "α1"))] :=
+  ⟨rfl, rfl, True.intro⟩
