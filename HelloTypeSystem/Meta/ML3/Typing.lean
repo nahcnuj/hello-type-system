@@ -287,7 +287,7 @@ $$
 となることを確認する。
 -/
 
-theorem «Extract(∅, x 3)» (h : ((Expr.Var "x").App 3).fv ⊆ TypeEnv.dom [("x", Types.Var "α0")])
+theorem «Extract([x : α0], x 3)» (h : ((Expr.Var "x").App 3).fv ⊆ TypeEnv.dom [("x", Types.Var "α0")])
 : (Expr.App "x" 3).extract [("x", .Var "α0")] h ["α0"]
   = (
       [(.Var "α0", .Fn .Int (.Var "α1"))],
@@ -299,7 +299,7 @@ theorem «Extract(∅, x 3)» (h : ((Expr.Var "x").App 3).fv ⊆ TypeEnv.dom [("
     (Expr.extract.Var (fun _ h => TypeEnv.dom.cons ▸ Expr.fv.Var ▸ Or.inr h))
     (Expr.extract.Z (Expr.fv.Int ▸ TypeEnv.dom.cons ▸ fun _ => Or.inl))
 
-theorem «Extract(∅, x 3 4)» (h : (((Expr.Var "x").App 3).App 4).fv ⊆ TypeEnv.dom [("x", Types.Var "α0")])
+theorem «Extract([x : α0], x 3 4)» (h : (((Expr.Var "x").App 3).App 4).fv ⊆ TypeEnv.dom [("x", Types.Var "α0")])
 : (Expr.App (.App (.Var "x") 3) 4).extract [("x", .Var "α0")] h ["α0"]
   = (
       [(.Var "α1", .Fn .Int (.Var "α2"))] ++ [(.Var "α0", .Fn .Int (.Var "α1"))],
