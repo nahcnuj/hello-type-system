@@ -270,6 +270,7 @@ theorem type_safety (compat : (EnvCompat E Γ)) : Typed Γ e τ → Evaluation E
       have compat' := EnvCompat.cons_cons ▸ ⟨rfl, compat₀, Sum.inr.inj heq₂ ▸ hvc⟩
       type_safety compat' dt₃ dr₃
 
+namespace Example
 /-!
 ## 方程式の抽出
 
@@ -286,6 +287,15 @@ $$
 $$
 となることを確認する。
 -/
+
+def e := Expr.Fn "x" (((Expr.Var "x").App 3).App 4)
+def E : SimultaneousEquation :=
+  [
+    -- α1 = int → α2
+    (.Var "α1", .Fn .Int (.Var "α2")),
+    -- α0 = int → α1
+    (.Var "α0", .Fn .Int (.Var "α1"))
+  ]
 
 theorem «Extract([x : α0], x 3)» (h : ((Expr.Var "x").App 3).fv ⊆ TypeEnv.dom [("x", Types.Var "α0")])
 : (Expr.App "x" 3).extract [("x", .Var "α0")] h ["α0"]
@@ -315,19 +325,8 @@ theorem «Extract([x : α0], x 3 4)» (h : (((Expr.Var "x").App 3).App 4).fv ⊆
       (Expr.fv.Int ▸ TypeEnv.dom.cons ▸ fun _ => Or.inl)
     )
 
-theorem «Extract(∅, fun x → x 3 4)» (h : (Expr.Fn "x" (((Expr.Var "x").App 3).App 4)).fv ⊆ TypeEnv.dom [])
-: (Expr.Fn "x" (.App (.App "x" 3) 4)).extract [] h []
-  = (
-      [
-        -- α1 = int → α2
-        (.Var "α1", .Fn .Int (.Var "α2")),
-        -- α0 = int → α1
-        (.Var "α0", .Fn .Int (.Var "α1"))
-      ],
-      -- α0 → α2
-      .Fn (.Var "α0") (.Var "α2"),
-      ["α2", "α1", "α0"]
-    )
+theorem «Extract(∅, fun x → x 3 4)» (h : e.fv ⊆ TypeEnv.dom [])
+: e.extract [] h [] = (E, .Fn (.Var "α0") (.Var "α2"), ["α2", "α1", "α0"])
 :=
   Expr.extract.Fn
     («Extract([x : α0], x 3 4)»
@@ -342,18 +341,90 @@ theorem «Extract(∅, fun x → x 3 4)» (h : (Expr.Fn "x" (((Expr.Var "x").App
     )
 
 /-!
-この方程式
+## 一階の単一化
+
+方程式
 $E := \{ \MV{\alpha_0} = \TT{int}\to\MV{\alpha_1},\, \MV{\alpha_1} = \TT{int}\to\MV{\alpha_2} \}$
 の解（型代入）が任意の型$\MV{\tau}$に対して
 $S_{\MV{\tau}} := [{\TT{int}\to\TT{int}\to\MV{\tau}}/{\MV{\alpha_0}},\,{\TT{int}\to\MV{\tau}}/{\MV{\alpha_1}},\,{\MV{\tau}}/{\MV{\alpha_2}}]$
 となることを確認する。
 -/
-example : TypeSubst.solved [("α2", .Int), ("α1", .Fn .Int .Int), ("α0", .Fn .Int (.Fn .Int .Int))] [(.Var "α1", .Fn .Int (.Var "α2")), (.Var "α0", .Fn .Int (.Var "α1"))] :=
+
+example : TypeSubst.solved [("α2", .Int), ("α1", .Fn .Int .Int), ("α0", .Fn .Int (.Fn .Int .Int))] E :=
   ⟨rfl, rfl, True.intro⟩
-example : TypeSubst.solved [("α2", .Bool), ("α1", .Fn .Int .Bool), ("α0", .Fn .Int (.Fn .Int .Bool))] [(.Var "α1", .Fn .Int (.Var "α2")), (.Var "α0", .Fn .Int (.Var "α1"))] :=
+example : TypeSubst.solved [("α2", .Bool), ("α1", .Fn .Int .Bool), ("α0", .Fn .Int (.Fn .Int .Bool))] E :=
   ⟨rfl, rfl, True.intro⟩
-example : TypeSubst.solved [("α2", .Fn .Int .Int), ("α1", .Fn .Int (.Fn .Int .Int)), ("α0", .Fn .Int (.Fn .Int (.Fn .Int .Int)))] [(.Var "α1", .Fn .Int (.Var "α2")), (.Var "α0", .Fn .Int (.Var "α1"))] :=
+example : TypeSubst.solved [("α2", .Fn .Int .Int), ("α1", .Fn .Int (.Fn .Int .Int)), ("α0", .Fn .Int (.Fn .Int (.Fn .Int .Int)))] E :=
   ⟨rfl, rfl, True.intro⟩
 
-theorem «[α0 = int → α1, α1 = int → α2]».solution (τ : Types) : TypeSubst.solved [("α2", τ), ("α1", .Fn .Int τ), ("α0", .Fn .Int (.Fn .Int τ))] [(.Var "α1", .Fn .Int (.Var "α2")), (.Var "α0", .Fn .Int (.Var "α1"))] :=
+theorem «[α0 = int → α1, α1 = int → α2]».solution (τ : Types) : TypeSubst.solved [("α2", τ), ("α1", .Fn .Int τ), ("α0", .Fn .Int (.Fn .Int τ))] E :=
   ⟨rfl, rfl, True.intro⟩
+
+/--
+$S := [\TT{int}→\TT{int}\to\MV{\alpha_2}/\MV{\alpha_0},\,\TT{int}\to\MV{\alpha_2}/\MV{\alpha_1}]$
+-/
+def S : TypeSubst := [("α1", Types.Fn .Int (.Var "α2")), ("α0", .Fn .Int (.Fn .Int (.Var "α2")))]
+
+/--
+$E$の最汎単一化子は$S$である。
+
+$E$の一般解$S' := [{\TT{int}\to\TT{int}\to\MV{\tau}}/{\MV{\alpha_0}},\,{\TT{int}\to\MV{\tau}}/{\MV{\alpha_1}},\,{\MV{\tau}}/{\MV{\alpha_2}}]$について$S'' := [\MV{\tau}/\MV{\alpha_2}]$とすれば
+$$S' = S'' \circ S$$
+が成り立つ。
+-/
+theorem «[α0 = int → α1, α1 = int → α2]».mgu {τ : Types} : (υ : Types) → [("α2", τ), ("α1", Types.Fn .Int τ), ("α0", .Fn .Int (.Fn .Int τ))] υ = ([("α2", τ)] ∘ S) υ
+  | .Var α =>
+      if ha : "α0" = α
+      then by simp [Types.subst, List.findSome?, ha.symm]
+      else
+        if hb : "α1" = α
+        then by simp [Types.subst, List.findSome?, hb.symm]
+        else by simp [Types.subst, List.findSome?, ha, hb]
+  | .Int      => rfl
+  | .Bool     => rfl
+  | .Fn υ₁ υ₂ => by simp [Types.subst, «[α0 = int → α1, α1 = int → α2]».mgu υ₁, «[α0 = int → α1, α1 = int → α2]».mgu υ₂]
+
+/-
+theorem H' (S' : TypeSubst) (h : S'.solved E) : (τ : Types) → S' τ = ([("α2", Types.Var "α2")] ∘ S) τ
+  | .Var α =>
+      have ⟨h1, h0, _⟩ := h
+      if ha : "α0" = α
+      then by
+        have : ¬ "α1" = α := fun h => nomatch h ▸ ha
+        simp [Types.subst, List.findSome?, ha, if_neg this]
+        -- have ⟨x, t⟩ := S'.head (fun hempty =>
+        --   have ⟨h1, _⟩ := hempty ▸ h
+        --   by simp [Types.subst] at h1
+        --   )
+        split
+        . next υ heq =>
+            match υ with
+            | .Var _ => sorry
+            have ⟨⟨x, t⟩, mem, h⟩ := List.exists_of_findSome?_eq_some heq
+            have := List.elem_eq_true_of_mem mem
+            if heq : (x, t).fst = α
+            then
+              have := if_pos heq ▸ h |> Option.some.inj
+              sorry
+            else sorry
+        . sorry -- by simp [ha, h0, h1, Types.subst, List.findSome?] -- ha ▸ h0 ▸ by simp [Types.subst, List.findSome?]
+      else
+        if hb : "α1" = α
+        then by simp [Types.subst, List.findSome?, hb.symm]
+        else by simp [Types.subst, List.findSome?, ha, hb]
+  | .Int      => rfl
+  | .Bool     => rfl
+  | .Fn τ₁ τ₂ => by simp [Types.subst, H' S' h τ₁, H' S' h τ₂]
+-/
+
+/-
+/--
+$S$は$E$の最汎単一化子である。
+-/
+theorem S_is_mgu : S.most_general E :=
+  And.intro
+    (⟨rfl, rfl, True.intro⟩)
+    sorry-- (fun S' h => Exists.intro [("α2", .Var "α2")] (funext (H' S' h)))
+-/
+
+end Example

@@ -563,6 +563,7 @@ inductive Types where
   | Fn (τ₁ τ₂ : Types)
   /-- 型変数$\MV{\alpha}$-/
   | Var (α : VarName)
+  deriving DecidableEq
 
 /--
 型環境
@@ -697,10 +698,16 @@ def Types.subst (S : TypeSubst) : Types → Types
       | none   => .Var α
 
 /--
+型代入$S$を型$\MV{\tau}$から型$S\MV{\tau}$への写像とみなす。
+-/
+instance : CoeFun TypeSubst (fun _ => Types → Types) where
+  coe := Types.subst
+
+/--
 型環境$\MV{\Gamma}$に型代入$S$を適用（$S\MV{\Gamma}$）する。
 -/
 def TypeEnv.subst (S : TypeSubst) : TypeEnv → TypeEnv :=
-  List.map (fun ⟨x, τ⟩ => (x, τ.subst S))
+  List.map (fun ⟨x, τ⟩ => (x, S τ))
 
 /--
 主要型 \[基礎概念,§10.2]
@@ -850,7 +857,7 @@ $\{
 \mathrel{\overset{\text{def}}{\iff}}
 \forall i \in \\{1,\dots,n\\}. S\MV{\tau_{i1}} \equiv S\MV{\tau_{i2}}
 $$
-\[基礎概念,§10.4]
+（定義10.2 \[基礎概念,§10.4]）
 -/
 def TypeSubst.solved (S : TypeSubst) : SimultaneousEquation → Prop
   | []            => True
@@ -870,6 +877,12 @@ example : TypeSubst.solved [("'c", .Bool), ("'b", .Fn .Int .Bool), ("'a", .Fn .I
   ⟨rfl, rfl, True.intro⟩
 example : TypeSubst.solved [("'c", .Fn .Int .Int), ("'b", .Fn .Int (.Fn .Int .Int)), ("'a", .Fn .Int (.Fn .Int (.Fn .Int .Int)))] [(.Var "'b", .Fn .Int (.Var "'c")), (.Var "'a", .Fn .Int (.Var "'b"))] :=
   ⟨rfl, rfl, True.intro⟩
+
+/--
+型代入$S$が連立方程式$E$の最汎単一化子であること。
+-/
+def TypeSubst.most_general (S : TypeSubst) (E : SimultaneousEquation) : Prop :=
+  S.solved E ∧ ∀ S' : TypeSubst, S'.solved E → ∃ S'' : TypeSubst, S' = S'' ∘ S
 
 /-
 /--
