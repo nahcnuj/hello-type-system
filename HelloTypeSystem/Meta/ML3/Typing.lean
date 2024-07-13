@@ -308,7 +308,7 @@ theorem «Extract([x : α0], x 3 4)» (h : (((Expr.Var "x").App 3).App 4).fv ⊆
     )
 :=
   Expr.extract.App
-    («Extract(∅, x 3)»
+    («Extract([x : α0], x 3)»
       (Expr.fv.App ▸ Expr.fv.Var ▸ Expr.fv.Int ▸ TypeEnv.dom.cons ▸ TypeEnv.dom.nil ▸ fun _ h => h.elim Or.inr Or.inl)
     )
     (Expr.extract.Z
@@ -330,7 +330,7 @@ theorem «Extract(∅, fun x → x 3 4)» (h : (Expr.Fn "x" (((Expr.Var "x").App
     )
 :=
   Expr.extract.Fn
-    («Extract(∅, x 3 4)»
+    («Extract([x : α0], x 3 4)»
       (Expr.fv.App ▸ TypeEnv.dom.cons ▸ TypeEnv.dom.nil ▸ fun _ h =>
         h.elim
           (Expr.fv.App ▸ fun h => h.elim
