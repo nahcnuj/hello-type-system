@@ -10,6 +10,7 @@ abbrev 𝔹 := _root_.Bool
 
 def Set (α : Type u) := α → Prop
 
+@[simp]
 instance : Membership α (Set α) where
   mem x s := s x
 

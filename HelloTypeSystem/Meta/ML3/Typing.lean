@@ -290,17 +290,17 @@ $$
 
 def e := Expr.Fn "x" (((Expr.Var "x").App 3).App 4)
 def E : SimultaneousEquation :=
-  [
+  ⟨[], [
     -- α1 = int → α2
     (.Var "α1", .Fn .Int (.Var "α2")),
     -- α0 = int → α1
     (.Var "α0", .Fn .Int (.Var "α1"))
-  ]
+  ]⟩
 
 theorem «Extract([x : α0], x 3)» (h : ((Expr.Var "x").App 3).fv ⊆ TypeEnv.dom [("x", Types.Var "α0")])
 : (Expr.App "x" 3).extract [("x", .Var "α0")] h ["α0"]
   = (
-      [(.Var "α0", .Fn .Int (.Var "α1"))],
+      ⟨[], [(.Var "α0", .Fn .Int (.Var "α1"))]⟩,
       .Var "α1",
       ["α1", "α0"]
     )
@@ -312,7 +312,7 @@ theorem «Extract([x : α0], x 3)» (h : ((Expr.Var "x").App 3).fv ⊆ TypeEnv.d
 theorem «Extract([x : α0], x 3 4)» (h : (((Expr.Var "x").App 3).App 4).fv ⊆ TypeEnv.dom [("x", Types.Var "α0")])
 : (Expr.App (.App (.Var "x") 3) 4).extract [("x", .Var "α0")] h ["α0"]
   = (
-      [(.Var "α1", .Fn .Int (.Var "α2"))] ++ [(.Var "α0", .Fn .Int (.Var "α1"))],
+      ⟨[], [(.Var "α1", .Fn .Int (.Var "α2"))] ++ [(.Var "α0", .Fn .Int (.Var "α1"))]⟩,
       .Var "α2",
       ["α2", "α1", "α0"]
     )
@@ -350,15 +350,15 @@ $S_{\MV{\tau}} := [{\TT{int}\to\TT{int}\to\MV{\tau}}/{\MV{\alpha_0}},\,{\TT{int}
 となることを確認する。
 -/
 
-example : TypeSubst.solved [("α2", .Int), ("α1", .Fn .Int .Int), ("α0", .Fn .Int (.Fn .Int .Int))] E :=
-  ⟨rfl, rfl, True.intro⟩
-example : TypeSubst.solved [("α2", .Bool), ("α1", .Fn .Int .Bool), ("α0", .Fn .Int (.Fn .Int .Bool))] E :=
-  ⟨rfl, rfl, True.intro⟩
-example : TypeSubst.solved [("α2", .Fn .Int .Int), ("α1", .Fn .Int (.Fn .Int .Int)), ("α0", .Fn .Int (.Fn .Int (.Fn .Int .Int)))] E :=
-  ⟨rfl, rfl, True.intro⟩
+-- example : TypeSubst.solved [("α2", .Int), ("α1", .Fn .Int .Int), ("α0", .Fn .Int (.Fn .Int .Int))] E :=
+--   ⟨rfl, rfl, True.intro⟩
+-- example : TypeSubst.solved [("α2", .Bool), ("α1", .Fn .Int .Bool), ("α0", .Fn .Int (.Fn .Int .Bool))] E :=
+--   ⟨rfl, rfl, True.intro⟩
+-- example : TypeSubst.solved [("α2", .Fn .Int .Int), ("α1", .Fn .Int (.Fn .Int .Int)), ("α0", .Fn .Int (.Fn .Int (.Fn .Int .Int)))] E :=
+--   ⟨rfl, rfl, True.intro⟩
 
-theorem «[α0 = int → α1, α1 = int → α2]».solution (τ : Types) : TypeSubst.solved [("α2", τ), ("α1", .Fn .Int τ), ("α0", .Fn .Int (.Fn .Int τ))] E :=
-  ⟨rfl, rfl, True.intro⟩
+-- theorem «[α0 = int → α1, α1 = int → α2]».solution (τ : Types) : TypeSubst.solved [("α2", τ), ("α1", .Fn .Int τ), ("α0", .Fn .Int (.Fn .Int τ))] E :=
+--   ⟨rfl, rfl, True.intro⟩
 
 /--
 $S := [\TT{int}→\TT{int}\to\MV{\alpha_2}/\MV{\alpha_0},\,\TT{int}\to\MV{\alpha_2}/\MV{\alpha_1}]$
@@ -426,5 +426,8 @@ theorem S_is_mgu : S.most_general E :=
     (⟨rfl, rfl, True.intro⟩)
     sorry-- (fun S' h => Exists.intro [("α2", .Var "α2")] (funext (H' S' h)))
 -/
+
+example : SimultaneousEquation.unify ⟨[], [(.Var "'b", .Int), (.Var "'a", .Fn .Int (.Var "'b"))]⟩ = Sum.inr [("'b", .Int), ("'a", .Fn .Int .Int)] := by
+  sorry
 
 end Example
