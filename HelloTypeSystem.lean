@@ -73,6 +73,7 @@ Lean 4でプログラミング言語の型システムや意味論に入門す�
     - EvalML3の評価の一意性 `HelloTypeSystem.ML3.eval_value_uniq`
     - TypingML3による型安全性 `HelloTypeSystem.ML3.type_safety`
     - 型変数に対する連立方程式の抽出アルゴリズム `HelloTypeSystem.ML3.Expr.extract`
+    - 型変数に対する連立方程式の解の単一化アルゴリズム `HelloTypeSystem.ML3.SimultaneousEquation.unify`
 
 ## Notation
 - $\MV{n},\MV{n_1},\dots$（太字斜体）：メタ変数。特にペアノ自然数の場合はそれに対応する普通の自然数を$n,n_1,\dots$と書く。

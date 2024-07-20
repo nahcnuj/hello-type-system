@@ -1029,7 +1029,7 @@ decreasing_by
     apply Prod.Lex.right ; simp_arith ; exact h2
   . apply Prod.Lex.left ; simp_arith
 
-theorem SimultaneousEquation.unify.nil
+theorem SimultaneousEquation.unify_nil
 : SimultaneousEquation.unify ⟨[], []⟩ = .inr [] := by simp [SimultaneousEquation.unify]
 theorem SimultaneousEquation.unify.Var (h0 : .Var α ≠ τ) (h1 : α ∉ τ.fv) (h2 : (SimultaneousEquation.subst [(α, τ)] ⟨E₁, E₀⟩).unify = .inr S)
 : SimultaneousEquation.unify ⟨E₁, (.Var α, τ) :: E₀⟩ = .inr ((α, τ.subst S) :: S)
