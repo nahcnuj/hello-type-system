@@ -576,6 +576,9 @@ def Types.fv : Types → List VarName
   | .Bool     => []
   | .Var α    => [ α ]
   | .Fn τ₁ τ₂ => τ₂.fv ++ τ₁.fv
+theorem Types.fv.Int : Types.fv .Int = ∅ := by simp [Types.fv]
+theorem Types.fv.Var : Types.fv (.Var α) = [ α ] := by simp [Types.fv]
+theorem Types.fv.Fn : Types.fv (.Fn τ₁ τ₂) = τ₂.fv ++ τ₁.fv := by simp [Types.fv]
 
 def Types.fv' : Types → Set VarName
   | .Int      => ∅
@@ -738,9 +741,12 @@ structure PrincipalType (Γ : TypeEnv) (e : Expr) where
   instantiate : Typed (Γ.subst S') e τ' → ∃ S'', (Γ.subst S).subst S'' = Γ.subst S' ∧ τ.subst S'' = τ'
 
 /--
-型に関する連立方程式
+型に関する連立方程式$E = (E^1, E^0)$
+
+両辺が関数型の方程式${ {\MV{\tau_1}→\MV{\tau_2}} = {\MV{\tau'_1}→\MV{\tau'_2}} } \in E^1$は、
+引数の型の方程式${\MV{\tau_1}=\MV{\tau'_1}} \in E^0$と返り値の型の方程式${\MV{\tau_2}=\MV{\tau'_2}} \in E^0$とに分解できるから、
+分解後に方程式が「小さく」なることが（各次数の方程式の数の辞書式順序で）示せるように分けて定義する。
 -/
--- abbrev SimultaneousEquation := List (Types × Types)
 structure SimultaneousEquation where
   /--
   `τ₁ → τ₂ = τ₁' → τ₂'`
@@ -757,6 +763,26 @@ structure SimultaneousEquation where
 def SimultaneousEquation.subst (S : TypeSubst) : SimultaneousEquation → SimultaneousEquation :=
   let subst := fun (⟨τ₁, τ₂⟩ : Types × Types) => (⟨τ₁.subst S, τ₂.subst S⟩ : Types × Types)
   fun ⟨E₁, E₀⟩ => ⟨E₁.map subst, E₀.map subst⟩
+
+/--
+連立方程式に型代入を適用しても方程式の数は変わらない。
+-/
+theorem SimultaneousEquation.length_eq_of_subst : (E : SimultaneousEquation) → (E.subst S).fst_deg.length = E.fst_deg.length ∧ (E.subst S).zero_deg.length = E.zero_deg.length
+  | ⟨[], []⟩ => ⟨rfl, rfl⟩
+  | ⟨[], e :: es⟩ =>
+      have ⟨_, h⟩ := SimultaneousEquation.length_eq_of_subst ⟨[], es⟩
+      have := h ▸ List.length_cons e es
+      ⟨rfl, this ▸ rfl⟩
+  | ⟨e :: es, []⟩ =>
+      have ⟨h, _⟩ := SimultaneousEquation.length_eq_of_subst ⟨es, []⟩
+      have := h ▸ List.length_cons ..
+      ⟨this ▸ rfl, rfl⟩
+  | ⟨e₁ :: es₁, e₀ :: es₀⟩ =>
+      have ⟨h₁, h₀⟩ := SimultaneousEquation.length_eq_of_subst ⟨es₁, es₀⟩
+      have h₁ := h₁ ▸ List.length_cons e₁ es₁
+      have h₀ := h₀ ▸ List.length_cons e₀ es₀
+      ⟨h₁ ▸ rfl, h₀ ▸ rfl⟩
+
 
 /--
 式$\MV{e}$について、与えられた型環境$\MV{\Gamma}$のもとで型に関する連立方程式$E$と式$\MV{e}$の型$\MV{\tau}$の組$(E, \MV{\tau})$を返す。
@@ -945,23 +971,16 @@ example : TypeSubst.solved [("'c", .Fn .Int .Int), ("'b", .Fn .Int (.Fn .Int .In
 def TypeSubst.most_general (S : TypeSubst) (E : SimultaneousEquation) : Prop :=
   S.solved E ∧ ∀ S' : TypeSubst, S'.solved E → ∃ S'' : TypeSubst, S' = S'' ∘ S
 
-@[simp]
-instance : SizeOf (List (Types × Types)) where
-  sizeOf := List.length
-
-def fv_num : List (Types × Types) → Nat
-  | [] => 0
-  | (.Var _, .Var _) :: es => 2 + fv_num es
-  | (.Var _, _) :: es => 1 + fv_num es
-  | (_, .Var _) :: es => 1 + fv_num es
-  | (_, _) :: es => fv_num es
-
 /--
 連立方程式の一階の単一化アルゴリズムUnify \[基礎概念,§10.4]
 
-TODO：$\MV{\alpha}=\MV{\tau}$（およびその逆）の場合において、このアルゴリズムを再帰的に適用する際の引数$[\MV{\tau}/\MV{\alpha}]E$がもとの$E$より「小さい」ことの証明（練習問題10.2）
+`parital`ではないのでLeanの仕様上この関数は全域で停止する（練習問題10.2）。
+
+以下を示すのが肝であった。
+- $(E^1, E^0 \cup \{\MV{\alpha} = \MV{\tau}\}) \prec ([\MV{\tau}/\MV{\alpha}]E^1, [\MV{\tau}/\MV{\alpha}]E^0)$
+- $(E^1 \cup \{{\MV{\tau_1}→\MV{\tau_2}} = {\MV{\tau'_1}→\MV{\tau'_2}}\}, E^0) \prec (E^1, E^0 \cup \{ {\MV{\tau_1}=\MV{\tau'_1}} ,\, {\MV{\tau_2}=\MV{\tau'_2}} \})$
 -/
-partial def SimultaneousEquation.unify : SimultaneousEquation → Error ⊕ TypeSubst
+def SimultaneousEquation.unify : SimultaneousEquation → Error ⊕ TypeSubst
   | ⟨[], []⟩ => .inr []
   | ⟨E₁, (.Int, .Int) :: E₀⟩ => SimultaneousEquation.unify ⟨E₁, E₀⟩
   | ⟨E₁, (.Bool, .Bool) :: E₀⟩ => SimultaneousEquation.unify ⟨E₁, E₀⟩
@@ -989,28 +1008,32 @@ partial def SimultaneousEquation.unify : SimultaneousEquation → Error ⊕ Type
           | .inl ε => .inl ε
   | ⟨(.Fn τ₁₁ τ₁₂, .Fn τ₂₁ τ₂₂) :: E₁, E₀⟩ => SimultaneousEquation.unify ⟨E₁, ((τ₁₂, τ₂₂) :: (τ₁₁, τ₂₁) :: E₀)⟩
   | _ => .inl error
--- termination_by E => (fv_num E.fst_deg, E.fst_deg, E.zero_deg)
+termination_by E => (E.fst_deg.length, E.zero_deg.length)
+decreasing_by
+  all_goals simp_wf
+  . apply Prod.Lex.right ; simp_arith
+  . apply Prod.Lex.right ; simp_arith
+  . apply Prod.Lex.right ; simp_arith
+  . -- `| [τ/α]E | = | E |`であって、
+    have h1 : E'.fst_deg.length = E₁.length  := SimultaneousEquation.length_eq_of_subst _ |> And.left
+    have h2 : E'.zero_deg.length ≤ E₀.length := SimultaneousEquation.length_eq_of_subst _ |> And.right |> Nat.le_of_eq
+    rw [h1]
+    -- 0次の方はパターンから小さくなっている
+    apply Prod.Lex.right ; simp_arith ; exact h2
+  . apply Prod.Lex.right ; simp_arith
+  . -- `| [τ/α]E | = | E |`であって、
+    have h1 : E'.fst_deg.length = E₁.length  := SimultaneousEquation.length_eq_of_subst _ |> And.left
+    have h2 : E'.zero_deg.length ≤ E₀.length := SimultaneousEquation.length_eq_of_subst _ |> And.right |> Nat.le_of_eq
+    rw [h1]
+    -- 0次の方はパターンから小さくなっている
+    apply Prod.Lex.right ; simp_arith ; exact h2
+  . apply Prod.Lex.left ; simp_arith
 
--- theorem SimultaneousEquation.unify.nil
--- : SimultaneousEquation.unify ⟨[], []⟩ = .inr [] := by unfold SimultaneousEquation.unify
--- theorem SimultaneousEquation.unify.Var' (h0 : .Var α ≠ τ) (h1 : α ∉ τ.fv) (h2 : SimultaneousEquation.subst [(α, τ)] ⟨E₁, E₀⟩ = E') (h3 : E'.unify = .inr S)
--- : SimultaneousEquation.unify ⟨E₁, (.Var α, τ) :: E₀⟩
---   =
---       if .Var α = τ
---       then SimultaneousEquation.unify ⟨E₁, E₀⟩
---       else
---         if α ∈ τ.fv
---         then .inl error
---         else
---           let E' := SimultaneousEquation.subst [(α, τ)] ⟨E₁, E₀⟩
---           match E'.unify with
---           | .inr S => .inr ((α, τ.subst S) :: S)
---           | .inl ε => .inl ε
--- := by simp [SimultaneousEquation.unify, h0, h1, h2, h3] ; exact rfl
-
--- theorem SimultaneousEquation.unify.Var (h0 : .Var α ≠ τ) (h1 : α ∈ τ.fv) (h2 : SimultaneousEquation.subst [(α, τ)] ⟨E₁, E₀⟩ = E') (h3 : E'.unify = .inr S) : SimultaneousEquation.unify ⟨E₁, (.Var α, τ) :: E₀⟩ = Sum.inr ((α, τ.subst S) :: S) := by
---   apply (if_neg h0)
---   sorry
+theorem SimultaneousEquation.unify.nil
+: SimultaneousEquation.unify ⟨[], []⟩ = .inr [] := by simp [SimultaneousEquation.unify]
+theorem SimultaneousEquation.unify.Var (h0 : .Var α ≠ τ) (h1 : α ∉ τ.fv) (h2 : (SimultaneousEquation.subst [(α, τ)] ⟨E₁, E₀⟩).unify = .inr S)
+: SimultaneousEquation.unify ⟨E₁, (.Var α, τ) :: E₀⟩ = .inr ((α, τ.subst S) :: S)
+:= by simp [SimultaneousEquation.unify, h0, h1, h2]
 
 /-
 #eval (SimultaneousEquation.unify ⟨[], [(.Var "'b", .Int), (.Var "'a", .Fn .Int (.Var "'b"))]⟩)

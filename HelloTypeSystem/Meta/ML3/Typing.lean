@@ -427,7 +427,56 @@ theorem S_is_mgu : S.most_general E :=
     sorry-- (fun S' h => Exists.intro [("α2", .Var "α2")] (funext (H' S' h)))
 -/
 
-example : SimultaneousEquation.unify ⟨[], [(.Var "'b", .Int), (.Var "'a", .Fn .Int (.Var "'b"))]⟩ = Sum.inr [("'b", .Int), ("'a", .Fn .Int .Int)] := by
-  sorry
+example : SimultaneousEquation.unify ⟨[], []⟩ = Sum.inr [] := SimultaneousEquation.unify.nil
+example : SimultaneousEquation.unify ⟨[], [(.Var "'b", .Int)]⟩ = Sum.inr [("'b", .Int)] :=
+  SimultaneousEquation.unify.Var (Types.noConfusion) (Types.fv.Int ▸ by simp) (SimultaneousEquation.unify.nil)
+example : SimultaneousEquation.unify ⟨[], [(.Var "'b", .Int), (.Var "'a", .Fn .Int (.Var "'b"))]⟩ = Sum.inr [("'b", .Int), ("'a", .Fn .Int .Int)] :=
+  (SimultaneousEquation.unify.Var
+    (Types.noConfusion)
+    (Types.fv.Int ▸ by simp)
+    (SimultaneousEquation.unify.Var
+      (Types.noConfusion)
+      (Types.fv.Fn ▸ Types.fv.Int ▸ by simp)
+      (SimultaneousEquation.unify.nil)
+    )
+  )
+
+/-
+TODO
+example : E.unify
+  = Sum.inr [
+      ("α1", HelloTypeSystem.ML3.Types.Fn (HelloTypeSystem.ML3.Types.Int) (HelloTypeSystem.ML3.Types.Var "α2")),
+      ("α0",
+        HelloTypeSystem.ML3.Types.Fn
+          (HelloTypeSystem.ML3.Types.Int)
+          (HelloTypeSystem.ML3.Types.Fn (HelloTypeSystem.ML3.Types.Int) (HelloTypeSystem.ML3.Types.Var "α2"))
+      )
+    ]
+:= sorry
+  -- (SimultaneousEquation.unify.Var
+  --   (Types.noConfusion)
+  --   (Types.fv.Fn ▸ Types.fv.Int ▸ Types.fv.Var ▸ by simp [Types.subst])
+  --   (by
+  --     simp [SimultaneousEquation.subst, Types.subst, List.findSome?]
+  --     exact
+  --       (SimultaneousEquation.unify.Var
+  --         (Types.noConfusion)
+  --         (Types.fv.Fn ▸ Types.fv.Int ▸ Types.fv.Var ▸ by simp [Types.subst])
+  --         (SimultaneousEquation.unify.nil)
+  --       )
+  --   )
+  -- )
+-/
+
+/-
+#eval E.unify
+/-
+Sum.inr [("α1", HelloTypeSystem.ML3.Types.Fn (HelloTypeSystem.ML3.Types.Int) (HelloTypeSystem.ML3.Types.Var "α2")),
+ ("α0",
+  HelloTypeSystem.ML3.Types.Fn
+    (HelloTypeSystem.ML3.Types.Int)
+    (HelloTypeSystem.ML3.Types.Fn (HelloTypeSystem.ML3.Types.Int) (HelloTypeSystem.ML3.Types.Var "α2")))]
+-/
+-/
 
 end Example
