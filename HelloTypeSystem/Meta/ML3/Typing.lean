@@ -368,7 +368,7 @@ def S : TypeSubst := [("α1", Types.Fn .Int (.Var "α2")), ("α0", .Fn .Int (.Fn
 /--
 $E$の最汎単一化子は$S$である。
 
-$E$の一般解$S' := [{\TT{int}\to\TT{int}\to\MV{\tau}}/{\MV{\alpha_0}},\,{\TT{int}\to\MV{\tau}}/{\MV{\alpha_1}},\,{\MV{\tau}}/{\MV{\alpha_2}}]$について$S'' := [\MV{\tau}/\MV{\alpha_2}]$とすれば
+$E$の一般解$S' := [{\TT{int}\to\TT{int}\to\MV{\tau}}/{\MV{\alpha_0}},\\,{\TT{int}\to\MV{\tau}}/{\MV{\alpha_1}},\\,{\MV{\tau}}/{\MV{\alpha_2}}]$について$S'' := [\MV{\tau}/\MV{\alpha_2}]$とすれば
 $$S' = S'' \circ S$$
 が成り立つ。
 -/
@@ -464,3 +464,110 @@ example : E.unify = Sum.inr [("α1", .Fn .Int (.Var "α2")), ("α0", .Fn (.Int) 
   )
 
 end Example
+
+/--
+型環境$\MV{\Gamma}$の下で式$\MV{e}$から`HelloTypeSystem.ML3.Expr.extract`によって得られる方程式$E$と式の型$\MV{\tau}$について、
+型代入$S$が$E$の解であることと$S\MV{\Gamma} \vdash \MV{e} : S\MV{\tau}$は同値である。（定理10.7 \[基礎概念,§10.5]）
+-/
+theorem solved_iff_typed_of_extract (e : Expr) (hb : e.fv ⊆ Γ.dom) : ∃ E τ Λ', (E, τ, Λ') = e.extract Γ hb Λ ∧ ∀ S : TypeSubst, S.solved E ↔ Typed (Γ.subst S) e (τ.subst S) :=
+  match e with
+  | .Z _ =>
+      ⟨
+        ⟨[], []⟩, .Int, Λ,
+        by simp [Expr.extract],
+        fun S =>
+          Iff.intro
+            (fun h => Types.subst_Int (S := S) ▸ Typed.Int)
+            (fun _ => by simp [TypeSubst.solved])
+      ⟩
+  | .B _ =>
+      ⟨
+        ⟨[], []⟩, .Bool, Λ,
+        by simp [Expr.extract],
+        fun S =>
+          Iff.intro
+            (fun h => Types.subst_Bool (S := S) ▸ Typed.Bool)
+            (fun _ => by simp [TypeSubst.solved])
+      ⟩
+    | .Var x =>
+        match Γ with
+        | [] =>
+            have := hb x (Expr.fv.Var ▸ rfl)
+            by contradiction
+        | (y, τ') :: (Γ' : TypeEnv) =>
+            if h : x = y
+            then
+              ⟨
+                ⟨[], []⟩, τ', Λ,
+                by simp [h, Expr.extract],
+                fun _ => h ▸
+                  Iff.intro
+                    (fun _ => Typed.Var)
+                    (fun _ => by simp [TypeSubst.solved])
+              ⟩
+            else
+              have hb' : (Expr.Var x).fv ⊆ Γ'.dom := (Expr.fv_Var_subset_TypeEnv_dom_cons_of_ne h).mp hb
+              have ⟨E, τ, Λ', he, hS⟩ := solved_iff_typed_of_extract (Λ := Λ) (Expr.Var x) hb'
+              ⟨
+                E, τ, Λ',
+                by simp [h, he, Expr.extract],
+                fun S =>
+                  have := hS S
+                  Iff.intro
+                    (fun h' => (H' h).mp <| this.mp h')
+                    (fun h' => this.mpr <| (H' h).mpr h')
+              ⟩
+  | .Add e₁ e₂ =>
+      have ⟨⟨E₁₁, E₁₀⟩, τ₁, Λ₁, he₁, hs₁⟩ :=
+        have : e₁.fv ⊆ (e₁.Add e₂).fv := Expr.fv.Add ▸ Union.subset_intro_left
+        solved_iff_typed_of_extract (Λ := Λ) e₁ (Subset.trans this hb)
+      have ⟨⟨E₂₁, E₂₀⟩, τ₂, Λ₂, he₂, _⟩ :=
+        have : e₂.fv ⊆ (e₁.Add e₂).fv := Expr.fv.Add ▸ Union.subset_intro_right
+        solved_iff_typed_of_extract (Λ := Λ₁) e₂ (Subset.trans this hb)
+      have hτ₁ := congrArg Prod.fst <| congrArg Prod.snd he₁
+      have hΛ₁ := congrArg Prod.snd <| congrArg Prod.snd he₁
+      have hτ₂ := congrArg Prod.fst <| congrArg Prod.snd he₂
+      have hΛ₂ := congrArg Prod.snd <| congrArg Prod.snd he₂
+      have hE₀ : E₂₀ ++ E₁₀ = (e₂.extract Γ _ Λ₁).1.zero_deg ++ (e₁.extract Γ _ Λ).1.zero_deg :=
+        have hE₁₀ := congrArg SimultaneousEquation.zero_deg <| congrArg Prod.fst he₁
+        have hE₂₀ := congrArg SimultaneousEquation.zero_deg <| congrArg Prod.fst he₂
+        (List.append_eq_append_iff.mpr (Or.inl (Exists.intro [] ⟨by simp [hE₂₀.symm], hE₁₀⟩)))
+      have hE₁ : E₂₁ ++ E₁₁ = (e₂.extract Γ _ Λ₁).1.fst_deg ++ (e₁.extract Γ _ Λ).1.fst_deg :=
+        have hE₁₁ := congrArg SimultaneousEquation.fst_deg <| congrArg Prod.fst he₁
+        have hE₂₁ := congrArg SimultaneousEquation.fst_deg <| congrArg Prod.fst he₂
+        (List.append_eq_append_iff.mpr (Or.inl (Exists.intro [] ⟨by simp [hE₂₁.symm], hE₁₁⟩)))
+      ⟨
+        ⟨E₂₁ ++ E₁₁, (τ₂, .Int) :: (τ₁, .Int) :: E₂₀ ++ E₁₀⟩, .Int, Λ₂,
+        by
+          simp [Expr.extract]
+          exact ⟨
+            ⟨hΛ₁ ▸ hE₁, hΛ₁ ▸ hτ₂, hτ₁, hΛ₁ ▸ hE₀⟩,
+            hΛ₁ ▸ hΛ₂
+          ⟩,
+        fun S =>
+          Iff.intro
+            (fun h' =>
+              have := by unfold TypeSubst.solved at h' ; exact h'
+              -- thisのzero_degの先頭から　Types.subst S τ₁ = Types.subst S τ₂　を取り出せば
+              have ht₁ : Types.subst S τ₁ = Types.subst S .Int := sorry
+              have hsE₁ : S.solved { fst_deg := E₁₁, zero_deg := E₁₀ } := sorry
+              Typed.Add
+                (Types.subst_Int (S := S) ▸ ht₁ ▸ (hs₁ S).mp hsE₁)
+                (sorry)
+            )
+            (fun _ => sorry)
+      ⟩
+  | _ => sorry
+where
+  H' {x y : VarName} {Γ' : TypeEnv} {S : TypeSubst} (hne : x ≠ y) {τ τ' : Types} : Typed (TypeEnv.subst S Γ') (Expr.Var x) (Types.subst S τ) ↔ Typed (TypeEnv.subst S ((y, τ') :: Γ')) (Expr.Var x) (Types.subst S τ) :=
+    Iff.intro
+      (fun h => by
+        have := Typed.VarIr (τ' := Types.subst S τ') h hne.symm
+        simp [List.map_cons] at this
+        exact this
+      )
+      (fun h =>
+        match h with
+        | .VarIr (τ := Sτ) d _ => d
+        | .Var                 => False.elim (hne rfl)
+      )

@@ -603,7 +603,7 @@ theorem TypeEnv.dom.cons : TypeEnv.dom ((x, τ) :: (Γ' : TypeEnv)) = Γ'.dom �
 /--
 ML3式の型付け規則
 
-"$\MV{\Gamma}\vdash\MV{e}\colon\MV{\tau}$" means that the type of the expression $\MV{e}$ is $\MV{\tau}$ in the type environment $\MV{\Gamma}$.
+"$\MV{\Gamma} \vdash \MV{e} : \MV{\tau}$" means that the type of the expression $\MV{e}$ is $\MV{\tau}$ in the type environment $\MV{\Gamma}$.
 -/
 inductive Typed : TypeEnv → Expr → Types → Prop
   | Int {i : Int}
@@ -612,8 +612,8 @@ inductive Typed : TypeEnv → Expr → Types → Prop
     : Typed Γ b .Bool
   | Var {x : VarName} {τ : Types}
     : Typed ((x, τ) :: Γ) x τ
-  | VarIr {x y : VarName} {τ : Types} (d : Typed Γ x τ) (hne : y ≠ x := by trivial)
-    : Typed ((y, _) :: Γ) x τ
+  | VarIr {x y : VarName} {τ τ' : Types} (d : Typed Γ x τ) (hne : y ≠ x := by trivial)
+    : Typed ((y, τ') :: Γ) x τ
   | Add {e₁ e₂ : Expr} (d₁ : Typed Γ e₁ .Int) (d₂ : Typed Γ e₂ .Int)
     : Typed Γ (e₁ + e₂) .Int
   | Sub {e₁ e₂ : Expr} (d₁ : Typed Γ e₁ .Int) (d₂ : Typed Γ e₂ .Int)
@@ -718,6 +718,9 @@ def Types.subst (S : TypeSubst) : Types → Types
       | some τ => τ
       | none   => .Var α
 
+theorem Types.subst_Int {S : TypeSubst} : Types.Int.subst S = .Int := by simp [Types.subst]
+theorem Types.subst_Bool {S : TypeSubst} : Types.Bool.subst S = .Bool := by simp [Types.subst]
+
 /--
 型代入$S$を型$\MV{\tau}$から型$S\MV{\tau}$への写像とみなす。
 -/
@@ -783,6 +786,19 @@ theorem SimultaneousEquation.length_eq_of_subst : (E : SimultaneousEquation) →
       have h₀ := h₀ ▸ List.length_cons e₀ es₀
       ⟨h₁ ▸ rfl, h₀ ▸ rfl⟩
 
+theorem Expr.fv_Var_subset_TypeEnv_dom_cons_of_ne (hne : x ≠ y) : (Expr.Var x).fv ⊆ TypeEnv.dom ((y, τ) :: (Γ' : TypeEnv)) ↔ (Expr.Var x).fv ⊆ TypeEnv.dom Γ' :=
+  Iff.intro
+    (fun hb z h =>
+      have : z ∈ Γ'.dom ∨ z ∈ {y} := (TypeEnv.dom.cons ▸ hb) z h
+      Or.elim this
+        id
+        (fun hy : z ∈ {y} =>
+          have hx := Singleton.mem_iff_eq_elem.mp (Expr.fv.Var ▸ h)
+          have := Singleton.mem_iff_eq_elem.mp hy
+          absurd (this ▸ hx) hne
+        )
+    )
+    (fun hb z h => Or.inl (hb z h))
 
 /--
 式$\MV{e}$について、与えられた型環境$\MV{\Gamma}$のもとで型に関する連立方程式$E$と式$\MV{e}$の型$\MV{\tau}$の組$(E, \MV{\tau})$を返す。
@@ -796,22 +812,13 @@ def Expr.extract (e : Expr) (Γ : TypeEnv) (bounded : e.fv ⊆ Γ.dom) (Λ : Lis
   | .Var x =>
       match Γ with
       | [] =>
-          let α := s!"α{Λ.length}"
-          (⟨[], [(.Var α, .Var α)]⟩, .Var α, α :: Λ)
+          have := TypeEnv.dom.nil ▸ bounded x (Expr.fv.Var ▸ rfl)
+          by contradiction
       | (y, τ) :: (Γ' : TypeEnv) =>
           if h : x = y
           then (⟨[], []⟩, τ, Λ)
           else
-            have bounded' : (Var x).fv ⊆ Γ'.dom :=
-              fun a h' =>
-                have : a ∈ Γ'.dom ∨ a ∈ {y} := (TypeEnv.dom.cons ▸ bounded) a h'
-                Or.elim this
-                  id
-                  (fun h'' : a ∈ {y} =>
-                    have hx := Singleton.mem_iff_eq_elem.mp (Expr.fv.Var ▸ h')
-                    have hy := Singleton.mem_iff_eq_elem.mp h''
-                    absurd (hy ▸ hx) h
-                  )
+            have bounded' : (Var x).fv ⊆ Γ'.dom := (Expr.fv_Var_subset_TypeEnv_dom_cons_of_ne h).mp bounded
             (Var x).extract Γ' bounded' Λ
   | .Add e₁ e₂ =>
       let ⟨⟨E₁₁, E₁₀⟩, τ₁, Λ₁⟩ :=
@@ -899,7 +906,9 @@ def Expr.extract (e : Expr) (Γ : TypeEnv) (bounded : e.fv ⊆ Γ.dom) (Λ : Lis
       | _       => (⟨                         E'₁, (τ₁, .Fn τ₂ (.Var α)) :: E'₀⟩, .Var α, α :: Λ₂)
 
 theorem Expr.extract.Z (h : (Expr.Z i).fv ⊆ TypeEnv.dom Γ) : (Expr.Z i).extract Γ h Λ = (⟨[], []⟩, .Int, Λ) := by simp [Expr.extract]
-theorem Expr.extract.Var (h : (Expr.Var x).fv ⊆ TypeEnv.dom [(y, τ)]) (heq : x = y := by trivial) : (Expr.Var x).extract [(y, τ)] h Λ = (⟨[], []⟩, τ, Λ) := by simp [Expr.extract] ; exact heq
+theorem Expr.extract.Var (h : (Expr.Var x).fv ⊆ TypeEnv.dom [(y, τ)]) (heq : x = y := by trivial) : (Expr.Var x).extract [(y, τ)] h Λ = (⟨[], []⟩, τ, Λ) := by simp [Expr.extract, heq]
+-- theorem Expr.extract.Add (h : (Expr.Add e₁ e₂).fv ⊆ TypeEnv.dom Γ)
+-- : (Expr.Add e₁ e₂).extract Γ h Λ = (E, .Int, Λ') := sorry
 theorem Expr.extract.Fn
   {Λ : List VarName}
   {h' : e.fv ⊆ TypeEnv.dom ((x, Types.Var s!"α{Λ.length}") :: Γ)}
