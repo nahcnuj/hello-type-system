@@ -464,3 +464,26 @@ example : E.unify = Sum.inr [("α1", .Fn .Int (.Var "α2")), ("α0", .Fn (.Int) 
   )
 
 end Example
+
+/-!
+## 型代入補題
+
+補題9.3 \[基礎概念,§9.5]
+-/
+
+/--
+型代入補題（補題9.3 \[基礎概念,§9.5]）
+-/
+theorem typed_subst_of_typed : {e : Expr} → Typed Γ e τ → Typed (Γ.subst S) e (τ.subst S)
+  | .Z _,    .Int          => .Int
+  | .B _,    .Bool         => .Bool
+  | .Var _,  .Var          => .Var
+  | .Var _,  .VarIr d _    => .VarIr (typed_subst_of_typed d)
+  | .Add .., .Add d₁ d₂    => .Add (typed_subst_of_typed d₁) (typed_subst_of_typed d₂)
+  | .Sub .., .Sub d₁ d₂    => .Sub (typed_subst_of_typed d₁) (typed_subst_of_typed d₂)
+  | .Mul .., .Mul d₁ d₂    => .Mul (typed_subst_of_typed d₁) (typed_subst_of_typed d₂)
+  | .LT  .., .LT  d₁ d₂    => .LT  (typed_subst_of_typed d₁) (typed_subst_of_typed d₂)
+  | .If  .., .If  d₁ d₂ d₃ => .If  (typed_subst_of_typed d₁) (typed_subst_of_typed d₂) (typed_subst_of_typed d₃)
+  | .Let .., .Let d₁ d₂    => .Let (typed_subst_of_typed d₁) (typed_subst_of_typed d₂)
+  | .Fn  .., .Fn  d        => .Fn  (typed_subst_of_typed d)
+  | .App .., .App d₁ d₂    => .App (typed_subst_of_typed d₁) (typed_subst_of_typed d₂)
