@@ -5,6 +5,7 @@ import «HelloTypeSystem».Meta
 import «HelloTypeSystem».ML1
 import «HelloTypeSystem».ML2
 import «HelloTypeSystem».ML3
+import «HelloTypeSystem».Language
 /-!
 $\newcommand\Set[1]{\mathbf{#1}}$
 $\newcommand\MV[1]{\boldsymbol{#1}}$
