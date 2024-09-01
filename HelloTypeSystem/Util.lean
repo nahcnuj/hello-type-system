@@ -26,6 +26,9 @@ instance : Union (Set α) where
 theorem Union.subset_intro_left  {a b : Set α} : a ⊆ a ∪ b := fun _ => Or.inl
 theorem Union.subset_intro_right {a b : Set α} : b ⊆ a ∪ b := fun _ => Or.inr
 
+instance : Insert α (Set α) where
+  insert a as := fun x => x = a ∨ x ∈ as
+
 instance : SDiff (Set α) where
   sdiff a b := fun x => x ∈ a ∧ ¬ x ∈ b
 

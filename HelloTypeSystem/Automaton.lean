@@ -1,1 +1,2 @@
 import HelloTypeSystem.Automaton.Deterministic
+import HelloTypeSystem.Automaton.NonDeterministic
