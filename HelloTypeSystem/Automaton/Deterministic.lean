@@ -3,30 +3,27 @@ import HelloTypeSystem.Util
 namespace HelloTypeSystem.Automaton
 
 /--
-決定性有限オートマトン(deterministic finite automata, DFA)
-$$\begin{align*}
-D :={}& \langle Q,\Sigma,\delta,q_0,F \rangle, \text{where} \\
-Q \colon{}& \text{状態の有限集合}, \\
-\Sigma \colon{}& \text{入力記号の有限集合}, \\
-\text{状態遷移関数} \delta \colon{}& Q \times \Sigma \to Q, \\
-\text{初期状態} q_0 \in{}& Q, \\
-\text{受理状態集合} F \subseteq{}& Q.
-\end{align*}$$
+アルファベット$A$上の（$n$-状態）決定性有限オートマトン(deterministic finite automata, DFA)$D := \langle \{q_0,\dots,q_{n-1}\},A,\delta,q_0,F \rangle$
 -/
-structure DFA (Q : Type u) (A : Type v) where
-  next : Q → A → Q
-  start : Q
-  accept : Set Q
+structure DFA (n : Nat) (A : Type u) where
+  /-- 状態遷移関数$\delta$ -/
+  next : Fin n → A → Fin n
+  /-- 受理状態集合$F \subseteq \\{q_0,\dots,q_{n-1}\\}$ -/
+  accept : Set (Fin n)
+
+section
+variable {A : Type u} {n : Nat}
+variable (dfa : DFA n.succ A)
 
 /--
-DFA $D := \langle Q,\Sigma,\delta,q_0,F \rangle$の遷移関数$\delta$を文字列$\Sigma^{\*}$上に拡張した関数$\hat{\delta}$
+DFA $D = \langle Q,A,\delta,q_0,F \rangle$の遷移関数$\delta$を文字列$A^{\*}$上に拡張した関数$\hat{\delta}$
 $$\begin{align*}
-\hat{\delta} \colon{}&& Q \times \Sigma^{*} \to{}& Q; \\
+\hat{\delta} \colon{}&& Q \times A^{*} \to{}& Q; \\
 && (q, \epsilon) \mapsto{}& q, \\
-\forall w\in\Sigma^{*}. \forall a\in\Sigma.&& (q, wa) \mapsto{}& \mathop{\delta}( \mathop{\hat{\delta}}(q, w) , a ).
+\forall w\in A^{*}. \forall a\in A.&& (q, wa) \mapsto{}& \mathop{\delta}( \mathop{\hat{\delta}}(q, w) , a ).
 \end{align*}$$
 -/
-def DFA.work (dfa : DFA Q A) (q : Q) : List A → Q :=
+protected def DFA.work (q : Fin n.succ) : List A → Fin n.succ :=
   List.foldl dfa.next q
 -- fun w =>
 --   match w with
@@ -34,63 +31,44 @@ def DFA.work (dfa : DFA Q A) (q : Q) : List A → Q :=
 --   | .cons a w => dfa.next (dfa.work q w) a
 
 /--
-DFA $D = \langle Q,\Sigma,\delta,q_0,F \rangle$が受理する言語$L(D) := \{ w \in \Sigma^{*} \mid \mathop{\hat{\delta}}(q_0, w) \in F \}$
+DFA $D = \langle Q,A,\delta,q_0,F \rangle$が受理する言語$L(D) := \{ w \in A^{*} \mid \mathop{\hat{\delta}}(q_0, w) \in F \}$
 -/
-def DFA.lang (dfa : DFA Q A) : Set (List A) :=
-  fun w => dfa.accept <| dfa.work dfa.start w
+def DFA.lang : Set (List A) :=
+  fun w => dfa.accept <| dfa.work 0 w.reverse
+
+end
 
 namespace Example
 
 /--
-アルファベット$\Set{Bin} := \\{0,1\\}$
+アルファベット$\\{0,1\\}$上の文字列を2進数と見て、3の倍数であれば受理する3状態DFA
 -/
-inductive Bin
-| O
-| I
-
-/--
-状態の有限集合$Q := \\{q_0, q_1, q_2\\}$
--/
-inductive States
-| q₀
-| q₁
-| q₂
-deriving Repr
-
-/--
-遷移関数$\delta$
--/
-def next : States → Bin → States
-  | .q₀, .O => .q₀ -- 2 * 0 + 0 = 0 ≡ 0 (mod 3)
-  | .q₀, .I => .q₁ -- 2 * 0 + 1 = 1 ≡ 1
-  | .q₁, .O => .q₂ -- 2 * 1 + 0 = 2 ≡ 2
-  | .q₁, .I => .q₀ -- 2 * 1 + 1 = 3 ≡ 0
-  | .q₂, .O => .q₁ -- 2 * 2 + 0 = 4 ≡ 1
-  | .q₂, .I => .q₂ -- 2 * 2 + 1 = 5 ≡ 2
-
-/--
-DFA $\langle Q, \Set{Bin}, \delta, q_0, \{q_0\} \rangle$
--/
-def dfa : DFA States Bin :=
+def dfa : DFA 3 (Fin 2) :=
+  let next : Fin 3 → Fin 2 → Fin 3
+    | 0, 0 => 0 -- 2 * 0 + 0 = 0 ≡ 0 (mod 3)
+    | 0, 1 => 1 -- 2 * 0 + 1 = 1 ≡ 1
+    | 1, 0 => 2 -- 2 * 1 + 0 = 2 ≡ 2
+    | 1, 1 => 0 -- 2 * 1 + 1 = 3 ≡ 0
+    | 2, 0 => 1 -- 2 * 2 + 0 = 4 ≡ 1
+    | 2, 1 => 2 -- 2 * 2 + 1 = 5 ≡ 2
   {
-    next := next,
-    start := .q₀,
-    accept := fun q => q = .q₀
+    next
+    accept := fun q => q = 0
   }
 
 /-- 0₂ ≡ 0 (mod 3) -/
-example : dfa.work .q₀ [.O] = .q₀ := rfl
+example : dfa.work 0 [0] = 0 := rfl
 /-- 1₂ ≡ 1 (mod 3) -/
-example : dfa.work .q₀ [.I] = .q₁ := rfl
+example : dfa.work 0 [1] = 1 := rfl
 /-- 10₂ ≡ 2 (mod 3) -/
-example : dfa.work .q₀ [.I, .O] = .q₂ := rfl
+example : dfa.work 0 [1,0] = 2 := rfl
 /-- 11₂ ≡ 0 (mod 3) -/
-example : dfa.work .q₀ [.I, .I] = .q₀ := rfl
+example : dfa.work 0 [1,1] = 0 := rfl
 
 /--
 DFA `dfa`は文字列`110`を受理する
 すなわち$110 \in L(\mathtt{dfa})$
 -/
-example : [.I, .I, .O] ∈ dfa.lang := rfl
+example : [1,1,0] ∈ dfa.lang := rfl
 
 end Example
