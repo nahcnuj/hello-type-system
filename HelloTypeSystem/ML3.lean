@@ -810,7 +810,8 @@ def Expr.extract (e : Expr) (Γ : TypeEnv) (bounded : e.fv ⊆ Γ.dom) (Λ : Lis
                   (fun h'' : a ∈ {y} =>
                     have hx := Singleton.mem_iff_eq_elem.mp (Expr.fv.Var ▸ h')
                     have hy := Singleton.mem_iff_eq_elem.mp h''
-                    absurd (hy ▸ hx) h
+                    have := hx ▸ hy
+                    absurd this.symm h
                   )
             (Var x).extract Γ' bounded' Λ
   | .Add e₁ e₂ =>
