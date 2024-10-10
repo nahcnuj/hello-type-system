@@ -12,7 +12,7 @@ def Set (α : Type u) := α → Prop
 
 @[simp]
 instance : Membership α (Set α) where
-  mem x s := s x
+  mem x s := x s
 
 instance : HasSubset (Set α) where
   Subset a b := ∀ x ∈ a, x ∈ b
