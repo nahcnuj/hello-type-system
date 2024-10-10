@@ -12,4 +12,4 @@ lean_exe «hellotypesystem» where
   root := `Main
 
 meta if get_config? env = some "dev" then -- dev is so not everyone has to build it
-require «doc-gen4» from git "https://github.com/leanprover/doc-gen4" @ "v4.10.0"
+require «doc-gen4» from git "https://github.com/leanprover/doc-gen4" @ "v4.12.0"
